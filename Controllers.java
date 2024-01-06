@@ -4,8 +4,10 @@
 
 package frc.robot.synced;
 
+import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.PS4Controller;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.GenericHID.HIDType;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -45,6 +47,10 @@ public class Controllers {
     public Trigger PovRight;
     public Trigger LeftStickPress;
     public Trigger RightStickPress;
+
+    public ControllerBase(int port) {
+      this(port, new GenericHID(port).getType() == HIDType.kXInputGamepad);
+    }
 
     public ControllerBase(int port, boolean isPS4) {
       this.isPS4 = isPS4;
@@ -181,10 +187,10 @@ public class Controllers {
     }
   }
 
-  public static ControllerBase Zero = new ControllerBase(0, false);
-  public static ControllerBase One = new ControllerBase(1, false);
-  public static ControllerBase Two = new ControllerBase(2, false);
-  public static ControllerBase Three = new ControllerBase(3, false);
-  public static ControllerBase Four = new ControllerBase(4, false);
-  public static ControllerBase Five = new ControllerBase(5, false);
+  public static ControllerBase Zero = new ControllerBase(0);
+  public static ControllerBase One = new ControllerBase(1);
+  public static ControllerBase Two = new ControllerBase(2);
+  public static ControllerBase Three = new ControllerBase(3);
+  public static ControllerBase Four = new ControllerBase(4);
+  public static ControllerBase Five = new ControllerBase(5);
 }
