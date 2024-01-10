@@ -1,4 +1,4 @@
-package frc.robot.synced;
+package frc.robot.SyncedLibraries;
 
 public class BasicFunctions {
   public static double deadband(double input, double deadband) {
