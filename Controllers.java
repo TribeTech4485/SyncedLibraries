@@ -34,7 +34,7 @@ public class Controllers {
   public ControllerBase Five;
 
   // Only used when no controller is connected, made here to reduce waste memory
-  private ControllerBase nullController = new ControllerBase(-1);
+  private ControllerBase nullController = new ControllerBase(-1, true, false, false);
 
   // For automatically selecting controllers based on which one is being used
   // reccomended to be primary = driver, secondary = shooter
