@@ -16,6 +16,7 @@ public class ManipulatorSpeedCommand extends Command {
     this.targetSpeed = speed;
     this.tolerance = tolerance;
     pid = new PIDController(kP, kI, kD);
+    pid.setTolerance(tolerance);
     addRequirements(manipulator);
   }
 

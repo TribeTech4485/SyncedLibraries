@@ -16,6 +16,7 @@ public class ManipulatorMoveCommand extends Command {
     this.position = position;
     this.tolerance = tolerance;
     pid = new PIDController(kP, kI, kD);
+    pid.setTolerance(tolerance);
     addRequirements(manipulator);
   }
 
@@ -25,7 +26,7 @@ public class ManipulatorMoveCommand extends Command {
     pid.reset();
     pid.setSetpoint(position);
     if (position == Integer.MAX_VALUE) {
-      // https://www.youtube.com/watch?v=dQw4w9WgXcQ
+      // https://www.youtube.com/watch?v=dQw4w9WgXcQ //
       DriverStation.reportError("ManipulatorMoveCommand: position not set", true);
       CommandScheduler.getInstance().cancel(this);
     }
