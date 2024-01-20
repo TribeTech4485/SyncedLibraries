@@ -4,10 +4,14 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /**
- * To impliment:
+ * <strong> To impliment: </strong>
  * <p>
- * Create class that extends this class, override all methods besides
- * the set___Command methods, and then run the set___Command methods
+ * 1.) Create class that extends this class
+ * <p>
+ * 2.) Override all non-final methods
+ * <p>
+ * 3.) Run the set___Command methods
+ * in the constructor to set the PID values.
  */
 public class ManipulatorBase extends SubsystemBase {
   ManipulatorMoveCommand moveCommand;
@@ -31,18 +35,17 @@ public class ManipulatorBase extends SubsystemBase {
   }
 
   /** Set multiplier to convert from encoder values to degrees on manipulator */
-  public void setPositionMultiplier(double multiplier) {
+  public final void setPositionMultiplier(double multiplier) {
     positionMultiplier = multiplier;
   }
 
-  /** DO NOT RUN WHILE {@link ManipulatorMoveCommand} IS IN USE */
-  public void setMoveCommand(double tolerance, double kP, double kI, double kD) {
+  public final void setPositionPID(double kP, double kI, double kD, double tolerance) {
     cancelMoveToPosition();
     this.moveCommand = new ManipulatorMoveCommand(this, Integer.MAX_VALUE, tolerance, kP, kI, kD);
   }
 
   /** Get the target position of the manipulator in degrees */
-  public double getTargetPosition() {
+  public final double getTargetPosition() {
     if (moveCommand == null) {
       return Integer.MAX_VALUE;
     }
@@ -50,13 +53,13 @@ public class ManipulatorBase extends SubsystemBase {
   }
 
   /** Move the manipulator to a position in degrees */
-  public void moveToPosition() {
+  public final void moveToPosition() {
     stopCommands();
     moveCommand.setTargetPosition(getPosition());
     moveCommand.schedule();
   }
 
-  public void cancelMoveToPosition() {
+  public final void cancelMoveToPosition() {
     if (moveCommand != null && moveCommand.isScheduled()) {
       CommandScheduler.getInstance().cancel(moveCommand);
       System.out.println("ManipulatorBase: Cancelling move command");
@@ -64,16 +67,18 @@ public class ManipulatorBase extends SubsystemBase {
   }
 
   // ===================== Raw Speed Methods ===================== //
-  // Whenever overriding raw speed methods, make sure to call stopCommands() in the method
   /** Get the raw speed of the motor in the range -1 to 1 */
   public double getPower() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  /** Set the raw speed of the motor in the range -1 to 1 
+  /**
+   * Set the raw speed of the motor in the range -1 to 1
    * <p>
    * Used for manual control
-  */
+   * <p>
+   * WHEN CREATING THIS METHOD, MAKE SURE TO CALL {@link #stopCommands()}
+   */
   public void setPower(double power) {
     throw new UnsupportedOperationException("Not implemented");
   }
@@ -81,7 +86,7 @@ public class ManipulatorBase extends SubsystemBase {
   // ===================== Speed Methods ===================== //
 
   /** Set multiplier to convert from encoder values to rpm on manipulator */
-  public void setSpeedMultiplier(double multiplier) {
+  public final void setSpeedMultiplier(double multiplier) {
     speedMultiplier = multiplier;
   }
 
@@ -91,7 +96,7 @@ public class ManipulatorBase extends SubsystemBase {
   }
 
   /** Get the target speed of the motor in rpm */
-  public double getTargetSpeed() {
+  public final double getTargetSpeed() {
     if (speedCommand == null) {
       return Integer.MAX_VALUE;
     }
@@ -99,30 +104,29 @@ public class ManipulatorBase extends SubsystemBase {
   }
 
   /** Set the speed of the motor in rpm */
-  public void setSpeed(double speed) {
+  public final void setSpeed(double speed) {
     stopCommands();
     speedCommand.setTargetSpeed(speed);
     speedCommand.schedule();
   }
 
-  /** DO NOT RUN WHILE {@link ManipulatorSpeedCommand} IS IN USE */
-  public void setSpeedCommand(double tolerance, double kP, double kI, double kD) {
+  public final void setSpeedPID(double kP, double kI, double kD, double tolerance) {
     cancelSpeedCommand();
     this.speedCommand = new ManipulatorSpeedCommand(this, Integer.MAX_VALUE, tolerance, kP, kI, kD);
   }
 
-  public void cancelSpeedCommand() {
+  public final void cancelSpeedCommand() {
     if (speedCommand != null && speedCommand.isScheduled()) {
       CommandScheduler.getInstance().cancel(speedCommand);
       System.out.println("ManipulatorBase: Cancelling speed command");
     }
   }
 
-  
   // ===================== Utility Methods ===================== //
-  /** Stop all motors
+  /**
+   * Stop all motors
    * <p>
-   * DO NOT FORGET TO STOP COMMANDS
+   * DOES NOT STOP COMMANDS
    */
   public void stop() {
     throw new UnsupportedOperationException("Not implemented");
@@ -133,7 +137,8 @@ public class ManipulatorBase extends SubsystemBase {
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  /** Use to invert all motor functions
+  /**
+   * Use to invert all motor functions
    * <p>
    * Don't forget to invert the encoder if needed!
    */
@@ -146,8 +151,13 @@ public class ManipulatorBase extends SubsystemBase {
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  public void stopCommands() {
+  public final void stopCommands() {
     cancelMoveToPosition();
     cancelSpeedCommand();
+  }
+
+  public final void fullStop() {
+    stopCommands();
+    stop();
   }
 }
