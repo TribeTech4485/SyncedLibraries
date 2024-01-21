@@ -27,6 +27,9 @@ public class AutoControllerSelector {
     }
 
     for (ControllerBase controller : controllers) {
+      if (!controller.isPluggedIn()) {
+        continue;
+      }
       if (controller.isBeingTouched()) {
         return controller;
       }

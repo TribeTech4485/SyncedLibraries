@@ -390,5 +390,9 @@ public class Controllers {
     public void setTriggerMultiplier(double multiplier) {
       this.triggerMultiplier = multiplier;
     }
+
+    public boolean isPluggedIn() {
+      return objectX.isConnected() || objectPS4.isConnected() || objectJoystick.isConnected();
+    }
   }
 }
