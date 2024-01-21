@@ -10,6 +10,7 @@ public class ManipulatorSpeedCommand extends Command {
   private double targetSpeed;
   private double tolerance;
   private PIDController pid;
+  private Command uponTarget;
 
   public ManipulatorSpeedCommand(ManipulatorBase manipulator, double speed, double tolerance, double kP, double kI, double kD) {
     this.manipulator = manipulator;
@@ -34,6 +35,9 @@ public class ManipulatorSpeedCommand extends Command {
   @Override
   public void execute() {
     manipulator.setPower(pid.calculate(manipulator.getCurrentSpeed(), targetSpeed));
+    if (uponTarget != null && isAtSpeed()) {
+      uponTarget.schedule();
+    }
   }
 
   @Override
@@ -52,5 +56,17 @@ public class ManipulatorSpeedCommand extends Command {
 
   public double getTargetSpeed() {
     return targetSpeed;
+  }
+
+  public double getTolerance() {
+    return tolerance;
+  }
+
+  public void setUponTarget(Command command) {
+    uponTarget = command;
+  }
+
+  public boolean isAtSpeed() {
+    return Math.abs(manipulator.getCurrentSpeed() - targetSpeed) < tolerance;
   }
 }

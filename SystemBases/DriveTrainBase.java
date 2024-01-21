@@ -231,7 +231,7 @@ public class DriveTrainBase extends SubsystemBase {
       return;
     }
     isHighGear = fast;
-    if (fast) {
+    if (isHighGear) {
       gearChanger.set(DoubleSolenoid.Value.kReverse);
       System.out.println("Gear shifter set to High Speed Mode");
     } else {
@@ -243,7 +243,7 @@ public class DriveTrainBase extends SubsystemBase {
   /** Artificial speed limit, 1/3 */
   public void doSlowMode(boolean slow) {
     isSlowMode = slow;
-    if (slow) {
+    if (isSlowMode) {
       speedMultiplier = 0.3;
     } else {
       speedMultiplier = maxSpeed;

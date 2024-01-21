@@ -10,6 +10,8 @@ public class ManipulatorMoveCommand extends Command {
   private double position;
   private double tolerance;
   private PIDController pid;
+  private Command uponTarget;
+  private int onTargetCounter = 10;
 
   public ManipulatorMoveCommand(ManipulatorBase manipulator, double position, double tolerance, double kP, double kI, double kD) {
     this.manipulator = manipulator;
@@ -56,5 +58,17 @@ public class ManipulatorMoveCommand extends Command {
 
   public double getTargetPosition() {
     return position;
+  }
+
+  public double getTolerance() {
+    return tolerance;
+  }
+
+  public void setUponTarget(Command command, int onTargetCounter) {
+    this.uponTarget = command;
+  }
+
+  public boolean isAtPosition() {
+    return Math.abs(manipulator.getPosition() - position) < tolerance;
   }
 }
