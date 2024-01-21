@@ -37,6 +37,9 @@ public class ManipulatorMoveCommand extends Command {
   @Override
   public void execute() {
     manipulator.setPower(pid.calculate(manipulator.getPosition(), position));
+    if (uponTarget != null && isAtPosition() && !uponTarget.isScheduled()) {
+      uponTarget.schedule();
+    }
   }
 
   @Override
@@ -69,6 +72,10 @@ public class ManipulatorMoveCommand extends Command {
   }
 
   public boolean isAtPosition() {
+    return currentlyAtPosition() && onTargetCounter-- <= 0;
+  }
+
+  private boolean currentlyAtPosition() {
     return Math.abs(manipulator.getPosition() - position) < tolerance;
   }
 }

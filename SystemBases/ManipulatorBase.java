@@ -62,6 +62,10 @@ public class ManipulatorBase extends SubsystemBase {
     this.moveCommand = new ManipulatorMoveCommand(this, Integer.MAX_VALUE, tolerance, kP, kI, kD);
   }
 
+  public ManipulatorMoveCommand getMoveCommand() {
+    return moveCommand;
+  }
+
   /** Get the target position of the manipulator in degrees */
   public double getTargetPosition() {
     if (moveCommand == null) {
@@ -140,6 +144,10 @@ public class ManipulatorBase extends SubsystemBase {
     stopCommands();
     speedCommand.setTargetSpeed(speed);
     speedCommand.schedule();
+  }
+
+  public ManipulatorSpeedCommand getSpeedCommand() {
+    return speedCommand;
   }
 
   public boolean isAtSpeed() {
