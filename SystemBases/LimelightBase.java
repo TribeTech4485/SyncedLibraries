@@ -70,6 +70,8 @@ public class LimelightBase extends SubsystemBase {
   }
 
   /** Sets the pipeline to use for the limelight */
+  //Pipeline 1 = AprilTag Detection
+  //Pipeline 2 = Retroreflective Detection
   public void setTarget(double target) {
     table.getEntry("pipeline").setNumber(target);
   }
