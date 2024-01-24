@@ -222,7 +222,7 @@ public class Controllers {
         this.LeftStickPress = new Trigger(() -> false);
         this.RightStickPress = new Trigger(() -> false);
       } else {
-        System.out.println("Controller " + port + " is not a valid controller.");
+        System.out.println("Controller on port " + port + " is not a valid controller.");
       }
     }
 
