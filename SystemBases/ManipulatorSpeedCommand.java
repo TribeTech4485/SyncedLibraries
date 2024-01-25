@@ -52,6 +52,7 @@ public class ManipulatorSpeedCommand extends Command {
 
   public void setTargetSpeed(double speed) {
     this.targetSpeed = speed;
+    initialize();
   }
 
   public double getTargetSpeed() {
