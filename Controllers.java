@@ -34,13 +34,13 @@ public class Controllers {
   public ControllerBase Five;
 
   // Only used when no controller is connected, made here to reduce waste memory
-  private ControllerBase nullController = new ControllerBase(-1, true, false, false);
+  public static ControllerBase ghostController = new ControllerBase(-1, true, false, false);
 
   // For automatically selecting controllers based on which one is being used
   // reccomended to be primary = driver, secondary = shooter
-  public AutoControllerSelector primaryControllerSelector = new AutoControllerSelector(nullController);
-  public AutoControllerSelector secondaryControllerSelector = new AutoControllerSelector(nullController);
-  public AutoControllerSelector tertiaryControllerSelector = new AutoControllerSelector(nullController);
+  public AutoControllerSelector primaryControllerSelector = new AutoControllerSelector(ghostController);
+  public AutoControllerSelector secondaryControllerSelector = new AutoControllerSelector(ghostController);
+  public AutoControllerSelector tertiaryControllerSelector = new AutoControllerSelector(ghostController);
   public ControllerBase Primary;
   public ControllerBase Secondary;
   public ControllerBase Tertiary;

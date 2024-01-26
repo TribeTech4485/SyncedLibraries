@@ -7,6 +7,12 @@ package frc.robot.SyncedLibraries;
  * <p>
  * KEEP UPDATED
  */
-public enum RobotState {
-  Driving, Shooting, Intaking, Climbing, Disabled
+public class RobotState {
+  public static enum RobotStateEnum {
+    Driving, Shooting, Intaking, Climbing, Disabled
+  }
+
+  public static enum ManipulatorStateEnum {
+    Intaking, Transporting, Held, Shooting, Empty
+  }
 }

@@ -15,15 +15,15 @@ public class AutoControllerSelector {
    * Further items take lower precedence.
    */
   ArrayList<ControllerBase> controllers = new ArrayList<>();
-  ControllerBase nullController;
+  ControllerBase ghostController;
 
-  public AutoControllerSelector(ControllerBase nullController) {
-    this.nullController = nullController;
+  public AutoControllerSelector(ControllerBase ghostController) {
+    this.ghostController = ghostController;
   }
 
   public ControllerBase getController() {
     if (controllers == null) {
-      return nullController;
+      return ghostController;
     }
 
     for (ControllerBase controller : controllers) {
@@ -38,7 +38,7 @@ public class AutoControllerSelector {
         return controller;
       }
     }
-    return nullController;
+    return ghostController;
   }
 
   public void addController(ControllerBase... controller) {
