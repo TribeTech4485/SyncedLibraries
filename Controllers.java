@@ -113,7 +113,7 @@ public class Controllers {
     /**
      * A class to handle controllers.
      * 
-     * @param port  The port of the controller. -1 for null controller.
+     * @param port The port of the controller. -1 for null controller.
      */
     public ControllerBase(int port) {
       this(port, new GenericHID(port).getType() == HIDType.kXInputGamepad,

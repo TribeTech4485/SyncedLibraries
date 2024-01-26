@@ -14,7 +14,7 @@ public class AutoControllerSelector {
   /**
    * Further items take lower precedence.
    */
-  ArrayList<ControllerBase> controllers;
+  ArrayList<ControllerBase> controllers = new ArrayList<>();
   ControllerBase nullController;
 
   public AutoControllerSelector(ControllerBase nullController) {
@@ -27,10 +27,14 @@ public class AutoControllerSelector {
     }
 
     for (ControllerBase controller : controllers) {
+      if (controller == null) {
+        continue;
+      }
       if (!controller.isPluggedIn()) {
         continue;
       }
       if (controller.isBeingTouched()) {
+        System.out.println(getClass().getName() + " returned controller on port " + controller.port);
         return controller;
       }
     }

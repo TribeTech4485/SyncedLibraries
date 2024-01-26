@@ -106,12 +106,11 @@ public class ManipulatorBase extends SubsystemBase {
    * Set the raw speed of the motor in the range -1 to 1
    * <p>
    * Used for manual control
-   * <p>
-   * WHEN CREATING THIS METHOD, MAKE SURE TO CALL {@link #stopCommands()}
    */
-  public void setPower(double power) {
+  public void setPower(double percent) {
+    stopCommands();
     for (CANSparkMax motor : motors) {
-      motor.set(power);
+      motor.set(percent);
     }
   }
 
@@ -140,9 +139,9 @@ public class ManipulatorBase extends SubsystemBase {
   }
 
   /** Set the speed of the motor in rpm */
-  public void setTargetSpeed(double speed) {
+  public void setTargetSpeed(double rpm) {
     stopCommands();
-    speedCommand.setTargetSpeed(speed);
+    speedCommand.setTargetSpeed(rpm);
     speedCommand.schedule();
   }
 
@@ -152,7 +151,7 @@ public class ManipulatorBase extends SubsystemBase {
 
   public boolean isAtSpeed() {
     return Math.abs(getCurrentSpeed() - getTargetSpeed()) < speedCommand.getTolerance();
-  } 
+  }
 
   public void setSpeedPID(double kP, double kI, double kD, double tolerance) {
     cancelSpeedCommand();
@@ -214,18 +213,27 @@ public class ManipulatorBase extends SubsystemBase {
     }
   }
 
-  /**
-   * Use to invert all motor functions
-   * <p>
-   * Don't forget to invert the encoder if needed!
-   */
+  /** Use to invert all motor functions, including encoders */
   public void setInverted(boolean inverted) {
     for (CANSparkMax motor : motors) {
       motor.setInverted(inverted);
+      motor.getEncoder().setInverted(inverted);
     }
   }
 
-  /** Move all motors to known position and then reset encoders */
+  /** Use to invert specific motors {@link #setInverted(boolean)} */
+  public void invertSpecificMotors(boolean inverted, int... motorIndexes) {
+    for (int index : motorIndexes) {
+      motors.get(index).setInverted(inverted);
+      motors.get(index).getEncoder().setInverted(inverted);
+    }
+  }
+
+  /**
+   * Move all motors to known position and then reset encoders
+   * <p>
+   * Do it yourself
+   */
   public void home() {
     throw new UnsupportedOperationException("Homing not implemented on: " + this.getClass().getName());
   }
