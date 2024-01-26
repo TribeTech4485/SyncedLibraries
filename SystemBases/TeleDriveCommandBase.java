@@ -16,6 +16,9 @@ public class TeleDriveCommandBase extends Command {
 
   @Override
   public void execute() {
+    // TODO Add swerve drive support
+
+    // TODO REMOVE ROBOT SPECIFIC CODE // TODO REMOVE ROBOT SPECIFIC CODE //
     Robot.DriveTrain.doTankDrive(Robot.Primary.getLeftY(), Robot.Primary.getRightY());
   }
 
