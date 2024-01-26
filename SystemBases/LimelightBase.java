@@ -84,9 +84,6 @@ public class LimelightBase extends SubsystemBase {
    * Code to position the AprilTag to the center of the frame.
    */
     public void alignTag() {
-    double targetx = tx.getDouble(0.0);
-    int posx = (int)targetx;
-    double targety = ty.getDouble(0.0);
-    int posy = (int)targety;
+    
     }
   }
