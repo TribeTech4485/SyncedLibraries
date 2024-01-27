@@ -5,3 +5,12 @@ Never put anything robot specific within this folder/repo. This is suppossed to 
 When making changes that could possibly change the output of old implimentations of this class, mark the function as `@Depricated` and make a new function. If not possible, add a javadoc to quickly explain how to update.
 
 The SystemBases folder contains template classes for major systems to provide further continuity between future code. This is especially important to follow the instructions above. To use, extend the class and `@Override` the methods.
+
+## To add to existing project
+
+```shell
+cd src/main/java/frc/robot/
+git submodule add https://github.com/TribeTech4485/SyncedLibraries
+```
+
+And you're done!
