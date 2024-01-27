@@ -1,18 +1,10 @@
 package frc.robot.SyncedLibraries.SystemBases;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.PS4Controller;
-import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.GenericHID.HIDType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import frc.robot.Robot;
-import frc.robot.RobotContainer;
-import frc.robot.SyncedLibraries.Controllers;
-import frc.robot.Constants;
 
 public class LimelightBase extends SubsystemBase {
   /** Creates a new LimelightBase. */

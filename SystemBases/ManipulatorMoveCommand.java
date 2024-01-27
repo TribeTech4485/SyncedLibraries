@@ -10,8 +10,8 @@ public class ManipulatorMoveCommand extends Command {
   private double position;
   private double tolerance;
   private PIDController pid;
-  private Command uponTarget;
-  private int onTargetCounter = 10;
+  private int onTargetCounterStart = 10;
+  private int onTargetCounter = onTargetCounterStart;
 
   public ManipulatorMoveCommand(ManipulatorBase manipulator, double position, double tolerance, double kP, double kI, double kD) {
     this.manipulator = manipulator;
@@ -36,10 +36,7 @@ public class ManipulatorMoveCommand extends Command {
 
   @Override
   public void execute() {
-    manipulator.setPower(pid.calculate(manipulator.getPosition(), position));
-    if (uponTarget != null && isAtPosition() && !uponTarget.isScheduled()) {
-      uponTarget.schedule();
-    }
+    manipulator.setPower(pid.calculate(manipulator.getPosition(), position), false);
   }
 
   @Override
@@ -52,7 +49,12 @@ public class ManipulatorMoveCommand extends Command {
 
   @Override
   public boolean isFinished() {
-    return Math.abs(manipulator.getPosition() - position) < tolerance;
+    if (currentlyAtPosition()) {
+      onTargetCounter--;
+    } else {
+      onTargetCounter = onTargetCounterStart;
+    }
+    return isAtPosition();
   }
 
   public void setTargetPosition(double position) {
@@ -67,12 +69,8 @@ public class ManipulatorMoveCommand extends Command {
     return tolerance;
   }
 
-  public void setUponTarget(Command command, int onTargetCounter) {
-    this.uponTarget = command;
-  }
-
   public boolean isAtPosition() {
-    return currentlyAtPosition() && onTargetCounter-- <= 0;
+    return currentlyAtPosition() && onTargetCounter <= 0;
   }
 
   private boolean currentlyAtPosition() {

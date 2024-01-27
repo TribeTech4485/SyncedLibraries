@@ -6,7 +6,8 @@ import frc.robot.SyncedLibraries.Controllers.ControllerBase;
 
 /**
  * This class is used to select the controller that is actively being used.
- * The first controller in the list that is being touched is the one that is used.
+ * The first controller in the list that is being touched is the one that is
+ * used.
  * If no controllers are being touched, the nullController is used.
  */
 public class AutoControllerSelector {
@@ -15,35 +16,42 @@ public class AutoControllerSelector {
    * Further items take lower precedence.
    */
   ArrayList<ControllerBase> controllers = new ArrayList<>();
+  ArrayList<Integer> ports = new ArrayList<>();
   ControllerBase ghostController;
+  Controllers controllersClass;
 
-  public AutoControllerSelector(ControllerBase ghostController) {
+  public AutoControllerSelector(ControllerBase ghostController, Controllers controllersClass) {
     this.ghostController = ghostController;
+    this.controllersClass = controllersClass;
   }
 
   public ControllerBase getController() {
+    System.out.println("Getting controller");
     if (controllers == null) {
       return ghostController;
     }
 
-    for (ControllerBase controller : controllers) {
+    for (int port : ports) {
+      ControllerBase controller = controllersClass.getPort(port);
       if (controller == null) {
         continue;
       }
       if (!controller.isPluggedIn()) {
+        // System.out.println("Controller on port " + controller.port + " not plugged in");
         continue;
       }
       if (controller.isBeingTouched()) {
-        System.out.println(getClass().getName() + " returned controller on port " + controller.port);
         return controller;
+      } else {
+        System.out.println("Controller on port " + controller.port + " not plugged in");
       }
     }
     return ghostController;
   }
 
-  public void addController(ControllerBase... controller) {
-    for (ControllerBase c : controller) {
-      controllers.add(c);
+  public void addController(Integer... port) {
+    for (Integer i : port) {
+      ports.add(i);
     }
   }
 }

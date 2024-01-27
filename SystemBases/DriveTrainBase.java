@@ -4,12 +4,14 @@ import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkBase.IdleMode;
+
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 import java.util.ArrayList;
 
 public class DriveTrainBase extends SubsystemBase {
@@ -37,6 +39,7 @@ public class DriveTrainBase extends SubsystemBase {
   private boolean isSlowMode = false;
 
   private DoubleSolenoid gearChanger;
+
   /**
    * Constructor for DriveTrainBase
    *
@@ -54,7 +57,7 @@ public class DriveTrainBase extends SubsystemBase {
    * @param disableShifter      Whether to disable the shifter
    */
   public DriveTrainBase(CANSparkMax[] leftDriveMotors, CANSparkMax[] rightDriveMotors, PneumaticsModuleType moduleType,
-      int[] GearChangerPorts, boolean kSkipGyro, double maxSpeed, int driveAmpsMax, int drivingRamp,
+      int[] GearChangerPorts, boolean kSkipGyro, double maxSpeed, int driveAmpsMax, double drivingRamp,
       double wheelDiameter, double pulsesPerRevolution, boolean disableShifter) {
     System.out.print("Instatntiating drivetrain");
     for (CANSparkMax motor : leftDriveMotors) {
@@ -97,13 +100,14 @@ public class DriveTrainBase extends SubsystemBase {
     // Invert 1 side of robot so will drive forward
     driveMainLeft.setInverted(true);
 
+    differentialDrive = new DifferentialDrive(driveMainLeft, driveMainRight);
     differentialDrive.setSafetyEnabled(false);
 
     m_leftEncoder = driveMainLeft.getEncoder();
     m_rightEncoder = driveMainRight.getEncoder();
 
     // Initialize the solenoids
-    if (GearChangerPorts.length == 2) {
+    if (GearChangerPorts.length == 2 && !disableShifter) {
       gearChanger = new DoubleSolenoid(5, moduleType, GearChangerPorts[0], GearChangerPorts[1]);
       gearChanger.set(DoubleSolenoid.Value.kOff);
     } else {
@@ -228,6 +232,7 @@ public class DriveTrainBase extends SubsystemBase {
   // Function to set the solenoids
   public void doHighGear(boolean fast) {
     if (gearChanger == null) {
+      System.out.println("No gear changer, and doHighGear called");
       return;
     }
     isHighGear = fast;

@@ -28,8 +28,8 @@ public class ManipulatorBase extends SubsystemBase {
   ManipulatorSpeedCommand speedCommand;
   double positionMultiplier = 1;
   double speedMultiplier = 1;
-  ArrayList<CANSparkMax> motors;
-  ArrayList<RelativeEncoder> encoders;
+  ArrayList<CANSparkMax> motors = new ArrayList<CANSparkMax>();
+  ArrayList<RelativeEncoder> encoders = new ArrayList<RelativeEncoder>();
 
   // ===================== Positional Methods ===================== //
   /** Get the known position of the manipulator in degrees */
@@ -107,8 +107,10 @@ public class ManipulatorBase extends SubsystemBase {
    * <p>
    * Used for manual control
    */
-  public void setPower(double percent) {
-    stopCommands();
+  public void setPower(double percent, boolean stopCommands) {
+    if (stopCommands) {
+      stopCommands();
+    }
     for (CANSparkMax motor : motors) {
       motor.set(percent);
     }
@@ -241,6 +243,7 @@ public class ManipulatorBase extends SubsystemBase {
   public void stopCommands() {
     cancelMoveToPosition();
     cancelSpeedCommand();
+    new Throwable("Stopping commands").printStackTrace();
   }
 
   public void fullStop() {

@@ -10,9 +10,11 @@ public class ManipulatorSpeedCommand extends Command {
   private double targetSpeed;
   private double tolerance;
   private PIDController pid;
-  private Command uponTarget;
+  private int onTargetCounterStart = 10;
+  private int onTargetCounter = onTargetCounterStart;
 
-  public ManipulatorSpeedCommand(ManipulatorBase manipulator, double speed, double tolerance, double kP, double kI, double kD) {
+  public ManipulatorSpeedCommand(ManipulatorBase manipulator, double speed, double tolerance, double kP, double kI,
+      double kD) {
     this.manipulator = manipulator;
     this.targetSpeed = speed;
     this.tolerance = tolerance;
@@ -34,10 +36,8 @@ public class ManipulatorSpeedCommand extends Command {
 
   @Override
   public void execute() {
-    manipulator.setPower(pid.calculate(manipulator.getCurrentSpeed(), targetSpeed));
-    if (uponTarget != null && isAtSpeed()) {
-      uponTarget.schedule();
-    }
+    double pidSpeed = pid.calculate(manipulator.getCurrentSpeed(), targetSpeed);
+    manipulator.setPower(pidSpeed, false);
   }
 
   @Override
@@ -47,7 +47,12 @@ public class ManipulatorSpeedCommand extends Command {
 
   @Override
   public boolean isFinished() {
-    return Math.abs(manipulator.getCurrentSpeed() - targetSpeed) < tolerance;
+    if (Math.abs(manipulator.getCurrentSpeed() - targetSpeed) < tolerance * 1.5) {
+      onTargetCounter--;
+    } else {
+      onTargetCounter = onTargetCounterStart;
+    }
+    return onTargetCounter <= 0;
   }
 
   public void setTargetSpeed(double speed) {
@@ -63,11 +68,16 @@ public class ManipulatorSpeedCommand extends Command {
     return tolerance;
   }
 
-  public void setUponTarget(Command command) {
-    uponTarget = command;
+  public boolean isAtSpeed() {
+    if (currentlyAtSpeed()) {
+      onTargetCounter--;
+    } else {
+      onTargetCounter = onTargetCounterStart;
+    }
+    return onTargetCounter <= 0;
   }
 
-  public boolean isAtSpeed() {
+  private boolean currentlyAtSpeed() {
     return Math.abs(manipulator.getCurrentSpeed() - targetSpeed) < tolerance;
   }
 }
