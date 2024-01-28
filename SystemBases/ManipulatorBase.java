@@ -243,7 +243,7 @@ public class ManipulatorBase extends SubsystemBase {
   public void stopCommands() {
     cancelMoveToPosition();
     cancelSpeedCommand();
-    new Throwable("Stopping commands").printStackTrace();
+    // new Throwable("Stopping commands").printStackTrace();
   }
 
   public void fullStop() {

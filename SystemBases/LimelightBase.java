@@ -14,9 +14,9 @@ public class LimelightBase extends SubsystemBase {
   NetworkTableEntry ta;
 
   // read values periodically
-  double x;
-  double y;
-  double area;
+  double TargetX;
+  double TargetY;
+  double TargetArea;
 
   public LimelightBase() {
     table = NetworkTableInstance.getDefault().getTable("limelight");
@@ -28,25 +28,25 @@ public class LimelightBase extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    x = tx.getDouble(0.0);
-    y = ty.getDouble(0.0);
-    area = ta.getDouble(0.0);
+    TargetX = tx.getDouble(0.0);
+    TargetY = ty.getDouble(0.0);
+    TargetArea = ta.getDouble(0.0);
 
-    SmartDashboard.putNumber("TargetX", x);
-    SmartDashboard.putNumber("TargetY", y);
-    SmartDashboard.putNumber("TargetArea", area);
+    SmartDashboard.putNumber("TargetX", TargetX);
+    SmartDashboard.putNumber("TargetY", TargetY);
+    SmartDashboard.putNumber("TargetArea", TargetArea);
   }
 
   public double getX() {
-    return x;
+    return TargetX;
   }
 
   public double getY() {
-    return y;
+    return TargetY;
   }
 
   public double getArea() {
-    return area;
+    return TargetArea;
   }
 
   public void turnOnLED() {
