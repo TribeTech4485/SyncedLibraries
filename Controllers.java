@@ -4,6 +4,8 @@
 
 package frc.robot.SyncedLibraries;
 
+import java.util.function.Supplier;
+
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PS4Controller;
 import edu.wpi.first.wpilibj.XboxController;
@@ -124,26 +126,26 @@ public class Controllers {
     public CommandJoystick commObjectJoystick;
     public Joystick objectJoystick;
 
-    public Trigger A;
-    public Trigger B;
-    public Trigger X;
-    public Trigger Y;
-    public Trigger LeftBumper;
-    public Trigger RightBumper;
-    public Trigger Share;
-    public Trigger Options;
-    public Trigger LeftTrigger;
-    public Trigger RightTrigger;
-    public Trigger PovUp;
-    public Trigger PovUpLeft;
-    public Trigger PovUpRight;
-    public Trigger PovDown;
-    public Trigger PovDownLeft;
-    public Trigger PovDownRight;
-    public Trigger PovLeft;
-    public Trigger PovRight;
-    public Trigger LeftStickPress;
-    public Trigger RightStickPress;
+    public Supplier<Trigger> A;
+    public Supplier<Trigger> B;
+    public Supplier<Trigger> X;
+    public Supplier<Trigger> Y;
+    public Supplier<Trigger> LeftBumper;
+    public Supplier<Trigger> RightBumper;
+    public Supplier<Trigger> Share;
+    public Supplier<Trigger> Options;
+    public Supplier<Trigger> LeftTrigger;
+    public Supplier<Trigger> RightTrigger;
+    public Supplier<Trigger> PovUp;
+    public Supplier<Trigger> PovUpLeft;
+    public Supplier<Trigger> PovUpRight;
+    public Supplier<Trigger> PovDown;
+    public Supplier<Trigger> PovDownLeft;
+    public Supplier<Trigger> PovDownRight;
+    public Supplier<Trigger> PovLeft;
+    public Supplier<Trigger> PovRight;
+    public Supplier<Trigger> LeftStickPress;
+    public Supplier<Trigger> RightStickPress;
 
     /**
      * A class to handle controllers.
@@ -188,100 +190,100 @@ public class Controllers {
     private void initAsJoystick(int port) {
       this.commObjectJoystick = new CommandJoystick(port);
       this.objectJoystick = commObjectJoystick.getHID();
-      this.A = new Trigger(() -> false);
-      this.B = new Trigger(() -> false);
-      this.X = new Trigger(() -> false);
-      this.Y = new Trigger(() -> false);
-      this.LeftBumper = new Trigger(() -> false);
-      this.RightBumper = new Trigger(() -> false);
-      this.Share = new Trigger(() -> false);
-      this.Options = new Trigger(() -> false);
-      this.LeftTrigger = new Trigger(() -> false);
-      this.RightTrigger = new Trigger(() -> false);
-      this.PovUp = new Trigger(() -> false);
-      this.PovUpLeft = new Trigger(() -> false);
-      this.PovUpRight = new Trigger(() -> false);
-      this.PovDown = new Trigger(() -> false);
-      this.PovDownLeft = new Trigger(() -> false);
-      this.PovDownRight = new Trigger(() -> false);
-      this.PovLeft = new Trigger(() -> false);
-      this.PovRight = new Trigger(() -> false);
-      this.LeftStickPress = new Trigger(() -> false);
-      this.RightStickPress = new Trigger(() -> false);
+      this.A = () -> new Trigger(() -> false);
+      this.B = () -> new Trigger(() -> false);
+      this.X = () -> new Trigger(() -> false);
+      this.Y = () -> new Trigger(() -> false);
+      this.LeftBumper = () -> new Trigger(() -> false);
+      this.RightBumper = () -> new Trigger(() -> false);
+      this.Share = () -> new Trigger(() -> false);
+      this.Options = () -> new Trigger(() -> false);
+      this.LeftTrigger = () -> new Trigger(() -> false);
+      this.RightTrigger = () -> new Trigger(() -> false);
+      this.PovUp = () -> new Trigger(() -> false);
+      this.PovUpLeft = () -> new Trigger(() -> false);
+      this.PovUpRight = () -> new Trigger(() -> false);
+      this.PovDown = () -> new Trigger(() -> false);
+      this.PovDownLeft = () -> new Trigger(() -> false);
+      this.PovDownRight = () -> new Trigger(() -> false);
+      this.PovLeft = () -> new Trigger(() -> false);
+      this.PovRight = () -> new Trigger(() -> false);
+      this.LeftStickPress = () -> new Trigger(() -> false);
+      this.RightStickPress = () -> new Trigger(() -> false);
     }
 
     private void initAsPS4(int port) {
       this.commObjectPS4 = new CommandPS4Controller(port);
       this.objectPS4 = commObjectPS4.getHID();
-      this.A = commObjectPS4.cross();
-      this.B = commObjectPS4.circle();
-      this.X = commObjectPS4.square();
-      this.Y = commObjectPS4.triangle();
-      this.LeftBumper = commObjectPS4.L1();
-      this.RightBumper = commObjectPS4.R1();
-      this.Share = commObjectPS4.share();
-      this.Options = commObjectPS4.options();
-      this.LeftTrigger = commObjectPS4.L2();
-      this.RightTrigger = commObjectPS4.R2();
-      this.PovUp = commObjectPS4.povUp();
-      this.PovUpLeft = commObjectPS4.povUpLeft();
-      this.PovUpRight = commObjectPS4.povUpRight();
-      this.PovDown = commObjectPS4.povDown();
-      this.PovDownLeft = commObjectPS4.povDownLeft();
-      this.PovDownRight = commObjectPS4.povDownRight();
-      this.PovLeft = commObjectPS4.povLeft();
-      this.PovRight = commObjectPS4.povRight();
-      this.LeftStickPress = commObjectPS4.L3();
-      this.RightStickPress = commObjectPS4.L3();
+      this.A = () -> commObjectPS4.cross();
+      this.B = () -> commObjectPS4.circle();
+      this.X = () -> commObjectPS4.square();
+      this.Y = () -> commObjectPS4.triangle();
+      this.LeftBumper = () -> commObjectPS4.L1();
+      this.RightBumper = () -> commObjectPS4.R1();
+      this.Share = () -> commObjectPS4.share();
+      this.Options = () -> commObjectPS4.options();
+      this.LeftTrigger = () -> commObjectPS4.L2();
+      this.RightTrigger = () -> commObjectPS4.R2();
+      this.PovUp = () -> commObjectPS4.povUp();
+      this.PovUpLeft = () -> commObjectPS4.povUpLeft();
+      this.PovUpRight = () -> commObjectPS4.povUpRight();
+      this.PovDown = () -> commObjectPS4.povDown();
+      this.PovDownLeft = () -> commObjectPS4.povDownLeft();
+      this.PovDownRight = () -> commObjectPS4.povDownRight();
+      this.PovLeft = () -> commObjectPS4.povLeft();
+      this.PovRight = () -> commObjectPS4.povRight();
+      this.LeftStickPress = () -> commObjectPS4.L3();
+      this.RightStickPress = () -> commObjectPS4.L3();
     }
 
     private void initAsXbox(int port) {
       // System.out.println("Init as X");
       this.commObjectX = new CommandXboxController(port);
       this.objectX = commObjectX.getHID();
-      this.A = commObjectX.a();
-      this.B = commObjectX.b();
-      this.X = commObjectX.x();
-      this.Y = commObjectX.y();
-      this.LeftBumper = commObjectX.leftBumper();
-      this.RightBumper = commObjectX.rightBumper();
-      this.Share = commObjectX.start();
-      this.Options = commObjectX.back();
-      this.LeftTrigger = commObjectX.leftTrigger();
-      this.RightTrigger = commObjectX.rightTrigger();
-      this.PovUp = commObjectX.povUp();
-      this.PovUpLeft = commObjectX.povUpLeft();
-      this.PovUpRight = commObjectX.povUpRight();
-      this.PovDown = commObjectX.povDown();
-      this.PovDownLeft = commObjectX.povDownLeft();
-      this.PovDownRight = commObjectX.povDownRight();
-      this.PovLeft = commObjectX.povLeft();
-      this.PovRight = commObjectX.povRight();
-      this.LeftStickPress = commObjectX.leftStick();
-      this.RightStickPress = commObjectX.rightStick();
+      this.A = () -> commObjectX.a();
+      this.B = () -> commObjectX.b();
+      this.X = () -> commObjectX.x();
+      this.Y = () -> commObjectX.y();
+      this.LeftBumper = () -> commObjectX.leftBumper();
+      this.RightBumper = () -> commObjectX.rightBumper();
+      this.Share = () -> commObjectX.start();
+      this.Options = () -> commObjectX.back();
+      this.LeftTrigger = () -> commObjectX.leftTrigger();
+      this.RightTrigger = () -> commObjectX.rightTrigger();
+      this.PovUp = () -> commObjectX.povUp();
+      this.PovUpLeft = () -> commObjectX.povUpLeft();
+      this.PovUpRight = () -> commObjectX.povUpRight();
+      this.PovDown = () -> commObjectX.povDown();
+      this.PovDownLeft = () -> commObjectX.povDownLeft();
+      this.PovDownRight = () -> commObjectX.povDownRight();
+      this.PovLeft = () -> commObjectX.povLeft();
+      this.PovRight = () -> commObjectX.povRight();
+      this.LeftStickPress = () -> commObjectX.leftStick();
+      this.RightStickPress = () -> commObjectX.rightStick();
     }
 
     private void initAsGhost() {
-      this.A = new Trigger(() -> false);
-      this.B = new Trigger(() -> false);
-      this.X = new Trigger(() -> false);
-      this.Y = new Trigger(() -> false);
-      this.LeftBumper = new Trigger(() -> false);
-      this.RightBumper = new Trigger(() -> false);
-      this.Share = new Trigger(() -> false);
-      this.Options = new Trigger(() -> false);
-      this.LeftTrigger = new Trigger(() -> false);
-      this.RightTrigger = new Trigger(() -> false);
-      this.PovUp = new Trigger(() -> false);
-      this.PovUpLeft = new Trigger(() -> false);
-      this.PovUpRight = new Trigger(() -> false);
-      this.PovDown = new Trigger(() -> false);
-      this.PovDownLeft = new Trigger(() -> false);
-      this.PovDownRight = new Trigger(() -> false);
-      this.PovLeft = new Trigger(() -> false);
-      this.PovRight = new Trigger(() -> false);
-      this.LeftStickPress = new Trigger(() -> false);
-      this.RightStickPress = new Trigger(() -> false);
+      this.A = () -> new Trigger(() -> false);
+      this.B = () -> new Trigger(() -> false);
+      this.X = () -> new Trigger(() -> false);
+      this.Y = () -> new Trigger(() -> false);
+      this.LeftBumper = () -> new Trigger(() -> false);
+      this.RightBumper = () -> new Trigger(() -> false);
+      this.Share = () -> new Trigger(() -> false);
+      this.Options = () -> new Trigger(() -> false);
+      this.LeftTrigger = () -> new Trigger(() -> false);
+      this.RightTrigger = () -> new Trigger(() -> false);
+      this.PovUp = () -> new Trigger(() -> false);
+      this.PovUpLeft = () -> new Trigger(() -> false);
+      this.PovUpRight = () -> new Trigger(() -> false);
+      this.PovDown = () -> new Trigger(() -> false);
+      this.PovDownLeft = () -> new Trigger(() -> false);
+      this.PovDownRight = () -> new Trigger(() -> false);
+      this.PovLeft = () -> new Trigger(() -> false);
+      this.PovRight = () -> new Trigger(() -> false);
+      this.LeftStickPress = () -> new Trigger(() -> false);
+      this.RightStickPress = () -> new Trigger(() -> false);
     }
 
     public double getLeftXRaw() {
@@ -384,45 +386,45 @@ public class Controllers {
     }
 
     public boolean isBeingTouched() {
-      if (A.getAsBoolean()) {
+      if (A.get().getAsBoolean()) {
         return true;
-      } else if (B.getAsBoolean()) {
+      } else if (B.get().getAsBoolean()) {
         return true;
-      } else if (X.getAsBoolean()) {
+      } else if (X.get().getAsBoolean()) {
         return true;
-      } else if (Y.getAsBoolean()) {
+      } else if (Y.get().getAsBoolean()) {
         return true;
-      } else if (LeftBumper.getAsBoolean()) {
+      } else if (LeftBumper.get().getAsBoolean()) {
         return true;
-      } else if (RightBumper.getAsBoolean()) {
+      } else if (RightBumper.get().getAsBoolean()) {
         return true;
-      } else if (Share.getAsBoolean()) {
+      } else if (Share.get().getAsBoolean()) {
         return true;
-      } else if (Options.getAsBoolean()) {
+      } else if (Options.get().getAsBoolean()) {
         return true;
-      } else if (LeftTrigger.getAsBoolean()) {
+      } else if (LeftTrigger.get().getAsBoolean()) {
         return true;
-      } else if (RightTrigger.getAsBoolean()) {
+      } else if (RightTrigger.get().getAsBoolean()) {
         return true;
-      } else if (PovUp.getAsBoolean()) {
+      } else if (PovUp.get().getAsBoolean()) {
         return true;
-      } else if (PovUpLeft.getAsBoolean()) {
+      } else if (PovUpLeft.get().getAsBoolean()) {
         return true;
-      } else if (PovUpRight.getAsBoolean()) {
+      } else if (PovUpRight.get().getAsBoolean()) {
         return true;
-      } else if (PovDown.getAsBoolean()) {
+      } else if (PovDown.get().getAsBoolean()) {
         return true;
-      } else if (PovDownLeft.getAsBoolean()) {
+      } else if (PovDownLeft.get().getAsBoolean()) {
         return true;
-      } else if (PovDownRight.getAsBoolean()) {
+      } else if (PovDownRight.get().getAsBoolean()) {
         return true;
-      } else if (PovLeft.getAsBoolean()) {
+      } else if (PovLeft.get().getAsBoolean()) {
         return true;
-      } else if (PovRight.getAsBoolean()) {
+      } else if (PovRight.get().getAsBoolean()) {
         return true;
-      } else if (LeftStickPress.getAsBoolean()) {
+      } else if (LeftStickPress.get().getAsBoolean()) {
         return true;
-      } else if (RightStickPress.getAsBoolean()) {
+      } else if (RightStickPress.get().getAsBoolean()) {
         return true;
       } else if (getLeftXRaw() != 0) {
         return true;
