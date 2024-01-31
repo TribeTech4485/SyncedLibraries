@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PS4Controller;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -34,45 +33,6 @@ public class Controllers {
   public ControllerBase Four;
   public ControllerBase Five;
 
-  // Only used when no controller is connected, made here to reduce waste memory
-  public static ControllerBase ghostController = new ControllerBase(-1, true, false, false);
-
-  // For automatically selecting controllers based on which one is being used
-  // reccomended to be primary = driver, secondary = shooter
-  public AutoControllerSelector primaryControllerSelector = new AutoControllerSelector(ghostController, this);
-  public AutoControllerSelector secondaryControllerSelector = new AutoControllerSelector(ghostController, this);
-  public AutoControllerSelector tertiaryControllerSelector = new AutoControllerSelector(ghostController, this);
-  public ControllerBase Primary;
-  public ControllerBase Secondary;
-  public ControllerBase Tertiary;
-  // idk why a third controller would be needed but it's here
-
-  public void addControllersToSelector(AutoControllerSelector selector, Integer... ports) {
-    selector.addController(ports);
-  }
-
-  /** Add to robot periodic */
-  public void updateAutoControllers() {
-    Primary = primaryControllerSelector.getController();
-    SmartDashboard.putNumber("Primary port:", Primary.port);
-    Secondary = secondaryControllerSelector.getController();
-    System.out.println("Secondary controller is on port " + Secondary.port);
-    Tertiary = tertiaryControllerSelector.getController();
-    System.out.println("Tertiary controller is on port " + Tertiary.port);
-
-    // ADD THIS TO Robot.java IF NOT ALREADY THERE
-    /*
-     * public static void updateAutoControllers() {
-     * Primary = m_controllers.Primary;
-     * Secondary = m_controllers.Secondary;
-     * }
-     */
-    // AND ADD DOC:
-    /** TO ONLY BE CALLED BY m_controllers OBJECT */
-
-    // Robot.updateAutoControllers();
-  }
-
   /** Call this only upon inits */
   public void fullUpdate() {
     // I would imagine this to be a very expensive operation
@@ -83,8 +43,6 @@ public class Controllers {
     Three = new ControllerBase(3);
     Four = new ControllerBase(4);
     Five = new ControllerBase(5);
-    updateAutoControllers();
-    // new Throwable("Updating controllers").printStackTrace();
   }
 
   public ControllerBase getPort(int port) {
@@ -103,7 +61,7 @@ public class Controllers {
         return Five;
       default:
         System.out.println("Port " + port + " is not a valid port. Returning ghost controller.");
-        return ghostController;
+        return null;
     }
   }
 
@@ -156,8 +114,8 @@ public class Controllers {
     public ControllerBase(int port) {
       // automatic controller type detection
       // this(port, new GenericHID(port).getType() == HIDType.kXInputGamepad,
-          // new GenericHID(port).getType() == HIDType.kHIDGamepad,
-          // new GenericHID(port).getType() == HIDType.kHIDJoystick);
+      // new GenericHID(port).getType() == HIDType.kHIDGamepad,
+      // new GenericHID(port).getType() == HIDType.kHIDJoystick);
 
       this(port, true, false, false);
     }

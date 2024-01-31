@@ -3,11 +3,17 @@ package frc.robot.SyncedLibraries.SystemBases;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Robot;
+import frc.robot.SyncedLibraries.Controllers.ControllerBase;
 
 public class TeleDriveCommandBase extends Command {
   // TODO: Add swerve drive support
-  public TeleDriveCommandBase() {
+  // TODO: Add multi-controller support
+  ControllerBase[] controllers;
+  boolean swerveDrive = false;
+
+  public TeleDriveCommandBase(ControllerBase... controller) {
     addRequirements(Robot.DriveTrain);
+    this.controllers = controller;
   }
 
   @Override
@@ -17,9 +23,11 @@ public class TeleDriveCommandBase extends Command {
   @Override
   public void execute() {
     // TODO Add swerve drive support
-
-    // TODO REMOVE ROBOT SPECIFIC CODE // TODO REMOVE ROBOT SPECIFIC CODE //
-    Robot.DriveTrain.doTankDrive(Robot.Primary.getLeftY(), Robot.Primary.getRightY());
+    if (swerveDrive) {
+    } else {
+      double[] ys = getJoys();
+      Robot.DriveTrain.doTankDrive(ys[0], ys[1]);
+    }
   }
 
   @Override
@@ -30,5 +38,19 @@ public class TeleDriveCommandBase extends Command {
   @Override
   public boolean isFinished() {
     return DriverStation.isDisabled();
+  }
+
+  private double[] getJoys() {
+    for (ControllerBase controller : controllers) {
+      if (controller.isBeingTouched()) {
+        return new double[] {
+            controller.getLeftY(),
+            controller.getRightY(),
+            controller.getLeftX(),
+            controller.getRightX()
+        };
+      }
+    }
+    return new double[] { 0, 0, 0, 0 };
   }
 }

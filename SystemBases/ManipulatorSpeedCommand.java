@@ -105,7 +105,8 @@ public class ManipulatorSpeedCommand extends Command {
     return Math.abs(manipulator.getCurrentSpeed() - targetSpeed) < tolerance * 1.5;
   }
 
-  public void setEndOnTarget(boolean endOnTarget) {
+  public ManipulatorSpeedCommand setEndOnTarget(boolean endOnTarget) {
     this.endOnTarget = endOnTarget;
+    return this;
   }
 }

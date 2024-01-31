@@ -2,6 +2,7 @@ package frc.robot.SyncedLibraries;
 
 import java.util.ArrayList;
 
+import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import frc.robot.SyncedLibraries.Controllers.ControllerBase;
 
 /**
@@ -9,7 +10,10 @@ import frc.robot.SyncedLibraries.Controllers.ControllerBase;
  * The first controller in the list that is being touched is the one that is
  * used.
  * If no controllers are being touched, the nullController is used.
+ * <p>
+ * @deprecated Use {@link Controllers} instead
  */
+@Deprecated
 public class AutoControllerSelector {
 
   /**
@@ -19,6 +23,7 @@ public class AutoControllerSelector {
   ArrayList<Integer> ports = new ArrayList<>();
   ControllerBase ghostController;
   Controllers controllersClass;
+  MotorControllerGroup motorCotrollerGroup;
 
   public AutoControllerSelector(ControllerBase ghostController, Controllers controllersClass) {
     this.ghostController = ghostController;
@@ -37,7 +42,6 @@ public class AutoControllerSelector {
         continue;
       }
       if (!controller.isPluggedIn()) {
-        // System.out.println("Controller on port " + controller.port + " not plugged in");
         continue;
       }
       if (controller.isBeingTouched()) {
