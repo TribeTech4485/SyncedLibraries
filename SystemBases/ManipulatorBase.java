@@ -152,7 +152,7 @@ public class ManipulatorBase extends SubsystemBase {
   }
 
   public boolean isAtSpeed() {
-    return Math.abs(getCurrentSpeed() - getTargetSpeed()) < speedCommand.getTolerance();
+    return speedCommand.atSpeed;
   }
 
   public void setSpeedPID(double kP, double kI, double kD, double tolerance) {
@@ -195,6 +195,10 @@ public class ManipulatorBase extends SubsystemBase {
 
   public CANSparkMax[] getMotors() {
     return motors.toArray(new CANSparkMax[0]);
+  }
+
+  public RelativeEncoder[] getEncoders() {
+    return encoders.toArray(new RelativeEncoder[0]);
   }
 
   /**
