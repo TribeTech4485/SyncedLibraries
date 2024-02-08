@@ -23,11 +23,12 @@ public class TeleDriveCommandBase extends Command {
   @Override
   public void execute() {
     // TODO Add swerve drive support
+    double[] ys = getJoys();
     if (swerveDrive) {
     } else {
-      double[] ys = getJoys();
       Robot.DriveTrain.doTankDrive(ys[0], ys[1]);
     }
+    Robot.Turret.setPower(ys[2], false);
   }
 
   @Override

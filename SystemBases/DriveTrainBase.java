@@ -159,16 +159,17 @@ public class DriveTrainBase extends SubsystemBase {
     if (counter++ % 100 == 0) {
       System.out.println("**driveTrain power L/R: " + leftDrivePercent + " | " + rightDrivePercent);
     }
-    if (Math.abs(leftDrivePercent) > 0.01) {
-      driveMainLeft.set(rightDrivePercent);
-    } else {
-      driveMainLeft.stopMotor();
-    }
-    if (Math.abs(rightDrivePercent) > 0.01) {
-      driveMainRight.set(rightDrivePercent);
-    } else {
-      driveMainRight.stopMotor();
-    }
+    // if (Math.abs(leftDrivePercent) > 0.01) {
+      // driveMainLeft.set(rightDrivePercent);
+    // } else {
+      // driveMainLeft.stopMotor();
+    // }
+    // if (Math.abs(rightDrivePercent) > 0.01) {
+      // driveMainRight.set(rightDrivePercent);
+    // } else {
+      // driveMainRight.stopMotor();
+    // }
+    differentialDrive.tankDrive(leftDrivePercent, rightDrivePercent);
   }
 
   /**
