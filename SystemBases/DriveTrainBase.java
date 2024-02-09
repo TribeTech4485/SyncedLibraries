@@ -94,11 +94,12 @@ public class DriveTrainBase extends SubsystemBase {
       motor.setOpenLoopRampRate(drivingRamp);
       motor.setIdleMode(IdleMode.kCoast);
       motor.enableVoltageCompensation(11);
+      motor.setInverted(false);
       motor.burnFlash();
     }
 
     // Invert 1 side of robot so will drive forward
-    driveMainLeft.setInverted(true);
+    driveMainLeft.setInverted(false);
 
     differentialDrive = new DifferentialDrive(driveMainLeft, driveMainRight);
     differentialDrive.setSafetyEnabled(false);
@@ -159,17 +160,17 @@ public class DriveTrainBase extends SubsystemBase {
     if (counter++ % 100 == 0) {
       System.out.println("**driveTrain power L/R: " + leftDrivePercent + " | " + rightDrivePercent);
     }
-    // if (Math.abs(leftDrivePercent) > 0.01) {
-      // driveMainLeft.set(rightDrivePercent);
-    // } else {
-      // driveMainLeft.stopMotor();
-    // }
-    // if (Math.abs(rightDrivePercent) > 0.01) {
-      // driveMainRight.set(rightDrivePercent);
-    // } else {
-      // driveMainRight.stopMotor();
-    // }
-    differentialDrive.tankDrive(leftDrivePercent, rightDrivePercent);
+    if (Math.abs(leftDrivePercent) > 0.01) {
+      driveMainLeft.set(-leftDrivePercent);
+    } else {
+      driveMainLeft.stopMotor();
+    }
+    if (Math.abs(rightDrivePercent) > 0.01) {
+      driveMainRight.set(rightDrivePercent);
+    } else {
+      driveMainRight.stopMotor();
+    }
+    // differentialDrive.tankDrive(leftDrivePercent, rightDrivePercent);
   }
 
   /**
@@ -287,6 +288,11 @@ public class DriveTrainBase extends SubsystemBase {
         motor.setIdleMode(IdleMode.kCoast);
       }
     }
+  }
+
+  public void invertAll() {
+    driveMainLeft.setInverted(!driveMainLeft.getInverted());
+    driveMainRight.setInverted(!driveMainRight.getInverted());
   }
 
   public void resetAll() {
