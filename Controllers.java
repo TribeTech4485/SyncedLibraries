@@ -1,7 +1,3 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot.SyncedLibraries;
 
 import java.util.function.Supplier;
@@ -36,7 +32,6 @@ public class Controllers {
   /** Call this only upon inits */
   public void fullUpdate() {
     // I would imagine this to be a very expensive operation
-    // System.out.println("Updating controllers");
     Zero = new ControllerBase(0);
     One = new ControllerBase(1);
     Two = new ControllerBase(2);
@@ -142,6 +137,7 @@ public class Controllers {
         System.out.println("Controller on port " + port
             + " is not a valid controller. Likely due to not being plugged in. Assuming Xbox.");
         initAsXbox(port);
+        // initAsGhost();
       }
     }
 
@@ -196,7 +192,6 @@ public class Controllers {
     }
 
     private void initAsXbox(int port) {
-      // System.out.println("Init as X");
       this.commObjectX = new CommandXboxController(port);
       this.objectX = commObjectX.getHID();
       this.A = () -> commObjectX.a();
@@ -250,8 +245,10 @@ public class Controllers {
       }
       if (isPS4) {
         return objectPS4.getLeftX();
-      } else {
+      } else if (isXbox) {
         return objectX.getLeftX();
+      } else {
+        return 0;
       }
     }
 
@@ -261,8 +258,10 @@ public class Controllers {
       }
       if (isPS4) {
         return objectPS4.getLeftY();
-      } else {
+      } else if (isXbox) {
         return objectX.getLeftY();
+      } else {
+        return 0;
       }
     }
 
@@ -272,8 +271,10 @@ public class Controllers {
       }
       if (isPS4) {
         return objectPS4.getRightX();
-      } else {
+      } else if (isXbox) {
         return objectX.getRightX();
+      } else {
+        return 0;
       }
     }
 
@@ -283,8 +284,10 @@ public class Controllers {
       }
       if (isPS4) {
         return objectPS4.getRightY();
-      } else {
+      } else if (isXbox) {
         return objectX.getRightY();
+      } else {
+        return 0;
       }
     }
 
@@ -294,8 +297,10 @@ public class Controllers {
       }
       if (isPS4) {
         return objectPS4.getL2Axis();
-      } else {
+      } else if (isXbox) {
         return objectX.getLeftTriggerAxis();
+      } else {
+        return 0;
       }
     }
 
@@ -305,8 +310,10 @@ public class Controllers {
       }
       if (isPS4) {
         return objectPS4.getR2Axis();
-      } else {
+      } else if (isXbox) {
         return objectX.getRightTriggerAxis();
+      } else {
+        return 0;
       }
     }
 
@@ -343,62 +350,65 @@ public class Controllers {
       }
     }
 
+    /** ALWAYS RETURNS TRUE, DO NOT USE */
+    @Deprecated
     public boolean isBeingTouched() {
-      if (A.get().getAsBoolean()) {
-        return true;
-      } else if (B.get().getAsBoolean()) {
-        return true;
-      } else if (X.get().getAsBoolean()) {
-        return true;
-      } else if (Y.get().getAsBoolean()) {
-        return true;
-      } else if (LeftBumper.get().getAsBoolean()) {
-        return true;
-      } else if (RightBumper.get().getAsBoolean()) {
-        return true;
-      } else if (Share.get().getAsBoolean()) {
-        return true;
-      } else if (Options.get().getAsBoolean()) {
-        return true;
-      } else if (LeftTrigger.get().getAsBoolean()) {
-        return true;
-      } else if (RightTrigger.get().getAsBoolean()) {
-        return true;
-      } else if (PovUp.get().getAsBoolean()) {
-        return true;
-      } else if (PovUpLeft.get().getAsBoolean()) {
-        return true;
-      } else if (PovUpRight.get().getAsBoolean()) {
-        return true;
-      } else if (PovDown.get().getAsBoolean()) {
-        return true;
-      } else if (PovDownLeft.get().getAsBoolean()) {
-        return true;
-      } else if (PovDownRight.get().getAsBoolean()) {
-        return true;
-      } else if (PovLeft.get().getAsBoolean()) {
-        return true;
-      } else if (PovRight.get().getAsBoolean()) {
-        return true;
-      } else if (LeftStickPress.get().getAsBoolean()) {
-        return true;
-      } else if (RightStickPress.get().getAsBoolean()) {
-        return true;
-      } else if (getLeftXRaw() != 0) {
-        return true;
-      } else if (getLeftYRaw() != 0) {
-        return true;
-      } else if (getRightXRaw() != 0) {
-        return true;
-      } else if (getRightYRaw() != 0) {
-        return true;
-      } else if (getLeftTriggerRaw() != 0) {
-        return true;
-      } else if (getRightTriggerRaw() != 0) {
-        return true;
-      } else {
-        return false;
-      }
+      return true;
+      // if (A.get().getAsBoolean()) {
+      // return true;
+      // } else if (B.get().getAsBoolean()) {
+      // return true;
+      // } else if (X.get().getAsBoolean()) {
+      // return true;
+      // } else if (Y.get().getAsBoolean()) {
+      // return true;
+      // } else if (LeftBumper.get().getAsBoolean()) {
+      // return true;
+      // } else if (RightBumper.get().getAsBoolean()) {
+      // return true;
+      // } else if (Share.get().getAsBoolean()) {
+      // return true;
+      // } else if (Options.get().getAsBoolean()) {
+      // return true;
+      // } else if (LeftTrigger.get().getAsBoolean()) {
+      // return true;
+      // } else if (RightTrigger.get().getAsBoolean()) {
+      // return true;
+      // } else if (PovUp.get().getAsBoolean()) {
+      // return true;
+      // } else if (PovUpLeft.get().getAsBoolean()) {
+      // return true;
+      // } else if (PovUpRight.get().getAsBoolean()) {
+      // return true;
+      // } else if (PovDown.get().getAsBoolean()) {
+      // return true;
+      // } else if (PovDownLeft.get().getAsBoolean()) {
+      // return true;
+      // } else if (PovDownRight.get().getAsBoolean()) {
+      // return true;
+      // } else if (PovLeft.get().getAsBoolean()) {
+      // return true;
+      // } else if (PovRight.get().getAsBoolean()) {
+      // return true;
+      // } else if (LeftStickPress.get().getAsBoolean()) {
+      // return true;
+      // } else if (RightStickPress.get().getAsBoolean()) {
+      // return true;
+      // } else if (getLeftXRaw() != 0) {
+      // return true;
+      // } else if (getLeftYRaw() != 0) {
+      // return true;
+      // } else if (getRightXRaw() != 0) {
+      // return true;
+      // } else if (getRightYRaw() != 0) {
+      // return true;
+      // } else if (getLeftTriggerRaw() != 0) {
+      // return true;
+      // } else if (getRightTriggerRaw() != 0) {
+      // return true;
+      // } else {
+      // return false;
+      // }
     }
 
     public void setJoystickMultiplier(double multiplier) {

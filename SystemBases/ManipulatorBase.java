@@ -231,7 +231,7 @@ public class ManipulatorBase extends SubsystemBase {
   public void invertSpecificMotors(boolean inverted, int... motorIndexes) {
     for (int index : motorIndexes) {
       motors.get(index).setInverted(inverted);
-      motors.get(index).getEncoder().setInverted(inverted);
+      // motors.get(index).getEncoder().setInverted(inverted);
     }
   }
 

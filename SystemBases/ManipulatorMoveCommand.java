@@ -12,6 +12,8 @@ public class ManipulatorMoveCommand extends Command {
   private PIDController pid;
   private int onTargetCounterStart = 10;
   private int onTargetCounter = onTargetCounterStart;
+  private boolean endOnTarget = false;
+  private boolean atPosition = false;
 
   public ManipulatorMoveCommand(ManipulatorBase manipulator, double position, double tolerance, double kP, double kI, double kD) {
     this.manipulator = manipulator;
@@ -37,6 +39,7 @@ public class ManipulatorMoveCommand extends Command {
   @Override
   public void execute() {
     manipulator.setPower(pid.calculate(manipulator.getPosition(), position), false);
+    atPosition = isAtPosition();
   }
 
   @Override
@@ -49,16 +52,12 @@ public class ManipulatorMoveCommand extends Command {
 
   @Override
   public boolean isFinished() {
-    if (currentlyAtPosition()) {
-      onTargetCounter--;
-    } else {
-      onTargetCounter = onTargetCounterStart;
-    }
-    return isAtPosition();
+    return endOnTarget && atPosition;
   }
 
-  public void setTargetPosition(double position) {
+  public ManipulatorMoveCommand setTargetPosition(double position) {
     this.position = position;
+    return this;
   }
 
   public double getTargetPosition() {
@@ -70,10 +69,20 @@ public class ManipulatorMoveCommand extends Command {
   }
 
   public boolean isAtPosition() {
-    return currentlyAtPosition() && onTargetCounter <= 0;
+    if (currentlyAtPosition()) {
+      onTargetCounter--;
+    } else {
+      onTargetCounter = onTargetCounterStart;
+    }
+    return onTargetCounter <= 0;
   }
 
   private boolean currentlyAtPosition() {
-    return Math.abs(manipulator.getPosition() - position) < tolerance;
+    return Math.abs(manipulator.getPosition() - position) < tolerance * 1.5;
+  }
+
+  public ManipulatorMoveCommand setEndOnTarget(boolean endOnTarget) {
+    this.endOnTarget = endOnTarget;
+    return this;
   }
 }

@@ -90,8 +90,8 @@ public class DriveTrainBase extends SubsystemBase {
     for (CANSparkMax motor : motors) {
       motor.restoreFactoryDefaults();
       motor.setSmartCurrentLimit(driveAmpsMax);
-      motor.setClosedLoopRampRate(drivingRamp);
-      motor.setOpenLoopRampRate(drivingRamp);
+      // motor.setClosedLoopRampRate(drivingRamp);
+      // motor.setOpenLoopRampRate(drivingRamp);
       motor.setIdleMode(IdleMode.kCoast);
       motor.enableVoltageCompensation(11);
       motor.setInverted(false);
@@ -303,5 +303,9 @@ public class DriveTrainBase extends SubsystemBase {
     doHighGear(false);
     doSlowMode(false);
     // setBrakeMode(true);
+  }
+
+  public AHRS getGyro() {
+    return m_Gyro;
   }
 }

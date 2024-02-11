@@ -25,7 +25,7 @@ public class TeleDriveCommandBase extends Command {
   @Override
   public void execute() {
     // TODO Add swerve drive support
-    double[] ys = procDeadBand(getJoys());
+    double[] ys = getJoys();
     SmartDashboard.putNumber("Left Y", -ys[0]);
     SmartDashboard.putNumber("Right Y", -ys[1]);
     if (swerveDrive) {
@@ -47,26 +47,13 @@ public class TeleDriveCommandBase extends Command {
 
   private double[] getJoys() {
     for (ControllerBase controller : controllers) {
-      if (controller.isBeingTouched()) {
-        return new double[] {
-            controller.getLeftY(),
-            controller.getRightY(),
-            controller.getLeftX(),
-            controller.getRightX()
-        };
-      }
+      return new double[] {
+          controller.getLeftY(),
+          controller.getRightY(),
+          controller.getLeftX(),
+          controller.getRightX()
+      };
     }
     return new double[] { 0, 0, 0, 0 };
-  }
-
-  private double[] procDeadBand(double[] inputs) {
-    for (double input : inputs) {
-      if (Math.abs(input) < deadBand) {
-        input = 0;
-      } else {
-        input = (input - (Math.abs(input) / (input / deadBand))) / (1 - deadBand);
-      }
-    }
-    return inputs;
   }
 }
