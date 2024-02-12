@@ -257,7 +257,7 @@ public abstract class ManipulatorBase extends SubsystemBase {
     stop();
   }
 
-  /** Emergency stop */
+  /** EMERGENCY STOP */
   public abstract void ESTOP();
 
   public ManipulatorBase() {
