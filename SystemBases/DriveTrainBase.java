@@ -308,4 +308,9 @@ public class DriveTrainBase extends SubsystemBase {
   public AHRS getGyro() {
     return m_Gyro;
   }
+
+  public void ESTOP() {
+    setBrakeMode(true);
+    stop();
+  }
 }

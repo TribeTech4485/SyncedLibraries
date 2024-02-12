@@ -4,6 +4,8 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import java.util.ArrayList;
 
+import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -23,7 +25,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
  * <p>
  * You also can use standard subsystem methods
  */
-public class ManipulatorBase extends SubsystemBase {
+public abstract class ManipulatorBase extends SubsystemBase {
+  public static ArrayList<ManipulatorBase> allManipulators = new ArrayList<ManipulatorBase>();
+  private static boolean needToHome = true;
   ManipulatorMoveCommand moveCommand;
   ManipulatorSpeedCommand speedCommand;
   double positionMultiplier = 1;
@@ -240,9 +244,7 @@ public class ManipulatorBase extends SubsystemBase {
    * <p>
    * Do it yourself
    */
-  public void home() {
-    throw new UnsupportedOperationException("Homing not implemented on: " + this.getClass().getName());
-  }
+  public abstract void home();
 
   public void stopCommands() {
     cancelMoveToPosition();
@@ -253,5 +255,12 @@ public class ManipulatorBase extends SubsystemBase {
   public void fullStop() {
     stopCommands();
     stop();
+  }
+
+  /** Emergency stop */
+  public abstract void ESTOP();
+
+  public ManipulatorBase() {
+    allManipulators.add(this);
   }
 }
