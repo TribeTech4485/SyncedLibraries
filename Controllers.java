@@ -411,6 +411,10 @@ public class Controllers {
       // }
     }
 
+    public boolean isJoysticksBeingTouched() {
+      return getLeftX() != 0 || getLeftY() != 0 || getRightX() != 0 || getRightY() != 0;
+    }
+
     public void setJoystickMultiplier(double multiplier) {
       this.joystickMultiplier = multiplier;
     }

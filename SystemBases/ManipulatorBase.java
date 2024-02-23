@@ -2,10 +2,7 @@ package frc.robot.SyncedLibraries.SystemBases;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
-import java.util.ArrayList;
-
-import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.DriverStation;
+import java.util.LinkedList;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -26,14 +23,13 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
  * You also can use standard subsystem methods
  */
 public abstract class ManipulatorBase extends SubsystemBase {
-  public static ArrayList<ManipulatorBase> allManipulators = new ArrayList<ManipulatorBase>();
-  private static boolean needToHome = true;
+  public static LinkedList<ManipulatorBase> allManipulators = new LinkedList<ManipulatorBase>();
   ManipulatorMoveCommand moveCommand;
   ManipulatorSpeedCommand speedCommand;
   double positionMultiplier = 1;
   double speedMultiplier = 1;
-  ArrayList<CANSparkMax> motors = new ArrayList<CANSparkMax>();
-  ArrayList<RelativeEncoder> encoders = new ArrayList<RelativeEncoder>();
+  LinkedList<CANSparkMax> motors = new LinkedList<CANSparkMax>();
+  LinkedList<RelativeEncoder> encoders = new LinkedList<RelativeEncoder>();
 
   // ===================== Positional Methods ===================== //
   /** Get the known position of the manipulator in degrees */

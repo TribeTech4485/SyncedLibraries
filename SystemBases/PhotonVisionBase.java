@@ -13,6 +13,10 @@ public class PhotonVisionBase extends SubsystemBase {
   public PhotonPipelineResult latestResult;
   public List<PhotonTrackedTarget> targets;
   public PhotonTrackedTarget mainTarget;
+  /**
+   * 0 is x, 1 is y <br>
+   * positive is right/up
+   */
   public double[] targetXYAngles = new double[2];
 
   public PhotonVisionBase(PhotonCamera camera) {
@@ -32,7 +36,6 @@ public class PhotonVisionBase extends SubsystemBase {
       mainTarget = latestResult.getBestTarget();
       x = mainTarget.getYaw();
       y = mainTarget.getPitch();
-
 
       targetXYAngles[0] = x;
       targetXYAngles[1] = y;

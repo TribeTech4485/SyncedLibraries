@@ -4,20 +4,18 @@ import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkBase.IdleMode;
-
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class DriveTrainBase extends SubsystemBase {
-  private ArrayList<CANSparkMax> leftMotors = new ArrayList<CANSparkMax>(); // define in constructor
-  private ArrayList<CANSparkMax> rightMotors = new ArrayList<CANSparkMax>(); // define in constructor
-  private ArrayList<CANSparkMax> motors = new ArrayList<CANSparkMax>(); // define in constructor
+  private LinkedList<CANSparkMax> leftMotors = new LinkedList<CANSparkMax>(); // define in constructor
+  private LinkedList<CANSparkMax> rightMotors = new LinkedList<CANSparkMax>(); // define in constructor
+  private LinkedList<CANSparkMax> motors = new LinkedList<CANSparkMax>(); // define in constructor
 
   // define Speed Controller Groups and Differential Drive for use in drive train
   private CANSparkMax driveMainLeft;
