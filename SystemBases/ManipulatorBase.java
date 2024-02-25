@@ -3,7 +3,10 @@ package frc.robot.SyncedLibraries.SystemBases;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import java.util.LinkedList;
+
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /**
@@ -28,6 +31,7 @@ public abstract class ManipulatorBase extends SubsystemBase {
   ManipulatorSpeedCommand speedCommand;
   double positionMultiplier = 1;
   double speedMultiplier = 1;
+  double maxPower = 1;
   LinkedList<CANSparkMax> motors = new LinkedList<CANSparkMax>();
   LinkedList<RelativeEncoder> encoders = new LinkedList<RelativeEncoder>();
 
@@ -75,7 +79,7 @@ public abstract class ManipulatorBase extends SubsystemBase {
   }
 
   /** Move the manipulator to a position in degrees */
-  public void moveToPosition(int position) {
+  public void moveToPosition(double position) {
     stopCommands();
     moveCommand.setTargetPosition(position);
     moveCommand.schedule();
@@ -102,6 +106,15 @@ public abstract class ManipulatorBase extends SubsystemBase {
     return average / motors.size();
   }
 
+  /** Same as {@link #getAvePower()} but ABSed before averaging */
+  public double getAbsPower() {
+    double average = 0;
+    for (CANSparkMax motor : motors) {
+      average += Math.abs(motor.get());
+    }
+    return average / motors.size();
+  }
+
   /**
    * Set the raw speed of the motor in the range -1 to 1
    * <p>
@@ -111,9 +124,25 @@ public abstract class ManipulatorBase extends SubsystemBase {
     if (stopCommands) {
       stopCommands();
     }
+    percent = Math.min(maxPower, Math.max(-maxPower, percent));
     for (CANSparkMax motor : motors) {
       motor.set(percent);
     }
+  }
+
+  /**
+   * Set the raw speed of the motor in the range -1 to 1
+   * <p>
+   * Used for manual control
+   * <p>
+   * <b>STOPS COMMANDS</b>
+   */
+  public void setPower(double percent) {
+    setPower(percent, true);
+  }
+
+  public void setMaxPower(double maxPower) {
+    this.maxPower = maxPower;
   }
 
   // ===================== Speed Methods ===================== //
@@ -235,12 +264,14 @@ public abstract class ManipulatorBase extends SubsystemBase {
     }
   }
 
-  /**
-   * Move all motors to known position and then reset encoders
-   * <p>
-   * Do it yourself
-   */
-  public abstract void home();
+  /** Is power going to any motors */
+  public boolean isRunning() {
+    return getAbsPower() != 0;
+  }
+
+  public boolean isSpinning() {
+    return getCurrentSpeed() != 0;
+  }
 
   public void stopCommands() {
     cancelMoveToPosition();
@@ -253,8 +284,19 @@ public abstract class ManipulatorBase extends SubsystemBase {
     stop();
   }
 
+  /**
+   * Move all motors to known position and then reset encoders
+   * <p>
+   * Do it yourself
+   */
+  public Command home() {
+    return new InstantCommand(() -> System.out.println("Homing not implemented on subsystem " + getName() + "... Continuing"));
+  }
+
   /** EMERGENCY STOP */
   public abstract void ESTOP();
+
+  public abstract Command test();
 
   public ManipulatorBase() {
     allManipulators.add(this);

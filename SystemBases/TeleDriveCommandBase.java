@@ -31,6 +31,7 @@ public class TeleDriveCommandBase extends Command {
     if (swerveDrive) {
     } else {
       Robot.DriveTrain.doTankDrive(ys[0], ys[1]);
+      Robot.Turret.setPower(-ys[2], false);
     }
     // Robot.Turret.setPower(ys[2], false);
   }
