@@ -7,14 +7,15 @@ import frc.robot.Robot;
 import frc.robot.SyncedLibraries.Controllers.ControllerBase;
 
 public class TeleDriveCommandBase extends Command {
-  // TODO: Add swerve drive support
-  // TODO: Add multi-controller support
-  ControllerBase[] controllers;
-  boolean swerveDrive = false;
-  double deadBand = 0.1;
+  protected ControllerBase[] controllers;
+  protected boolean swerveDrive = false;
+  protected double deadBand = 0.1;
+  protected boolean defaultExecute = true;
+  protected double[] ys = new double[4];
 
-  public TeleDriveCommandBase(ControllerBase... controller) {
-    addRequirements(Robot.DriveTrain);
+  public TeleDriveCommandBase(DriveTrainBase driveTrain, boolean isSwerveDrive, ControllerBase... controller) {
+    addRequirements(driveTrain);
+    swerveDrive = isSwerveDrive;
     this.controllers = controller;
   }
 
@@ -24,16 +25,21 @@ public class TeleDriveCommandBase extends Command {
 
   @Override
   public void execute() {
-    // TODO Add swerve drive support
-    double[] ys = getJoys();
-    SmartDashboard.putNumber("Left Y", -ys[0]);
-    SmartDashboard.putNumber("Right Y", -ys[1]);
+    ys = getJoys();
+    SmartDashboard.putNumber("Left Y", ys[0]);
+    SmartDashboard.putNumber("Right Y", ys[1]);
     if (swerveDrive) {
+      // TODO: Add swerve drive support
     } else {
       Robot.DriveTrain.doTankDrive(ys[0], ys[1]);
-      Robot.Turret.setPower(-ys[2], false);
     }
-    // Robot.Turret.setPower(ys[2], false);
+
+    // This is a warning to the programmer that they should override this method
+    if (defaultExecute) {
+      defaultExecute = false;
+      DriverStation.reportWarning("TeleDriveCommandBase: execute() not overridden.\n" +
+          "Nothing is wrong with this, but reccomended to put further joystick controls here.", false);
+    }
   }
 
   @Override
@@ -46,14 +52,16 @@ public class TeleDriveCommandBase extends Command {
     return DriverStation.isDisabled();
   }
 
-  private double[] getJoys() {
+  protected double[] getJoys() {
     for (ControllerBase controller : controllers) {
-      return new double[] {
-          controller.getLeftY(),
-          controller.getRightY(),
-          controller.getLeftX(),
-          controller.getRightX()
-      };
+      if (controller.isJoysticksBeingTouched()) {
+        return new double[] {
+            -controller.getLeftY(),
+            -controller.getRightY(),
+            -controller.getLeftX(),
+            -controller.getRightX()
+        };
+      }
     }
     return new double[] { 0, 0, 0, 0 };
   }

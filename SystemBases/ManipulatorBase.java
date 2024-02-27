@@ -4,6 +4,7 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import java.util.LinkedList;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -86,7 +87,7 @@ public abstract class ManipulatorBase extends SubsystemBase {
   }
 
   public boolean isAtPosition() {
-    return Math.abs(getPosition() - getTargetPosition()) < moveCommand.getTolerance();
+    return moveCommand == null ? moveCommand.atPosition : false;
   }
 
   public final void cancelMoveToPosition() {
@@ -181,7 +182,7 @@ public abstract class ManipulatorBase extends SubsystemBase {
   }
 
   public boolean isAtSpeed() {
-    return speedCommand.atSpeed;
+    return speedCommand == null ? speedCommand.atSpeed : false;
   }
 
   public void setSpeedPID(double kP, double kI, double kD, double tolerance) {
@@ -290,10 +291,26 @@ public abstract class ManipulatorBase extends SubsystemBase {
    * Do it yourself
    */
   public Command home() {
-    return new InstantCommand(() -> System.out.println("Homing not implemented on subsystem " + getName() + "... Continuing"));
+    return new InstantCommand(
+        () -> System.out.println("Homing not implemented on subsystem " + getName() + "... Continuing"));
   }
 
-  /** EMERGENCY STOP */
+  @Override
+  public void periodic() {
+    SmartDashboard.putNumber(getName() + " Position", getPosition());
+    SmartDashboard.putNumber(getName() + " Speed", getCurrentSpeed());
+    SmartDashboard.putNumber(getName() + " Power", getAvePower());
+    SmartDashboard.putBoolean(getName() + " At Speed/Power", isAtSpeed() || isAtPosition());
+  }
+
+  /**
+   * <b>EMERGENCY STOP</b>
+   * <p>
+   * WILL STOP THE MANIPULATOR
+   * <p>
+   * Recomended to set brake mode to true, unless if the manipulator coulde be
+   * in a position that would be dangerous or would trap a piece.
+   */
   public abstract void ESTOP();
 
   public abstract Command test();

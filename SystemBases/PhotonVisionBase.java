@@ -18,6 +18,8 @@ public class PhotonVisionBase extends SubsystemBase {
    * positive is right/up
    */
   public double[] targetXYAngles = new double[2];
+  /** in meters */
+  public double targetDistance = 0;
 
   public PhotonVisionBase(PhotonCamera camera) {
     camera.setPipelineIndex(0);
@@ -39,10 +41,12 @@ public class PhotonVisionBase extends SubsystemBase {
 
       targetXYAngles[0] = x;
       targetXYAngles[1] = y;
+      targetDistance = mainTarget.getBestCameraToTarget().getTranslation().getX(); // TODO: check if correct
     }
 
     SmartDashboard.putNumber("TargetX", x);
     SmartDashboard.putNumber("TargetY", y);
+    SmartDashboard.putNumber("Target dist", targetDistance);
   }
 
   protected PhotonTrackedTarget containsTarget(List<PhotonTrackedTarget> targets, int... fiducialIds) {

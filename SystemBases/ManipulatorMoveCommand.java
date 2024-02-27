@@ -13,7 +13,7 @@ public class ManipulatorMoveCommand extends Command {
   private int onTargetCounterStart = 10;
   private int onTargetCounter = onTargetCounterStart;
   private boolean endOnTarget = false;
-  private boolean atPosition = false;
+  public boolean atPosition = false;
 
   public ManipulatorMoveCommand(ManipulatorBase manipulator, double position, double tolerance, double kP, double kI, double kD) {
     this.manipulator = manipulator;
