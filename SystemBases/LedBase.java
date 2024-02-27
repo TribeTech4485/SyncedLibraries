@@ -5,44 +5,41 @@ import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.ArrayList;
+import java.util.List;
 
 public class LedBase extends SubsystemBase {
   /** Creates a new LedBase. */
   public AddressableLED led;
-  AddressableLEDBuffer mainBuffer;
-  int numSections;
-  ArrayList<LedSection> sections = new ArrayList<LedSection>(numSections);
-  int counter = 0;
+  public LedSection[] sections;
+  protected AddressableLEDBuffer mainBuffer;
+  protected int counter = 0;
 
-  
-  /**
-   * Represents a base class for controlling an addressable LED strip.
-   *
-   * @param port      The port number of the addressable LED strip.
-   * @param length    The length of the addressable LED strip.
-   * @param sections  The number of sections in the addressable LED strip.
-   */
-  public LedBase(int port, int length, int sections) {
+  public LedBase(int port, int activateTimer, int... sectionLengths) {
+    int length = 0;
+    for (int i = 0; i < sectionLengths.length; i++) {
+      length += sectionLengths[i];
+    }
+
     led = new AddressableLED(port);
     mainBuffer = new AddressableLEDBuffer(length);
-    led.setLength(mainBuffer.getLength());
+    led.setLength(length);
     led.setData(mainBuffer);
-    this.numSections = sections;
+    this.sections = new LedSection[sectionLengths.length];
+    for (int i = 0; i < sectionLengths.length; i++) {
+      sections[i] = new LedSection(activateTimer, sectionLengths[i]);
+    }
   }
 
   @Override
   public void periodic() {
     counter++;
-    AddressableLEDBuffer[] buffers = new AddressableLEDBuffer[sections.size()];
-    for (int i = 0; i < sections.size(); i++) {
-      sections.get(i).run();
-      buffers[i] = sections.get(i).getBuffer();
+    for (LedSection section : sections) {
+      section.run();
     }
-    mainBuffer = combineSections(sections);
+    combineSections();
     led.setData(mainBuffer);
   }
 
-  /** SYNC/CONTINUE ONLY WORKS ON SECOND SECTION */
   enum DisplayType {
     /** Moving rainbow */
     RAINBOW,
@@ -68,40 +65,104 @@ public class LedBase extends SubsystemBase {
     CONTINUE
   }
 
-  private AddressableLEDBuffer combineSections(ArrayList<LedSection> sections) {
-    LedSection[] newSections = new LedSection[sections.size()];
-    for (var i = 0; i < sections.size(); i++) {
-      newSections[i] = sections.get(i);
-    }
+  private void combineSections() {
     AddressableLEDBuffer combinedBuffer = new AddressableLEDBuffer(mainBuffer.getLength());
     int i = 0;
-    for (LedSection section : newSections) {
+    for (LedSection section : sections) {
       for (int j = 0; i < section.getBuffer().getLength(); j++) {
         combinedBuffer.setLED(i, section.getBuffer().getLED(j));
         i++;
       }
     }
-    return combinedBuffer;
+    mainBuffer = combinedBuffer;
   }
 
-  class LedSection {
+  public class LedSection {
     AddressableLEDBuffer buffer;
     DisplayType displayType;
-    double activateTimer;
+    int activateTimer;
     ArrayList<Color> colors;
     /** Section to follow if selected */
-    LedSection followingSection;
+    LedSection followingSection = null;
 
-    public LedSection(DisplayType displayType, double activateTimer, ArrayList<Color> colors,
-        LedSection followingSection) {
-      this.displayType = displayType;
+    /**
+     * Create like so:
+     * <p>
+     * new LedSection(0.1, Color.RED, Color.GREEN, new Color(0, 0, 255)).doCycle();
+     * <p>
+     * <p>
+     * (0.1 second cycle between red, green, and blue)
+     */
+    public LedSection(int activateTimer, int length, Color... colors) {
       this.activateTimer = activateTimer;
-      this.colors = colors;
-      this.followingSection = followingSection;
+      this.buffer = new AddressableLEDBuffer(length);
+      this.colors = new ArrayList<Color>(colors.length);
+      this.colors.addAll(List.of(colors));
     }
 
     public AddressableLEDBuffer getBuffer() {
       return buffer;
+    }
+
+    /**
+     * Set the section to follow if used
+     * <p>
+     * <b>WATCH FOR INFINITE LOOPS</b>, calls recursively
+     */
+    public LedSection addFollowingSection(LedSection followingSection) {
+      this.followingSection = followingSection;
+      return this;
+    }
+
+    public LedSection addColor(Color... colors) {
+      for (Color color : colors) {
+        this.colors.add(color);
+      }
+      return this;
+    }
+
+    public void doRainbow() {
+      this.displayType = DisplayType.RAINBOW;
+    }
+
+    public void doSolid() {
+      this.displayType = DisplayType.SOLID;
+    }
+
+    public void doCycle() {
+      this.displayType = DisplayType.CYCLE;
+    }
+
+    public void doAlternate() {
+      this.displayType = DisplayType.ALTERNATE;
+    }
+
+    public void doMoveForward() {
+      this.displayType = DisplayType.MOVE_FORWARD;
+    }
+
+    public void doMoveBackward() {
+      this.displayType = DisplayType.MOVE_BACKWARD;
+    }
+
+    public void doOff() {
+      this.displayType = DisplayType.OFF;
+    }
+
+    public void doSync() {
+      if (followingSection == null) {
+        new Throwable("Following section is null").printStackTrace();
+        return;
+      }
+      this.displayType = DisplayType.SYNC;
+    }
+
+    public void doContinue() {
+      if (followingSection == null) {
+        new Throwable("Following section is null").printStackTrace();
+        return;
+      }
+      this.displayType = DisplayType.CONTINUE;
     }
 
     public void run() {
@@ -144,7 +205,7 @@ public class LedBase extends SubsystemBase {
       this.displayType = displayType;
     }
 
-    public void setActivateTimer(double activateTimer) {
+    public void setActivateTimer(int activateTimer) {
       this.activateTimer = activateTimer;
     }
 
@@ -186,12 +247,20 @@ public class LedBase extends SubsystemBase {
     }
 
     private void sync() {
+      if (followingSection == null) {
+        new Throwable("Following section is null").printStackTrace();
+        return;
+      }
       for (int i = 0; i < buffer.getLength(); i++) {
         buffer.setLED(i, followingSection.buffer.getLED(i));
       }
     }
 
     private void follow(int c) {
+      if (followingSection == null) {
+        new Throwable("Following section is null").printStackTrace();
+        return;
+      }
       run(followingSection.displayType, c + followingSection.buffer.getLength());
     }
   }
