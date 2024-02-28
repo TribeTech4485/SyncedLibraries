@@ -7,14 +7,25 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Example creation:
+ * 
+ * <pre>
+ * <code>
+ * LED = new LedBase(0, 30, 30);
+ * LED.sections[0].init(1, 1, Color.kRed, Color.kGreen, Color.kBlue).doCycle();
+ * LED.sections[1].init(1, 1, Color.kRed, Color.kGreen, Color.kBlue).doMoveForward();
+ * </code>
+ * </pre>
+ */
 public class LedBase extends SubsystemBase {
-  /** Creates a new LedBase. */
   public AddressableLED led;
   public LedSection[] sections;
   protected AddressableLEDBuffer mainBuffer;
   protected int counter = 0;
 
-  public LedBase(int port, int activateTimer, int... sectionLengths) {
+  /** Be sure to run sections[i].init() */
+  public LedBase(int port, int... sectionLengths) {
     int length = 0;
     for (int i = 0; i < sectionLengths.length; i++) {
       length += sectionLengths[i];
@@ -26,7 +37,7 @@ public class LedBase extends SubsystemBase {
     led.setData(mainBuffer);
     this.sections = new LedSection[sectionLengths.length];
     for (int i = 0; i < sectionLengths.length; i++) {
-      sections[i] = new LedSection(activateTimer, sectionLengths[i]);
+      sections[i] = new LedSection(sectionLengths[i]);
     }
   }
 
@@ -41,8 +52,10 @@ public class LedBase extends SubsystemBase {
   }
 
   enum DisplayType {
-    /** Moving rainbow */
-    RAINBOW,
+    /** Moving rainbow forward */
+    RAINBOW_FORWARD,
+    /** Moving rainbow backward */
+    RAINBOW_BACKWARD,
     /** Rolid color, first only */
     SOLID,
     /** Rlinking between colors */
@@ -80,99 +93,128 @@ public class LedBase extends SubsystemBase {
   public class LedSection {
     AddressableLEDBuffer buffer;
     DisplayType displayType;
-    int activateTimer;
+    int speed;
+    int width;
     ArrayList<Color> colors;
     /** Section to follow if selected */
     LedSection followingSection = null;
 
-    /**
-     * Create like so:
-     * <p>
-     * new LedSection(0.1, Color.RED, Color.GREEN, new Color(0, 0, 255)).doCycle();
-     * <p>
-     * <p>
-     * (0.1 second cycle between red, green, and blue)
+    /*
+     * public LedSection(int speed, int width, int length, Color... colors) {
+     * this.speed = speed;
+     * this.width = width;
+     * this.buffer = new AddressableLEDBuffer(length);
+     * this.colors = new ArrayList<Color>(colors.length);
+     * this.colors.addAll(List.of(colors));
+     * }
      */
-    public LedSection(int activateTimer, int length, Color... colors) {
-      this.activateTimer = activateTimer;
+
+    /** Creates a blank section, only for temporary use */
+    public LedSection(int length) {
+      this.speed = 1;
+      this.width = 1;
       this.buffer = new AddressableLEDBuffer(length);
+      this.colors = new ArrayList<Color>();
+      this.colors.add(new Color(0, 0, 0));
+    }
+
+    /**
+     * After this, run one of the do methods
+     * 
+     * @param speed  Ticks per color change
+     * @param width  Width of the color before next color
+     * @param length Length of the section
+     * @param colors Colors to cycle through
+     */
+    public LedSection init(int speed, int width, Color... colors) {
+      this.speed = speed;
+      this.width = width;
       this.colors = new ArrayList<Color>(colors.length);
       this.colors.addAll(List.of(colors));
+      return this;
     }
 
-    public AddressableLEDBuffer getBuffer() {
-      return buffer;
-    }
-
-    /**
-     * Set the section to follow if used
-     * <p>
-     * <b>WATCH FOR INFINITE LOOPS</b>, calls recursively
-     */
-    public LedSection addFollowingSection(LedSection followingSection) {
+    /** Set the section to continue/sync with if selected by the do method */
+    public LedSection setFollower(LedSection followingSection) {
       this.followingSection = followingSection;
       return this;
     }
 
-    public LedSection addColor(Color... colors) {
-      for (Color color : colors) {
-        this.colors.add(color);
-      }
-      return this;
+    private AddressableLEDBuffer getBuffer() {
+      return buffer;
     }
 
+    /** Moving rainbow forward */
     public void doRainbow() {
-      this.displayType = DisplayType.RAINBOW;
+      this.displayType = DisplayType.RAINBOW_FORWARD;
     }
 
+    /** Moving rainbow backward */
+    public void doRainbowBackward() {
+      this.displayType = DisplayType.RAINBOW_BACKWARD;
+    }
+
+    /** Rolid color, first only */
     public void doSolid() {
       this.displayType = DisplayType.SOLID;
     }
 
+    /** Rlinking between colors */
     public void doCycle() {
       this.displayType = DisplayType.CYCLE;
     }
 
+    /** Rotate through colors list (staticly) */
     public void doAlternate() {
       this.displayType = DisplayType.ALTERNATE;
     }
 
+    /** Rotate through colors list (moving) */
     public void doMoveForward() {
       this.displayType = DisplayType.MOVE_FORWARD;
     }
 
+    /** Rotate through colors list (moving backwards) */
     public void doMoveBackward() {
       this.displayType = DisplayType.MOVE_BACKWARD;
     }
 
+    /** No comment */
     public void doOff() {
       this.displayType = DisplayType.OFF;
     }
 
-    public void doSync() {
-      if (followingSection == null) {
-        new Throwable("Following section is null").printStackTrace();
-        return;
-      }
+    /**
+     * Sync with {@link #setFollower(LedSection)} section
+     * <p>
+     * <b>WATCH FOR INFINITE LOOPS</b>, following calls recursively
+     */
+    public void doSync(LedSection followingSection) {
+      this.followingSection = followingSection;
       this.displayType = DisplayType.SYNC;
     }
 
-    public void doContinue() {
-      if (followingSection == null) {
-        new Throwable("Following section is null").printStackTrace();
-        return;
-      }
+    /**
+     * Continue from {@link #setFollower(LedSection)} section
+     * <p>
+     * <b>WATCH FOR INFINITE LOOPS</b>, following calls recursively
+     */
+    public void doContinue(LedSection followingSection) {
+      this.followingSection = followingSection;
       this.displayType = DisplayType.CONTINUE;
     }
 
-    public void run() {
+    private void run() {
       run(displayType, counter);
     }
 
     private void run(DisplayType dType, int count) {
       switch (dType) {
-        case RAINBOW:
+        case RAINBOW_FORWARD:
           rainbow(count);
+          break;
+        case RAINBOW_BACKWARD:
+          rainbow(-count);
           break;
         case SOLID:
           solid(colors.get(0));
@@ -201,17 +243,9 @@ public class LedBase extends SubsystemBase {
       }
     }
 
-    public void setType(DisplayType displayType) {
-      this.displayType = displayType;
-    }
-
-    public void setActivateTimer(int activateTimer) {
-      this.activateTimer = activateTimer;
-    }
-
     private void rainbow(int c) {
       for (int i = 0; i < buffer.getLength(); i++) {
-        buffer.setHSV(i, (int) (c * activateTimer) % 180, 255, 255);
+        buffer.setHSV(i, (int) (c * speed) % 180, 255, 255);
       }
     }
 
@@ -222,21 +256,21 @@ public class LedBase extends SubsystemBase {
     }
 
     private void cycle(int c) {
-      if (c % activateTimer == 0) {
-        int number = (c % (int) activateTimer) % colors.size();
+      if (c % speed == 0) {
+        int number = (c % (int) speed) % colors.size();
         solid(colors.get(number));
       }
     }
 
     private void alternate() {
       for (int i = 0; i < buffer.getLength(); i++) {
-        buffer.setLED(i, colors.get(i % colors.size()));
+        buffer.setLED(i, colors.get((i / width) % colors.size()));
       }
     }
 
     private void moveForward(int c) {
       for (int i = 0; i < buffer.getLength(); i++) {
-        buffer.setLED(i, colors.get((i + c) % colors.size()));
+        buffer.setLED(i, colors.get(((i / width) + (c / speed)) % colors.size()));
       }
     }
 
