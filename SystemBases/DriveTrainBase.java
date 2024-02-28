@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.LinkedList;
@@ -88,10 +89,10 @@ public class DriveTrainBase extends SubsystemBase {
     for (CANSparkMax motor : motors) {
       motor.restoreFactoryDefaults();
       motor.setSmartCurrentLimit(driveAmpsMax);
-      // motor.setClosedLoopRampRate(drivingRamp);
-      // motor.setOpenLoopRampRate(drivingRamp);
+      motor.setClosedLoopRampRate(drivingRamp);
+      motor.setOpenLoopRampRate(drivingRamp);
       motor.setIdleMode(IdleMode.kCoast);
-      motor.enableVoltageCompensation(11);
+      motor.enableVoltageCompensation(11.75);
       motor.setInverted(false);
       motor.burnFlash();
     }
@@ -143,6 +144,8 @@ public class DriveTrainBase extends SubsystemBase {
 
   @Override
   public void periodic() {
+    SmartDashboard.putNumber("Left Drive Speed", getLeftSpeed());
+    SmartDashboard.putNumber("Right Drive Speed", getRightSpeed());
   }
 
   /**
@@ -286,6 +289,10 @@ public class DriveTrainBase extends SubsystemBase {
         motor.setIdleMode(IdleMode.kCoast);
       }
     }
+  }
+
+  public CANSparkMax[] getAllMotors() {
+    return motors.toArray(new CANSparkMax[0]);
   }
 
   public void invertAll() {

@@ -276,7 +276,7 @@ public class LedBase extends SubsystemBase {
 
     private void moveBackward(int c) {
       for (int i = 0; i < buffer.getLength(); i++) {
-        buffer.setLED(i, colors.get((i - c) % colors.size()));
+        buffer.setLED(i, colors.get(Math.abs((i - c) % colors.size())));
       }
     }
 
