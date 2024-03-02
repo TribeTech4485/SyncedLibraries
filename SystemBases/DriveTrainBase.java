@@ -69,22 +69,6 @@ public class DriveTrainBase extends SubsystemBase {
     motors.addAll(leftMotors);
     motors.addAll(rightMotors);
 
-    // Sync side motors
-    for (CANSparkMax motor : leftMotors) {
-      if (motor == leftMotors.get(0)) {
-        driveMainLeft = motor;
-      } else {
-        motor.follow(driveMainLeft);
-      }
-    }
-    for (CANSparkMax motor : rightMotors) {
-      if (motor == rightMotors.get(0)) {
-        driveMainRight = motor;
-      } else {
-        motor.follow(driveMainRight);
-      }
-    }
-
     // Update motor config
     for (CANSparkMax motor : motors) {
       motor.restoreFactoryDefaults();
@@ -92,13 +76,31 @@ public class DriveTrainBase extends SubsystemBase {
       motor.setClosedLoopRampRate(drivingRamp);
       motor.setOpenLoopRampRate(drivingRamp);
       motor.setIdleMode(IdleMode.kCoast);
-      motor.enableVoltageCompensation(11.75);
+      motor.enableVoltageCompensation(12);
       motor.setInverted(false);
       motor.burnFlash();
     }
 
+    // Sync side motors
+    for (CANSparkMax motor : leftDriveMotors) {
+      motor.setInverted(false);
+      if (motor == leftMotors.get(0)) {
+        driveMainLeft = motor;
+      } else {
+        // motor.follow(driveMainLeft);
+      }
+    }
+    for (CANSparkMax motor : rightDriveMotors) {
+      motor.setInverted(false);
+      if (motor == rightMotors.get(0)) {
+        driveMainRight = motor;
+      } else {
+        // motor.follow(driveMainRight);
+      }
+    }
+
     // Invert 1 side of robot so will drive forward
-    driveMainLeft.setInverted(false);
+    // driveMainLeft.setInverted(true);
 
     differentialDrive = new DifferentialDrive(driveMainLeft, driveMainRight);
     differentialDrive.setSafetyEnabled(false);
@@ -162,14 +164,26 @@ public class DriveTrainBase extends SubsystemBase {
       System.out.println("**driveTrain power L/R: " + leftDrivePercent + " | " + rightDrivePercent);
     }
     if (Math.abs(leftDrivePercent) > 0.01) {
-      driveMainLeft.set(-leftDrivePercent);
+      for (CANSparkMax motor : leftMotors) {
+        motor.set(leftDrivePercent);
+      }
+      // driveMainLeft.set(leftDrivePercent);
     } else {
-      driveMainLeft.stopMotor();
+      for (CANSparkMax motor : leftMotors) {
+        motor.stopMotor();
+      }
+      // driveMainLeft.stopMotor();
     }
     if (Math.abs(rightDrivePercent) > 0.01) {
-      driveMainRight.set(rightDrivePercent);
+      for (CANSparkMax motor : rightMotors) {
+        motor.set(-rightDrivePercent);
+      }
+      // driveMainRight.set(rightDrivePercent);
     } else {
-      driveMainRight.stopMotor();
+      for (CANSparkMax motor : rightMotors) {
+        motor.stopMotor();
+      }
+      // driveMainRight.stopMotor();
     }
     // differentialDrive.tankDrive(leftDrivePercent, rightDrivePercent);
   }
@@ -296,8 +310,9 @@ public class DriveTrainBase extends SubsystemBase {
   }
 
   public void invertAll() {
-    driveMainLeft.setInverted(!driveMainLeft.getInverted());
-    driveMainRight.setInverted(!driveMainRight.getInverted());
+    for (CANSparkMax motor : motors) {
+      motor.setInverted(!motor.getInverted());
+    }
   }
 
   public void resetAll() {

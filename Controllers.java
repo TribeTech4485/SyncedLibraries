@@ -19,6 +19,7 @@ public class Controllers {
   public Controllers(double joystickDeadband, double triggerDeadband) {
     Controllers.joystickDeadband = joystickDeadband;
     Controllers.triggerDeadband = triggerDeadband;
+    fullUpdate();
   }
 
   // Port-bound controllers

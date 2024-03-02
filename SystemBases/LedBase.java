@@ -34,7 +34,11 @@ public class LedBase extends SubsystemBase {
     led = new AddressableLED(port);
     mainBuffer = new AddressableLEDBuffer(length);
     led.setLength(length);
+    for (int i = 0; i < length; i++) {
+      mainBuffer.setRGB(i, 0, 0, 0);
+    }
     led.setData(mainBuffer);
+    led.start();
     this.sections = new LedSection[sectionLengths.length];
     for (int i = 0; i < sectionLengths.length; i++) {
       sections[i] = new LedSection(sectionLengths[i]);
@@ -82,19 +86,21 @@ public class LedBase extends SubsystemBase {
     AddressableLEDBuffer combinedBuffer = new AddressableLEDBuffer(mainBuffer.getLength());
     int i = 0;
     for (LedSection section : sections) {
-      for (int j = 0; i < section.getBuffer().getLength(); j++) {
+      for (int j = 0; j < section.getBuffer().getLength(); j++, i++) {
         combinedBuffer.setLED(i, section.getBuffer().getLED(j));
-        i++;
       }
     }
+    // System.out.println(i + " Total lights" + mainBuffer.getLength());
+    // System.out.println(sections[0].getBuffer().getLength() +
+    // sections[1].getBuffer().getLength());
     mainBuffer = combinedBuffer;
   }
 
   public class LedSection {
     AddressableLEDBuffer buffer;
     DisplayType displayType;
-    int speed;
-    int width;
+    double speed;
+    double width;
     ArrayList<Color> colors;
     /** Section to follow if selected */
     LedSection followingSection = null;
@@ -126,7 +132,7 @@ public class LedBase extends SubsystemBase {
      * @param length Length of the section
      * @param colors Colors to cycle through
      */
-    public LedSection init(int speed, int width, Color... colors) {
+    public LedSection init(double speed, double width, Color... colors) {
       this.speed = speed;
       this.width = width;
       this.colors = new ArrayList<Color>(colors.length);
@@ -245,7 +251,7 @@ public class LedBase extends SubsystemBase {
 
     private void rainbow(int c) {
       for (int i = 0; i < buffer.getLength(); i++) {
-        buffer.setHSV(i, (int) (c * speed) % 180, 255, 255);
+        buffer.setHSV(i, (int) (((c * speed) + (i * 180 / width / buffer.getLength())) % (180)), 255, 255);
       }
     }
 
@@ -256,27 +262,25 @@ public class LedBase extends SubsystemBase {
     }
 
     private void cycle(int c) {
-      if (c % speed == 0) {
-        int number = (c % (int) speed) % colors.size();
-        solid(colors.get(number));
-      }
+      int number = (int) (c * speed) % colors.size();
+      solid(colors.get(number));
     }
 
     private void alternate() {
       for (int i = 0; i < buffer.getLength(); i++) {
-        buffer.setLED(i, colors.get((i / width) % colors.size()));
+        buffer.setLED(i, colors.get((int) ((i / width) % colors.size())));
       }
     }
 
     private void moveForward(int c) {
       for (int i = 0; i < buffer.getLength(); i++) {
-        buffer.setLED(i, colors.get(((i / width) + (c / speed)) % colors.size()));
+        buffer.setLED(i, colors.get((int) (((i / width) + (c / speed)) % colors.size())));
       }
     }
 
     private void moveBackward(int c) {
       for (int i = 0; i < buffer.getLength(); i++) {
-        buffer.setLED(i, colors.get(Math.abs((i - c) % colors.size())));
+        buffer.setLED(i, colors.get((int) (Math.abs((-i / width) + (c / speed)) % colors.size())));
       }
     }
 
