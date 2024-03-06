@@ -3,6 +3,7 @@ package frc.robot.SyncedLibraries.SystemBases;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import java.util.LinkedList;
+import java.util.function.BooleanSupplier;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -35,6 +36,7 @@ public abstract class ManipulatorBase extends SubsystemBase {
   double maxPower = 1;
   LinkedList<CANSparkMax> motors = new LinkedList<CANSparkMax>();
   LinkedList<RelativeEncoder> encoders = new LinkedList<RelativeEncoder>();
+  BooleanSupplier customSensor = () -> false;
 
   // ===================== Positional Methods ===================== //
   /** Get the known position of the manipulator in degrees */
