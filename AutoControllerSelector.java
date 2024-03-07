@@ -1,19 +1,17 @@
 package frc.robot.SyncedLibraries;
 
 import java.util.ArrayList;
-
-import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import frc.robot.SyncedLibraries.Controllers.ControllerBase;
 
 /**
  * This class is used to select the controller that is actively being used.
  * The first controller in the list that is being touched is the one that is
  * used.
+ * <p>
  * If no controllers are being touched, the nullController is used.
  * <p>
- * @deprecated Use {@link Controllers} instead
+ * ONLY CHECKS IF JOYSTICK ARE BEING TOUCHED, NOT THE BUTTONS
  */
-@Deprecated
 public class AutoControllerSelector {
 
   /**
@@ -23,13 +21,22 @@ public class AutoControllerSelector {
   ArrayList<Integer> ports = new ArrayList<>();
   ControllerBase ghostController;
   Controllers controllersClass;
-  MotorControllerGroup motorCotrollerGroup;
 
-  public AutoControllerSelector(ControllerBase ghostController, Controllers controllersClass) {
-    this.ghostController = ghostController;
+  public AutoControllerSelector(Controllers controllersClass) {
+    this.ghostController = controllersClass.ghostController;
     this.controllersClass = controllersClass;
   }
 
+  /**
+   * <h4>NEVER ATTEMPT TO USE THE BUTTONS FROM THIS CONTROLLER</h4>
+   * <p>
+   * Using any .get() method from this controller will cause a crash within 2
+   * minutes
+   * due to <b>extreme</b> memory usage.
+   * <p>
+   * Recommended to treat as if this method is private, but it is public for
+   * potential future use.
+   */
   public ControllerBase getController() {
     System.out.println("Getting controller");
     if (controllers == null) {
@@ -44,10 +51,11 @@ public class AutoControllerSelector {
       if (!controller.isPluggedIn()) {
         continue;
       }
-      if (controller.isBeingTouched()) {
+      if (controller.isJoysticksBeingTouched()) {
         return controller;
       } else {
-        System.out.println("Controller on port " + controller.port + " not plugged in");
+        // System.out.println("Controller on port " + controller.port + " not plugged
+        // in");
       }
     }
     return ghostController;
@@ -57,5 +65,29 @@ public class AutoControllerSelector {
     for (Integer i : port) {
       ports.add(i);
     }
+  }
+
+  public double getLeftY() {
+    return getController().getLeftY();
+  }
+
+  public double getRightY() {
+    return getController().getRightY();
+  }
+
+  public double getLeftX() {
+    return getController().getLeftX();
+  }
+
+  public double getRightX() {
+    return getController().getRightX();
+  }
+
+  public double getLeftTrigger() {
+    return getController().getLeftTrigger();
+  }
+
+  public double getRightTrigger() {
+    return getController().getRightTrigger();
   }
 }

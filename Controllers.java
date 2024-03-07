@@ -29,6 +29,7 @@ public class Controllers {
   public ControllerBase Three;
   public ControllerBase Four;
   public ControllerBase Five;
+  public final ControllerBase ghostController = new ControllerBase(-1);
 
   /** Call this only upon inits */
   public void fullUpdate() {
@@ -351,7 +352,13 @@ public class Controllers {
       }
     }
 
-    /** ALWAYS RETURNS TRUE, DO NOT USE */
+    /**
+     * ALWAYS RETURNS TRUE, DO NOT USE
+     * 
+     * @deprecated
+     *             Use isJoysticksBeingTouched() instead, but does not include
+     *             buttons
+     */
     @Deprecated
     public boolean isBeingTouched() {
       return true;
