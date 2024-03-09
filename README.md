@@ -14,3 +14,21 @@ git submodule add https://github.com/TribeTech4485/SyncedLibraries
 ```
 
 And you're done!
+
+----
+
+Add to readmes of projects containing:
+
+# TO SAVE
+
+Always use the command line git to install as shown below, or it will not work:
+
+`git clone --recurse-submodules {URL}`
+
+Odds are, if you are reading this because you cloned through the GUI, so use the command below while in the repo to fix:
+
+`git submodule update --init --recursive`
+
+# When using
+
+Also note the sub-repository [SyncedLibraries](https://github.com/TribeTech4485/SyncedLibraries). The README should explain the basics.

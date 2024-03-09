@@ -4,7 +4,6 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj.DriverStation;
-import java.util.ArrayList;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
@@ -28,12 +27,12 @@ public class ManipulatorSpeedCommand extends Command {
     this.tolerance = tolerance;
     motors = manipulator.getMotors();
     encoders = manipulator.getEncoders();
-    ArrayList<PIDController> pidList = new ArrayList<PIDController>();
+    PIDController[] pidList = new PIDController[motors.length];
     for (int i = 0; i < motors.length; i++) {
-      pidList.add(new PIDController(kP, kI, kD));
-      pidList.get(pidList.size() - 1).setTolerance(tolerance);
+      pidList[i] = new PIDController(kP, kI, kD);
+      pidList[i].setTolerance(tolerance);
     }
-    pid = pidList.toArray(new PIDController[0]);
+    pid = pidList;
 
     addRequirements(manipulator);
   }
