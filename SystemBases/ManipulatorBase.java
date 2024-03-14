@@ -259,6 +259,12 @@ public abstract class ManipulatorBase extends SubsystemBase {
     }
   }
 
+  public void setCurrentLimit(int limit) {
+    for (CANSparkMax motor : motors) {
+      motor.setSmartCurrentLimit(limit);
+    }
+  }
+
   /** Use to invert specific motors {@link #setInverted(boolean)} */
   public void invertSpecificMotors(boolean inverted, int... motorIndexes) {
     for (int index : motorIndexes) {
