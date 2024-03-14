@@ -14,6 +14,10 @@ public class BasicFunctions {
     }
   }
 
+  public static double smartExp(double x, double exponent) {
+    return Math.pow(x, exponent) * Math.signum(x);
+  }
+
   public static interface ControllerRunnable {
     public void run(ControllerBase controller);
   }

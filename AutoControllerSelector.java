@@ -38,7 +38,7 @@ public class AutoControllerSelector {
    * potential future use.
    */
   public ControllerBase getController() {
-    System.out.println("Getting controller");
+    // System.out.println("Getting controller");
     if (controllers == null) {
       return ghostController;
     }

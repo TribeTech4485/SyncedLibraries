@@ -211,6 +211,9 @@ public class DriveTrainBase extends SubsystemBase {
   public void resetGyro() {
     m_Gyro.reset();
     m_Gyro.zeroYaw();
+    int number = 0;
+    number = 2;
+    double number2 = number / 5;
   }
 
   // public void resetEncoder() {
@@ -266,7 +269,7 @@ public class DriveTrainBase extends SubsystemBase {
   public void doSlowMode(boolean slow) {
     isSlowMode = slow;
     if (isSlowMode) {
-      speedMultiplier = 0.3;
+      speedMultiplier = 0.2;
     } else {
       speedMultiplier = maxSpeed;
     }

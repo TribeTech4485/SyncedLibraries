@@ -1,5 +1,6 @@
 package frc.robot.SyncedLibraries;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import edu.wpi.first.wpilibj.Joystick;
@@ -146,26 +147,26 @@ public class Controllers {
     private void initAsJoystick(int port) {
       this.commObjectJoystick = new CommandJoystick(port);
       this.objectJoystick = commObjectJoystick.getHID();
-      this.A = () -> new Trigger(() -> false);
-      this.B = () -> new Trigger(() -> false);
-      this.X = () -> new Trigger(() -> false);
-      this.Y = () -> new Trigger(() -> false);
-      this.LeftBumper = () -> new Trigger(() -> false);
-      this.RightBumper = () -> new Trigger(() -> false);
-      this.Share = () -> new Trigger(() -> false);
-      this.Options = () -> new Trigger(() -> false);
-      this.LeftTrigger = () -> new Trigger(() -> false);
-      this.RightTrigger = () -> new Trigger(() -> false);
-      this.PovUp = () -> new Trigger(() -> false);
-      this.PovUpLeft = () -> new Trigger(() -> false);
-      this.PovUpRight = () -> new Trigger(() -> false);
-      this.PovDown = () -> new Trigger(() -> false);
-      this.PovDownLeft = () -> new Trigger(() -> false);
-      this.PovDownRight = () -> new Trigger(() -> false);
-      this.PovLeft = () -> new Trigger(() -> false);
-      this.PovRight = () -> new Trigger(() -> false);
-      this.LeftStickPress = () -> new Trigger(() -> false);
-      this.RightStickPress = () -> new Trigger(() -> false);
+      this.A = () -> commObjectJoystick.button(1);
+      this.B = () -> commObjectJoystick.button(2);
+      this.X = () -> commObjectJoystick.button(3);
+      this.Y = () -> commObjectJoystick.button(4);
+      this.LeftBumper = () -> commObjectJoystick.button(5);
+      this.RightBumper = () -> commObjectJoystick.button(6);
+      this.Share = () -> commObjectJoystick.button(7);
+      this.Options = () -> commObjectJoystick.button(8);
+      this.LeftTrigger = () -> commObjectJoystick.button(9);
+      this.RightTrigger = () -> commObjectJoystick.button(10);
+      this.PovUp = () -> commObjectJoystick.button(11);
+      this.PovUpLeft = () -> commObjectJoystick.button(12);
+      this.PovUpRight = () -> commObjectJoystick.button(13);
+      this.PovDown = () -> commObjectJoystick.button(14);
+      this.PovDownLeft = () -> commObjectJoystick.button(15);
+      this.PovDownRight = () -> commObjectJoystick.button(16);
+      this.PovLeft = () -> commObjectJoystick.button(17);
+      this.PovRight = () -> commObjectJoystick.button(18);
+      this.LeftStickPress = () -> commObjectJoystick.button(19);
+      this.RightStickPress = () -> commObjectJoystick.button(20);
     }
 
     private void initAsPS4(int port) {
@@ -249,6 +250,8 @@ public class Controllers {
         return objectPS4.getLeftX();
       } else if (isXbox) {
         return objectX.getLeftX();
+      } else if (isJoystick) {
+        return objectJoystick.getX();
       } else {
         return 0;
       }
@@ -262,6 +265,8 @@ public class Controllers {
         return objectPS4.getLeftY();
       } else if (isXbox) {
         return objectX.getLeftY();
+      } else if (isJoystick) {
+        return objectJoystick.getY();
       } else {
         return 0;
       }
@@ -275,6 +280,8 @@ public class Controllers {
         return objectPS4.getRightX();
       } else if (isXbox) {
         return objectX.getRightX();
+      } else if (isJoystick) {
+        return objectJoystick.getZ();
       } else {
         return 0;
       }
@@ -288,6 +295,8 @@ public class Controllers {
         return objectPS4.getRightY();
       } else if (isXbox) {
         return objectX.getRightY();
+      } else if (isJoystick) {
+        return objectJoystick.getThrottle();
       } else {
         return 0;
       }

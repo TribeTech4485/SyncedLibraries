@@ -16,6 +16,7 @@ public class TeleDriveCommandBase extends Command {
   /** Up to 3 drivers */
   protected double[][] ys = new double[3][4];
   DriveTrainBase driveTrain;
+  private boolean straightMode = false;
 
   /**
    * @deprecated Use AutoControllerSelectors instead
@@ -48,9 +49,14 @@ public class TeleDriveCommandBase extends Command {
     if (swerveDrive) {
       // TODO: Add swerve drive support
     } else {
-      if (driveTrain.getCurrentCommand() == null) {
+      // if (driveTrain.getCurrentCommand() == null) {
+        if (Math.abs(ys[0][0] - ys[0][1]) <= 0.05 || straightMode) {
+          double newY = (ys[0][0] + ys[0][1]) / 2;
+          ys[0][0] = newY;
+          ys[0][1] = newY;
+        }
         driveTrain.doTankDrive(ys[0][0], ys[0][1]);
-      }
+      // }
     }
 
     // This is a warning to the programmer that they should override this method
@@ -59,6 +65,10 @@ public class TeleDriveCommandBase extends Command {
       DriverStation.reportWarning("TeleDriveCommandBase: execute() not overridden.\n" +
           "Nothing is wrong with this, but reccomended to put further joystick controls here.", false);
     }
+  }
+
+  public void straightDrive(boolean straight) {
+    straightMode = straight;
   }
 
   @Override
@@ -74,7 +84,7 @@ public class TeleDriveCommandBase extends Command {
   protected double[][] getJoys() {
     if (controllerSelectors != null) {
       double[][] joys = new double[3][4];
-      for (int i = 0; i < joys.length; i++) {
+      for (int i = 0; i < controllerSelectors.length; i++) {
         if (controllerSelectors[i] == null) {
           joys[i] = zeros();
           continue;
