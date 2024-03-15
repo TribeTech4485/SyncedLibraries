@@ -265,6 +265,13 @@ public abstract class ManipulatorBase extends SubsystemBase {
     }
   }
 
+  public void setRampRate(int rate) {
+    for (CANSparkMax motor : motors) {
+      motor.setOpenLoopRampRate(rate);
+      motor.setClosedLoopRampRate(rate);
+    }
+  }
+
   /** Use to invert specific motors {@link #setInverted(boolean)} */
   public void invertSpecificMotors(boolean inverted, int... motorIndexes) {
     for (int index : motorIndexes) {

@@ -211,9 +211,6 @@ public class DriveTrainBase extends SubsystemBase {
   public void resetGyro() {
     m_Gyro.reset();
     m_Gyro.zeroYaw();
-    int number = 0;
-    number = 2;
-    double number2 = number / 5;
   }
 
   // public void resetEncoder() {
@@ -265,7 +262,6 @@ public class DriveTrainBase extends SubsystemBase {
     }
   }
 
-  /** Artificial speed limit, 1/3 */
   public void doSlowMode(boolean slow) {
     isSlowMode = slow;
     if (isSlowMode) {
@@ -273,6 +269,11 @@ public class DriveTrainBase extends SubsystemBase {
     } else {
       speedMultiplier = maxSpeed;
     }
+  }
+
+  /** AKA set speed multiplier */
+  public void doSlowMode(double speed) {
+    speedMultiplier = Math.max(Math.min(speed, maxSpeed), -maxSpeed);
   }
 
   public void stop() {
