@@ -202,7 +202,7 @@ public abstract class ManipulatorBase extends SubsystemBase {
   // ===================== Utility Methods ===================== //
 
   /** Adds all the encoders from the motors into the encoders list */
-  private void updateEncoders() {
+  protected void updateEncoders() {
     encoders.clear();
     for (CANSparkMax motor : motors) {
       encoders.add(motor.getEncoder());

@@ -16,7 +16,7 @@ public class ManipulatorSpeedCommand extends Command {
   private PIDController[] pid;
   private CANSparkMax[] motors;
   private RelativeEncoder[] encoders;
-  public int onTargetCounterStart = 5;
+  public int onTargetCounterStart = 1;
   private int onTargetCounter = onTargetCounterStart;
   public boolean atSpeed = false;
   
