@@ -9,13 +9,14 @@ import frc.robot.SyncedLibraries.Controllers.ControllerBase;
 public class TeleDriveCommandBase extends Command {
   protected ControllerBase[] controllers = null;
   protected AutoControllerSelector[] controllerSelectors = null;
-  protected boolean swerveDrive = false;
+  protected final boolean swerveDrive;
   protected double deadBand = 0.1;
   /** Set to false to disable warning upon startup */
   protected boolean defaultExecute = true;
   /** Up to 3 drivers */
   protected double[][] ys = new double[3][4];
   DriveTrainBase driveTrain;
+  SwerveDriveBase swerveTrain;
   private boolean straightMode = false;
 
   /**
@@ -29,11 +30,19 @@ public class TeleDriveCommandBase extends Command {
     this.controllers = controller;
   }
 
-  public TeleDriveCommandBase(DriveTrainBase driveTrain, boolean isSwerveDrive,
+  public TeleDriveCommandBase(DriveTrainBase driveTrain,
       AutoControllerSelector... controllerSelector) {
     addRequirements(driveTrain);
     this.driveTrain = driveTrain;
-    swerveDrive = isSwerveDrive;
+    swerveDrive = false;
+    this.controllerSelectors = controllerSelector;
+  }
+
+  public TeleDriveCommandBase(SwerveDriveBase driveTrain,
+      AutoControllerSelector... controllerSelector) {
+    addRequirements(driveTrain);
+    this.driveTrain = null;
+    swerveDrive = true;
     this.controllerSelectors = controllerSelector;
   }
 
@@ -47,7 +56,7 @@ public class TeleDriveCommandBase extends Command {
     SmartDashboard.putNumber("Left Y", ys[0][0]);
     SmartDashboard.putNumber("Right Y", ys[0][1]);
     if (swerveDrive) {
-      // TODO: Add swerve drive support
+      swerveTrain.update(false, ys[0][0], ys[0][2], ys[0][1]);
     } else {
       // if (driveTrain.getCurrentCommand() == null) {
         if (Math.abs(ys[0][0] - ys[0][1]) <= 0.05 || straightMode) {
