@@ -6,6 +6,7 @@ package frc.robot.SyncedLibraries.SystemBases;
 
 import com.revrobotics.CANSparkBase.ControlType;
 import com.ctre.phoenix6.hardware.CANcoder;
+import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkPIDController;
@@ -29,6 +30,8 @@ public class SwerveDriveBase extends SubsystemBase {
    */
 
   private SwerveModule[] modules;
+  private AHRS navx;
+  private double speedTurnAngle = 45;
 
   /**
    * Represents a swerve drive base that consists of multiple swerve modules.
@@ -67,6 +70,19 @@ public class SwerveDriveBase extends SubsystemBase {
     }
   }
 
+  public void enableFieldCentric(AHRS navx) {
+    this.navx = navx;
+  }
+
+  public void disableFieldCentric() {
+    enableFieldCentric(null);
+  }
+
+  /** Angle at which the wheels will be if going full speed and full turn */
+  public void setSpeedTurnAngle(double angle) {
+    speedTurnAngle = angle;
+  }
+
   @Override
   public void periodic() {
     for (SwerveModule module : modules) {
@@ -74,19 +90,64 @@ public class SwerveDriveBase extends SubsystemBase {
     }
   }
 
-  /** @param direction angle in degrees from positive x direction */
-  public void update(double power, double direction, double rotation) {
-    double[] directions = new double[4];
-    double[] speeds = new double[4];
+  /**
+   * hello
+   * Updates the swerve drive base with the specified parameters.
+   * If inPolarCoords is true, a is the magnitude and b is the angle in degrees.
+   * If inPolarCoords is false, a is the x component and b is the y component.
+   */
+  public void update(boolean inPolarCoords, double a, double b, double rotation) {
+    double angle;
+    double speed;
+    if (inPolarCoords) {
+      speed = a;
+      angle = b;
+    } else {
+      double square = Math.sqrt(a * a + b * b);
+      speed = square / (square / Math.max(Math.abs(a), Math.abs(b)));
+      angle = Units.radiansToDegrees(Math.atan2(a, b));
+    }
+
+    if (navx != null) {
+      angle -= navx.getAngle();
+    }
+    // Reorder wheels based on angle
+    SwerveModule[] wheels = new SwerveModule[4];
+    double unwrapped = unWrap(angle);
+    if (unwrapped < -135 || unwrapped > 135) {
+      // left
+      wheels[0] = modules[2];
+      wheels[1] = modules[3];
+      wheels[2] = modules[0];
+      wheels[3] = modules[1];
+    } else if (unwrapped < -45) {
+      // bottom
+      wheels[0] = modules[1];
+      wheels[1] = modules[2];
+      wheels[2] = modules[3];
+      wheels[3] = modules[0];
+    } else if (unwrapped < 45) {
+      // right
+      wheels[0] = modules[0];
+      wheels[1] = modules[1];
+      wheels[2] = modules[2];
+      wheels[3] = modules[3];
+    } else {
+      // top
+      wheels[0] = modules[3];
+      wheels[1] = modules[0];
+      wheels[2] = modules[1];
+      wheels[3] = modules[2];
+    }
+
     for (int i = 0; i < 4; i++) {
-      // TODO: Find what directions to turn to
-      directions[i] = 0;
+      // reverse rotate wheels behind
+      double turnModifier = i % 2 == 0 ? 1 : -1;
+      turnModifier *= rotation * speedTurnAngle;
+      double _angle = angle + turnModifier;
 
-      // TODO: Find what speeds to drive at
-      speeds[i] = 0.5;
-
-      modules[i].setTurnPosition(directions[i]);
-      modules[i].setPower(speeds[i]);
+      wheels[i].setTurnPosition(_angle);
+      wheels[i].setPower(speed);
     }
   }
 
@@ -121,6 +182,16 @@ public class SwerveDriveBase extends SubsystemBase {
     for (SwerveModule module : modules) {
       module.setBrakeMode(brake);
     }
+  }
+
+  private double unWrap(double angle) {
+    while (angle > 180) {
+      angle -= 360;
+    }
+    while (angle < -180) {
+      angle += 360;
+    }
+    return angle;
   }
 
   private class SwerveModule {
@@ -225,13 +296,8 @@ public class SwerveDriveBase extends SubsystemBase {
     /** If value is greater than 180, it will be wrapped to -180 */
     private double unWrapError() {
       double error = getTargetTurnPosition() - getTurnPosition();
-      while (error > 180) {
-        error -= 360;
-      }
-      while (error < -180) {
-        error += 360;
-      }
-      return error;
+
+      return unWrap(error);
     }
 
     public void setBrakeMode(boolean brake) {
