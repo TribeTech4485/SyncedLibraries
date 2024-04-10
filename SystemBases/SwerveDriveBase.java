@@ -8,6 +8,7 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /** For info about positions and standards, read comment inside */
@@ -43,6 +44,8 @@ public class SwerveDriveBase extends SubsystemBase {
    *                           the wheels.
    * @param absoluteTurnOffset The initial positions of the turn motors in
    *                           degrees.
+   * @param turnMultiplier     The multiplier for the turn encoders (for gears).
+   *                           Recommended 150/7:1.
    * @param driveMotors        The motors that control the driving of the
    *                           wheels.
    * @param maxDriveSpeed      The maximum speed of the drive motors.
@@ -55,7 +58,7 @@ public class SwerveDriveBase extends SubsystemBase {
   public SwerveDriveBase(CANSparkMax[] turnMotors, CANcoder[] absoluteEncoders,
       double[] absoluteTurnOffset, double turnMultiplier,
       CANSparkMax[] driveMotors, double maxDriveSpeed, int[] amps,
-      double turnP, double turnI, double turnD) {
+      double turnP, double turnI, double turnD, double turnFF) {
 
     modules = new SwerveModule[4];
 
@@ -63,7 +66,7 @@ public class SwerveDriveBase extends SubsystemBase {
       modules[i] = new SwerveModule(turnMotors[i], absoluteEncoders[i],
           absoluteTurnOffset[i], turnMultiplier,
           driveMotors[i], maxDriveSpeed, amps,
-          turnP, turnI, turnD);
+          turnP, turnI, turnD, turnFF, i);
     }
   }
 
@@ -92,10 +95,11 @@ public class SwerveDriveBase extends SubsystemBase {
    * Updates the swerve drive base with the specified parameters.
    * If inPolarCoords is true, a is the magnitude and b is the angle in degrees.
    * If inPolarCoords is false, a is the x component and b is the y component.
+   * 
    * @param inPolarCoords Whether the inputs are in polar coordinates.
-   * @param a X or magnitude
-   * @param b Y or angle
-   * @param rotation The rotation
+   * @param a             X or magnitude
+   * @param b             Y or angle
+   * @param rotation      The rotation
    */
   public void update(boolean inPolarCoords, double a, double b, double rotation) {
     double angle;
@@ -147,13 +151,17 @@ public class SwerveDriveBase extends SubsystemBase {
     for (int i = 0; i < 4; i++) {
       // reverse rotate wheels behind
       double turnModifier = i % 2 == 0 ? 1 : -1;
-      double speedModifier = driveSpeedNoTurn;
+      // double speedModifier = driveSpeedNoTurn;
       turnModifier *= rotation * speedTurnAngle * driveSpeedNoTurn;
       double _angle = angle + turnModifier;
 
       wheels[i].setTurnPosition(_angle);
       wheels[i].setPower(wheelSpeed);
     }
+
+    SmartDashboard.putNumber("Drive Speed", driveSpeedNoTurn);
+    SmartDashboard.putNumber("Turn Speed", rotation);
+    SmartDashboard.putNumber("Angle", angle);
   }
 
   public void testSingleWheel(int index, double power, double angle) {

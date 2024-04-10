@@ -56,7 +56,9 @@ public class TeleDriveCommandBase extends Command {
     SmartDashboard.putNumber("Left Y", ys[0][0]);
     SmartDashboard.putNumber("Right Y", ys[0][1]);
     if (swerveDrive) {
-      swerveTrain.update(false, ys[0][0], ys[0][2], ys[0][1]);
+      // swerveTrain.update(false, ys[0][0], ys[0][2], ys[0][3]);
+      double theta = Math.atan2(ys[0][0], ys[0][2]);
+      swerveTrain.testSingleWheel(0, ys[0][1], theta);
     } else {
       // if (driveTrain.getCurrentCommand() == null) {
         if (Math.abs(ys[0][0] - ys[0][1]) <= 0.05 || straightMode) {

@@ -7,15 +7,18 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkPIDController;
 
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class SwerveModule {
   private CANSparkMax driveMotor;
   private CANSparkMax turnMotor;
   private RelativeEncoder turnEncoder;
   private RelativeEncoder driveEncoder;
+  private CANcoder absoluteEncoder;
   private SparkPIDController turnPID;
-  private double targetTurnPosition;
-  private double targetPower;
+  private double targetTurnPosition = 0;
+  private double targetPower = 0;
+  private int moduleNumber;
 
   /**
    * Constructs a SwerveModule object with the specified parameters.
@@ -26,6 +29,7 @@ public class SwerveModule {
    *                            encoder of the swerve module
    * @param initialTurnPosition the initial position of the turn encoder
    * @param turnMultiplier      the multiplier for the turn encoder (for gears)
+   *                            Reccomended 150/7:1
    * @param driveMotor          the CANSparkMax object representing the drive
    *                            motor of the swerve module
    * @param maxDriveSpeed       the maximum speed of the drive motor
@@ -41,7 +45,9 @@ public class SwerveModule {
   public SwerveModule(CANSparkMax turnMotor, CANcoder absoluteEncoder,
       double initialTurnPosition, double turnMultiplier,
       CANSparkMax driveMotor, double maxDriveSpeed, int[] amps,
-      double turnP, double turnI, double turnD) {
+      double turnP, double turnI, double turnD, double turnFF, int moduleNumber) {
+
+    this.moduleNumber = moduleNumber;
 
     this.driveMotor = driveMotor;
     this.turnMotor = turnMotor;
@@ -52,6 +58,7 @@ public class SwerveModule {
     this.turnMotor.setIdleMode(CANSparkMax.IdleMode.kBrake);
     setTurnAmps(amps[0]);
     this.turnEncoder = turnMotor.getEncoder();
+    this.absoluteEncoder = absoluteEncoder;
     this.turnEncoder.setPosition(
         absoluteEncoder.getPosition().getValue() * 360 - initialTurnPosition);
     this.turnEncoder.setPositionConversionFactor(turnMultiplier);
@@ -60,6 +67,7 @@ public class SwerveModule {
     turnPID.setP(turnP);
     turnPID.setI(turnI);
     turnPID.setD(turnD);
+    turnPID.setFF(turnFF);
     turnPID.setPositionPIDWrappingEnabled(true);
     turnPID.setPositionPIDWrappingMinInput(-180);
     turnPID.setPositionPIDWrappingMaxInput(180);
@@ -151,5 +159,9 @@ public class SwerveModule {
     }
 
     driveMotor.set(cosErr * targetPower);
+
+    SmartDashboard.putNumber("Module " + moduleNumber + " Angle", getTurnPosition());
+    SmartDashboard.putNumber("Module " + moduleNumber + " Angle Error", targetAngle - getTurnPosition());
+    SmartDashboard.putNumber("Module " + moduleNumber + " Power", targetPower);
   }
 }
