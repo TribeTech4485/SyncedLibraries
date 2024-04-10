@@ -61,10 +61,11 @@ public class AutoControllerSelector {
     return ghostController;
   }
 
-  public void addController(Integer... port) {
+  public AutoControllerSelector addController(Integer... port) {
     for (Integer i : port) {
       ports.add(i);
     }
+    return this;
   }
 
   public double getLeftY() {

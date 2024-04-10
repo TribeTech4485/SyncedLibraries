@@ -92,16 +92,23 @@ public class SwerveDriveBase extends SubsystemBase {
    * Updates the swerve drive base with the specified parameters.
    * If inPolarCoords is true, a is the magnitude and b is the angle in degrees.
    * If inPolarCoords is false, a is the x component and b is the y component.
+   * @param inPolarCoords Whether the inputs are in polar coordinates.
+   * @param a X or magnitude
+   * @param b Y or angle
+   * @param rotation The rotation
    */
   public void update(boolean inPolarCoords, double a, double b, double rotation) {
     double angle;
-    double speed;
+    double wheelSpeed;
+    double driveSpeedNoTurn;
     if (inPolarCoords) {
-      speed = a;
+      wheelSpeed = Math.max(Math.abs(a), Math.abs(rotation));
       angle = b;
+      driveSpeedNoTurn = a;
     } else {
       double square = Math.sqrt(a * a + b * b);
-      speed = square / (square / Math.max(Math.abs(a), Math.abs(b)));
+      driveSpeedNoTurn = square / (square / Math.max(Math.abs(a), Math.abs(b)));
+      wheelSpeed = square / (square / Math.max(Math.max(Math.abs(a), Math.abs(b)), Math.abs(rotation)));
       angle = Units.radiansToDegrees(Math.atan2(a, b));
     }
 
@@ -140,12 +147,18 @@ public class SwerveDriveBase extends SubsystemBase {
     for (int i = 0; i < 4; i++) {
       // reverse rotate wheels behind
       double turnModifier = i % 2 == 0 ? 1 : -1;
-      turnModifier *= rotation * speedTurnAngle;
+      double speedModifier = driveSpeedNoTurn;
+      turnModifier *= rotation * speedTurnAngle * driveSpeedNoTurn;
       double _angle = angle + turnModifier;
 
       wheels[i].setTurnPosition(_angle);
-      wheels[i].setPower(speed);
+      wheels[i].setPower(wheelSpeed);
     }
+  }
+
+  public void testSingleWheel(int index, double power, double angle) {
+    modules[index].setPower(power);
+    modules[index].setTurnPosition(angle);
   }
 
   public SwerveModule[] getModules() {
