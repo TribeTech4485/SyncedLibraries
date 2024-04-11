@@ -3,6 +3,7 @@ package frc.robot.SyncedLibraries.SystemBases;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.SyncedLibraries.AutoControllerSelector;
 import frc.robot.SyncedLibraries.Controllers.ControllerBase;
 
@@ -15,8 +16,9 @@ public class TeleDriveCommandBase extends Command {
   protected boolean defaultExecute = true;
   /** Up to 3 drivers */
   protected double[][] ys = new double[3][4];
-  DriveTrainBase driveTrain;
-  SwerveDriveBase swerveTrain;
+  protected DriveTrainBase driveTrain;
+  protected SwerveDriveBase swerveTrain;
+  protected Subsystem actualDrivetrain;
   private boolean straightMode = false;
 
   /**
@@ -48,26 +50,28 @@ public class TeleDriveCommandBase extends Command {
 
   @Override
   public void initialize() {
+    actualDrivetrain = swerveDrive ? swerveTrain : driveTrain;
   }
 
   @Override
   public void execute() {
     ys = getJoys();
-    SmartDashboard.putNumber("Left Y", ys[0][0]);
-    SmartDashboard.putNumber("Right Y", ys[0][1]);
     if (swerveDrive) {
       // swerveTrain.update(false, ys[0][0], ys[0][2], ys[0][3]);
       double theta = Math.atan2(ys[0][0], ys[0][2]);
       swerveTrain.testSingleWheel(0, ys[0][1], theta);
+      SmartDashboard.putNumber("Joystick X", ys[0][0]);
+      SmartDashboard.putNumber("Joystick Y", ys[0][1]);
+      SmartDashboard.putNumber("Joystick Rotate", ys[0][2]);
     } else {
-      // if (driveTrain.getCurrentCommand() == null) {
+      SmartDashboard.putNumber("Left Y", ys[0][0]);
+      SmartDashboard.putNumber("Right Y", ys[0][1]);
         if (Math.abs(ys[0][0] - ys[0][1]) <= 0.05 || straightMode) {
           double newY = (ys[0][0] + ys[0][1]) / 2;
           ys[0][0] = newY;
           ys[0][1] = newY;
         }
         driveTrain.doTankDrive(ys[0][0], ys[0][1]);
-      // }
     }
 
     // This is a warning to the programmer that they should override this method

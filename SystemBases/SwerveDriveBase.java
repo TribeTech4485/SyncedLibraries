@@ -160,8 +160,8 @@ public class SwerveDriveBase extends SubsystemBase {
     }
 
     SmartDashboard.putNumber("Drive Speed", driveSpeedNoTurn);
-    SmartDashboard.putNumber("Turn Speed", rotation);
-    SmartDashboard.putNumber("Angle", angle);
+    SmartDashboard.putNumber("Drive Turn Speed", rotation);
+    SmartDashboard.putNumber("Drive Angle", angle);
   }
 
   public void testSingleWheel(int index, double power, double angle) {
