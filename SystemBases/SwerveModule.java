@@ -151,7 +151,7 @@ public class SwerveModule {
     if (absPos > 180 / 2) {
       targetAngle += 180;
     }
-    turnPID.setReference(targetAngle, ControlType.kSmartMotion);
+    turnPID.setReference(targetAngle, ControlType.kPosition);
 
     double cosErr = (Math.cos(Units.degreesToRadians(position)));
     if (Math.abs(cosErr) < 0.1) {
@@ -161,6 +161,7 @@ public class SwerveModule {
     driveMotor.set(cosErr * targetPower);
 
     SmartDashboard.putNumber("Module " + moduleNumber + " Angle", getTurnPosition());
+    SmartDashboard.putNumber("Module " + moduleNumber + " Target", targetAngle);
     SmartDashboard.putNumber("Module " + moduleNumber + " Angle Error", targetAngle - getTurnPosition());
     SmartDashboard.putNumber("Module " + moduleNumber + " Power", targetPower);
   }

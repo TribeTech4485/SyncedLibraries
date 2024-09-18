@@ -46,6 +46,7 @@ public class TeleDriveCommandBase extends Command {
     this.driveTrain = null;
     swerveDrive = true;
     this.controllerSelectors = controllerSelector;
+    this.swerveTrain = driveTrain;
   }
 
   @Override
@@ -60,9 +61,10 @@ public class TeleDriveCommandBase extends Command {
       // swerveTrain.update(false, ys[0][0], ys[0][2], ys[0][3]);
       double theta = Math.atan2(ys[0][0], ys[0][2]);
       swerveTrain.testSingleWheel(0, ys[0][1], theta);
-      SmartDashboard.putNumber("Joystick X", ys[0][0]);
-      SmartDashboard.putNumber("Joystick Y", ys[0][1]);
-      SmartDashboard.putNumber("Joystick Rotate", ys[0][2]);
+      SmartDashboard.putNumber("Joystick Theta", theta);
+      SmartDashboard.putNumber("Joystick X", ys[0][2]);
+      SmartDashboard.putNumber("Joystick Y", ys[0][0]);
+      SmartDashboard.putNumber("Joystick Rotate", ys[0][3]);
     } else {
       SmartDashboard.putNumber("Left Y", ys[0][0]);
       SmartDashboard.putNumber("Right Y", ys[0][1]);
@@ -88,7 +90,7 @@ public class TeleDriveCommandBase extends Command {
 
   @Override
   public void end(boolean interrupted) {
-    driveTrain.stop();
+    // driveTrain.stop();
   }
 
   @Override
