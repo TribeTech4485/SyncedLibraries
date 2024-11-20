@@ -1,7 +1,7 @@
 package frc.robot.SyncedLibraries;
 
 import edu.wpi.first.wpilibj.DriverStation;
-import frc.robot.SyncedLibraries.Controllers.ControllerBase;
+import frc.robot.SyncedLibraries.SystemBases.ControllerBase;
 import frc.robot.SyncedLibraries.SystemBases.DriveTrainBase;
 import frc.robot.SyncedLibraries.SystemBases.ManipulatorBase;
 

@@ -1,7 +1,8 @@
 package frc.robot.SyncedLibraries;
 
 import java.util.ArrayList;
-import frc.robot.SyncedLibraries.Controllers.ControllerBase;
+
+import frc.robot.SyncedLibraries.SystemBases.ControllerBase;
 
 /**
  * This class is used to select the controller that is actively being used.

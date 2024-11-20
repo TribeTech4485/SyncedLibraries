@@ -5,7 +5,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.SyncedLibraries.AutoControllerSelector;
-import frc.robot.SyncedLibraries.Controllers.ControllerBase;
 
 public class TeleDriveCommandBase extends Command {
   protected ControllerBase[] controllers = null;
@@ -17,7 +16,7 @@ public class TeleDriveCommandBase extends Command {
   /** Up to 3 drivers */
   protected double[][] ys = new double[3][4];
   protected DriveTrainBase driveTrain;
-  protected SwerveDriveBase swerveTrain;
+  // protected SwerveDriveBase swerveTrain; // TODO
   protected Subsystem actualDrivetrain;
   private boolean straightMode = false;
 
@@ -40,6 +39,7 @@ public class TeleDriveCommandBase extends Command {
     this.controllerSelectors = controllerSelector;
   }
 
+  /* // TODO
   public TeleDriveCommandBase(SwerveDriveBase driveTrain,
       AutoControllerSelector... controllerSelector) {
     addRequirements(driveTrain);
@@ -48,10 +48,12 @@ public class TeleDriveCommandBase extends Command {
     this.controllerSelectors = controllerSelector;
     this.swerveTrain = driveTrain;
   }
+    */
 
   @Override
   public void initialize() {
-    actualDrivetrain = swerveDrive ? swerveTrain : driveTrain;
+    // actualDrivetrain = swerveDrive ? swerveTrain : driveTrain; // TODO
+    actualDrivetrain = driveTrain;
   }
 
   @Override
@@ -60,7 +62,7 @@ public class TeleDriveCommandBase extends Command {
     if (swerveDrive) {
       // swerveTrain.update(false, ys[0][0], ys[0][2], ys[0][3]);
       double theta = Math.atan2(ys[0][0], ys[0][2]);
-      swerveTrain.testSingleWheel(0, ys[0][1], theta);
+      // swerveTrain.testSingleWheel(0, ys[0][1], theta); // TODO
       SmartDashboard.putNumber("Joystick Theta", theta);
       SmartDashboard.putNumber("Joystick X", ys[0][2]);
       SmartDashboard.putNumber("Joystick Y", ys[0][0]);
