@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.LinkedList;
 
+/** USED FOR TANK-DRIVE BASES */
 public class DriveTrainBase extends SubsystemBase {
   private LinkedList<CANSparkMax> leftMotors = new LinkedList<CANSparkMax>(); // define in constructor
   private LinkedList<CANSparkMax> rightMotors = new LinkedList<CANSparkMax>(); // define in constructor

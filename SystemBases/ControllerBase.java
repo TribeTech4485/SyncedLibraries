@@ -14,7 +14,7 @@ import frc.robot.SyncedLibraries.Controllers;
 
 /**
  * A class to contain all controller needs
- * If joystick, use left joystick for XY and objectJoystick for buttons
+ * If joystick, use left joystick for XY and the buttons list for buttons
  */
 public class ControllerBase {
   public boolean isPS4;
@@ -51,11 +51,16 @@ public class ControllerBase {
   public Supplier<Trigger> PovRight;
   public Supplier<Trigger> LeftStickPress;
   public Supplier<Trigger> RightStickPress;
+  public Supplier<Trigger> ESTOPCondition;
+  /** <b>IS ONE INDEXED TO MATH WITH getRawButton() */
+  public Supplier<Trigger>[] buttons;
 
   /**
    * A class to handle controllers.
-   * Ghost controller is a controller that all axes and buttons return 0/false.<p>
-   * <b>Currently this only creates an xbox controller. Use {@link #ControllerBase(int, boolean, boolean, boolean)} for more options.</b>
+   * Ghost controller is a controller that all axes and buttons return 0/false.
+   * <p>
+   * <b>Currently this only creates an xbox controller. Use
+   * {@link #ControllerBase(int, boolean, boolean, boolean)} for more options.</b>
    * 
    * @param port The port of the controller. -1 for ghost controller.
    */
@@ -117,6 +122,25 @@ public class ControllerBase {
     this.PovRight = () -> commObjectJoystick.button(18);
     this.LeftStickPress = () -> commObjectJoystick.button(19);
     this.RightStickPress = () -> commObjectJoystick.button(20);
+
+    int buttonCount = objectJoystick.getButtonCount();
+    buttons = new Supplier[buttonCount + 1];
+    for (int i = 0; i < buttonCount + 1; i++) {
+      if (i == 0) {
+        buttons[i] = () -> new Trigger(() -> false);
+        continue;
+      }
+      final int j = i;
+      buttons[i] = () -> commObjectJoystick.button(j);
+    }
+
+    // All the buttons on the base section
+    ESTOPCondition = () -> commObjectJoystick.button(7)
+        .and(commObjectJoystick.button(8))
+        .and(commObjectJoystick.button(9))
+        .and(commObjectJoystick.button(10))
+        .and(commObjectJoystick.button(11))
+        .and(commObjectJoystick.button(12));
   }
 
   private void initAsPS4(int port) {
@@ -142,6 +166,25 @@ public class ControllerBase {
     this.PovRight = () -> commObjectPS4.povRight();
     this.LeftStickPress = () -> commObjectPS4.L3();
     this.RightStickPress = () -> commObjectPS4.L3();
+
+    int buttonCount = objectPS4.getButtonCount();
+    buttons = new Supplier[buttonCount + 1];
+    for (int i = 0; i < buttonCount + 1; i++) {
+      if (i == 0) {
+        buttons[i] = () -> new Trigger(() -> false);
+        continue;
+      }
+      final int j = i;
+      buttons[i] = () -> commObjectPS4.button(j);
+    }
+
+    // All the buttons your hands are already resting on
+    ESTOPCondition = () -> commObjectPS4.L3()
+        .and(commObjectPS4.R3())
+        .and(commObjectPS4.L1())
+        .and(commObjectPS4.R1())
+        .and(commObjectPS4.L2())
+        .and(commObjectPS4.R2());
   }
 
   private void initAsXbox(int port) {
@@ -167,6 +210,25 @@ public class ControllerBase {
     this.PovRight = () -> commObjectX.povRight();
     this.LeftStickPress = () -> commObjectX.leftStick();
     this.RightStickPress = () -> commObjectX.rightStick();
+
+    int buttonCount = objectX.getButtonCount();
+    buttons = new Supplier[buttonCount + 1];
+    for (int i = 0; i < buttonCount + 1; i++) {
+      if (i == 0) {
+        buttons[i] = () -> new Trigger(() -> false);
+        continue;
+      }
+      final int j = i;
+      buttons[i] = () -> commObjectX.button(j);
+    }
+
+    // All the buttons your hands are already resting on
+    ESTOPCondition = () -> commObjectX.leftStick()
+        .and(commObjectX.rightStick())
+        .and(commObjectX.leftBumper())
+        .and(commObjectX.rightBumper())
+        .and(commObjectX.leftTrigger())
+        .and(commObjectX.rightTrigger());
   }
 
   private void initAsGhost() {
@@ -190,6 +252,14 @@ public class ControllerBase {
     this.PovRight = () -> new Trigger(() -> false);
     this.LeftStickPress = () -> new Trigger(() -> false);
     this.RightStickPress = () -> new Trigger(() -> false);
+
+    buttons = new Supplier[20];
+    for (int i = 0; i < 20; i++) {
+      final int j = i;
+      buttons[i] = () -> new Trigger(() -> false);
+    }
+
+    ESTOPCondition = () -> new Trigger(() -> false);
   }
 
   public double getLeftXRaw() {
@@ -399,5 +469,29 @@ public class ControllerBase {
       return objectJoystick.isConnected();
     }
     return false;
+  }
+
+  public boolean getRawButton(int button) {
+    if (isPS4) {
+      return objectPS4.getRawButton(button);
+    } else if (isXbox) {
+      return objectX.getRawButton(button);
+    } else if (isJoystick) {
+      return objectJoystick.getRawButton(button);
+    } else {
+      return false;
+    }
+  }
+
+  public int getPOV() {
+    if (isPS4) {
+      return objectPS4.getPOV();
+    } else if (isXbox) {
+      return objectX.getPOV();
+    } else if (isJoystick) {
+      return objectJoystick.getPOV();
+    } else {
+      return -1;
+    }
   }
 }

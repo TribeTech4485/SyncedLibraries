@@ -3,6 +3,7 @@ package frc.robot.SyncedLibraries;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.SyncedLibraries.SystemBases.ControllerBase;
 import frc.robot.SyncedLibraries.SystemBases.DriveTrainBase;
+import frc.robot.SyncedLibraries.SystemBases.Estoppable;
 import frc.robot.SyncedLibraries.SystemBases.ManipulatorBase;
 
 public class BasicFunctions {
@@ -27,10 +28,12 @@ public class BasicFunctions {
    * <p>
    * YES, ACTUALLY
    * @param DriveTrain 
+   * @deprecated Use {@link #KILLIT()} instead
    */
+  @Deprecated
   public static void KILLIT(DriveTrainBase DriveTrain) {
     DriverStation.reportError("KILLING IT", true);
-    for (ManipulatorBase manipulator : ManipulatorBase.allManipulators) {
+    for (Estoppable manipulator : ManipulatorBase.allManipulators) {
       DriverStation.reportWarning("ESTOP " + manipulator.getName(), false);
       manipulator.ESTOP();
       System.out.println("Done");
@@ -39,6 +42,23 @@ public class BasicFunctions {
     DriverStation.reportWarning("ESTOP DriveTrain", false);
     DriveTrain.ESTOP();
     System.out.println("Done");
+
+    DriverStation.reportError("KILLED IT, EXITING NOW", false);
+    System.exit(0);
+  }
+
+  /**
+   * <b>ONLY FOR USE IN EMERGENCY</b>
+   * <p>
+   * YES, ACTUALLY
+   */
+  public static void KILLIT() {
+    DriverStation.reportError("KILLING IT", true);
+    for (Estoppable manipulator : ManipulatorBase.allManipulators) {
+      DriverStation.reportWarning("ESTOP " + manipulator.getName(), false);
+      manipulator.ESTOP();
+      System.out.println("Done");
+    }
 
     DriverStation.reportError("KILLED IT, EXITING NOW", false);
     System.exit(0);

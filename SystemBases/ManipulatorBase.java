@@ -9,7 +9,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /**
  * <strong> To impliment: </strong>
@@ -27,8 +26,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
  * <p>
  * You also can use standard subsystem methods
  */
-public abstract class ManipulatorBase extends SubsystemBase {
-  public static LinkedList<ManipulatorBase> allManipulators = new LinkedList<ManipulatorBase>();
+public abstract class ManipulatorBase extends Estoppable {
+  /** List of all manipulators for emergency stop */
+  public static LinkedList<Estoppable> allManipulators = new LinkedList<Estoppable>();
   ManipulatorMoveCommand moveCommand;
   ManipulatorSpeedCommand speedCommand;
   double positionMultiplier = 1;
@@ -318,18 +318,12 @@ public abstract class ManipulatorBase extends SubsystemBase {
     SmartDashboard.putBoolean(getName() + " At Speed/Power", isAtSpeed() || isAtPosition());
   }
 
-  /**
-   * <b>EMERGENCY STOP</b>
-   * <p>
-   * WILL STOP THE MANIPULATOR
-   * <p>
-   * Recomended to set brake mode to true, unless if the manipulator coulde be
-   * in a position that would be dangerous or would trap a piece.
-   */
-  public abstract void ESTOP();
-
   public abstract Command test();
 
+  /**
+   * This will always be silently called upon initialization of any manipulator
+   * subclass, adds itself to the list of all manipulators for emergency stop
+   */
   public ManipulatorBase() {
     allManipulators.add(this);
   }

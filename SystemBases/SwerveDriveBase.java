@@ -17,21 +17,17 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.SyncedLibraries.DrivetrainMode;
 
 /** Represents a swerve drive style drivetrain. */
-public class SwerveDriveBase extends SubsystemBase {
+public class SwerveDriveBase extends Estoppable {
   public static final double kMaxSpeed = 1.0; // 3 meters per second // TODO: increase
-  public static final double kMaxAngularSpeed = 2 * Math.PI / 4; // 1/2 rotation per second
+  public static final double kMaxAngularSpeed = (2 * Math.PI) / 4; // 1/4 rotation per second
 
-  // For a square 3ft x 3ft robot, the wheelbase is 0.381 meters from center to
-  // module.
+  // The physical dimensions of the robot
   private final double _robotWidth;
   private final double _robotLength;
   private final double _robotWidthOffset;
   private final double _robotLengthOffset;
-
   private final Translation2d m_frontLeftLocation;
   private final Translation2d m_frontRightLocation;
   private final Translation2d m_backLeftLocation;
@@ -46,8 +42,6 @@ public class SwerveDriveBase extends SubsystemBase {
   private final SwerveModuleBase m_backLeft;
   private final SwerveModuleBase m_backRight;
 
-  int counter = 0;
-
   private final AHRS m_gyro;
   private final SwerveDriveKinematics m_kinematics;
   private final SwerveDriveOdometry m_odometry;
@@ -57,12 +51,11 @@ public class SwerveDriveBase extends SubsystemBase {
   private final SwerveModuleState[] lockPositions = generateLockPositions();
   private SwerveModuleState[] swerveModuleStates = lockPositions;
 
-  private DrivetrainMode drivetrainMode = DrivetrainMode.NORMAL;
+  private boolean locked = false;
   private boolean fieldRelative = true;
   private boolean brakeMode = false;
 
-  public boolean allowTurnMotors = true;
-  public boolean allowDriveMotors = true;
+  int counter = 0;
 
   /**
    * An instance for controlling a swerve drivetrain
@@ -112,17 +105,20 @@ public class SwerveDriveBase extends SubsystemBase {
             m_backLeft.getPosition(),
             m_backRight.getPosition()
         });
+
+    // Add this manipulator to the list of all manipulators for emergency stop
+    ManipulatorBase.allManipulators.add(this);
   }
 
   public void enableXLock() {
-    drivetrainMode = DrivetrainMode.LOCKED;
+    locked = true;
     setDriveBrakeMode(true);
     swerveModuleStates = lockPositions;
     setDesiredStates();
   }
 
   public void disableXLock() {
-    drivetrainMode = DrivetrainMode.NORMAL;
+    locked = false;
     setDriveBrakeMode(brakeMode);
   }
 
@@ -135,7 +131,8 @@ public class SwerveDriveBase extends SubsystemBase {
   }
 
   /**
-   * Method to drive the robot using joystick info.
+   * Method to drive the robot using joystick info.<br>
+   * All speeds are from -1 to 1.
    *
    * @param xSpeed              Speed of the robot in the x direction (forward).
    * @param ySpeed              Speed of the robot in the y direction (right).
@@ -147,32 +144,22 @@ public class SwerveDriveBase extends SubsystemBase {
   public void inputDrivingX_Y(double xSpeed, double ySpeed,
       double rotationSpeed, int centerOfRotationPOV) {
 
-    if (drivetrainMode == DrivetrainMode.NORMAL) {
+    if (!locked) {
       xSpeed *= kMaxSpeed;
       ySpeed *= kMaxSpeed;
       rotationSpeed *= kMaxAngularSpeed;
       Translation2d centerOfRotation = POVToTranslate2d(centerOfRotationPOV);
 
+      // Calculate the swerve module states from the requested speeds
       swerveModuleStates = m_kinematics.toSwerveModuleStates(
           // Account for time between updates
           ChassisSpeeds.discretize(
-              fieldRelative
-                  // if field relative
-                  ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                      xSpeed, -ySpeed, rotationSpeed,
-                      m_gyro.getRotation2d())
-                  // if robot relative
-                  : new ChassisSpeeds(xSpeed, -ySpeed, rotationSpeed),
+              ChassisSpeeds.fromFieldRelativeSpeeds(
+                  xSpeed, -ySpeed, rotationSpeed,
+                  fieldRelative ? m_gyro.getRotation2d() : Rotation2d.fromDegrees(0)),
               0.02),
           centerOfRotation);
     }
-  }
-
-  private void setDesiredStates() {
-    m_frontLeft.setDesiredState(swerveModuleStates[0]);
-    m_frontRight.setDesiredState(swerveModuleStates[1]);
-    m_backLeft.setDesiredState(swerveModuleStates[2]);
-    m_backRight.setDesiredState(swerveModuleStates[3]);
   }
 
   /** Used for using a POV joystick to rotate around corner of robot */
@@ -228,9 +215,7 @@ public class SwerveDriveBase extends SubsystemBase {
   @Override
   public void periodic() {
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
-    if (allowTurnMotors) {
-      setDesiredStates();
-    }
+    setDesiredStates();
 
     NetworkTablesSwervePublisherDesired.set(swerveModuleStates);
     NetworkTablesSwervePublisherCurrent.set(
@@ -241,11 +226,21 @@ public class SwerveDriveBase extends SubsystemBase {
             m_backRight.getState()
         });
 
-    SmartDashboard.putNumber("Gyro", m_gyro.getAngle());
-    SmartDashboard.putNumber("Gyro Rad", m_gyro.getAngle() / 180 * Math.PI);
+    SmartDashboard.putData("Gyro", m_gyro);
     updateOdometry();
   }
 
+  private void setDesiredStates() {
+    m_frontLeft.setDesiredState(swerveModuleStates[0]);
+    m_frontRight.setDesiredState(swerveModuleStates[1]);
+    m_backLeft.setDesiredState(swerveModuleStates[2]);
+    m_backRight.setDesiredState(swerveModuleStates[3]);
+  }
+
+  /**
+   * Positions to turn all the wheels inward<br>
+   * aka X Lock
+   */
   private SwerveModuleState[] generateLockPositions() {
     SwerveModuleState[] lockPositions = new SwerveModuleState[4];
     lockPositions[0] = new SwerveModuleState(0, new Rotation2d(1 * Math.PI / 4));
@@ -253,5 +248,15 @@ public class SwerveDriveBase extends SubsystemBase {
     lockPositions[2] = new SwerveModuleState(0, new Rotation2d(3 * Math.PI / 4));
     lockPositions[3] = new SwerveModuleState(0, new Rotation2d(5 * Math.PI / 4));
     return lockPositions;
+  }
+
+  /**
+   * Stops all motors and sets the robot to a safe state.<br>
+   * <b>ONLY FOR USE IN EMERGENCY</b>
+   * <p>
+   * Hopefully won't skid too far
+   */
+  public void ESTOP() {
+    enableXLock();
   }
 }
