@@ -15,16 +15,16 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class SwerveModuleBase extends SubsystemBase {
-  private final CANSparkMax m_driveMotor;
-  private final CANSparkMax m_turningMotor;
+  protected final CANSparkMax m_driveMotor;
+  protected final CANSparkMax m_turningMotor;
 
-  private final RelativeEncoder m_driveEncoder;
-  private final SparkAbsoluteEncoder m_turningEncoder;
+  protected final RelativeEncoder m_driveEncoder;
+  protected final SparkAbsoluteEncoder m_turningEncoder;
 
-  private final PIDController m_drivePIDController;
-  private final PIDController m_turnPIDController;
+  protected final PIDController m_drivePIDController;
+  protected final PIDController m_turnPIDController;
 
-  private final double driveGearRatio = 1 / (10 * Math.PI * 15 / 50); // 1 is the gear ratio when I find out
+  protected final double driveGearRatio = 1 / (10 * Math.PI * 15 / 50); // 1 is the gear ratio when I find out
 
   /**
    * Constructs a new SwerveModule.
@@ -48,7 +48,7 @@ public class SwerveModuleBase extends SubsystemBase {
     m_driveEncoder.setPositionConversionFactor(driveGearRatio);
     m_driveEncoder.setVelocityConversionFactor(driveGearRatio);
 
-    m_drivePIDController = new PIDController(0.1, 0, 0.01);
+    m_drivePIDController = new PIDController(0.5, 0, 0.01);
 
     // TURNING MOTOR SETUP
     m_turningMotor = turningMotor;
@@ -138,16 +138,16 @@ public class SwerveModuleBase extends SubsystemBase {
     }
   }
 
-  private double covertFromRadians(double radians) {
+  protected double covertFromRadians(double radians) {
     return (radians / (-2 * Math.PI)) + (1 / 2);
   }
 
-  private double convertToRadians(double position) {
+  protected double convertToRadians(double position) {
     return (-(position - (1 / 2))) * (2 * Math.PI);
   }
 
   /** Converts to radians */
-  private Rotation2d getEncoderPos() {
+  public Rotation2d getEncoderPos() {
     return new Rotation2d(convertToRadians(m_turningEncoder.getPosition()));
   }
 
@@ -157,5 +157,21 @@ public class SwerveModuleBase extends SubsystemBase {
 
   public CANSparkMax getDriveMotor() {
     return m_driveMotor;
+  }
+
+  public RelativeEncoder getDriveEncoder() {
+    return m_driveEncoder;
+  }
+
+  public SparkAbsoluteEncoder getTurnEncoder() {
+    return m_turningEncoder;
+  }
+
+  public PIDController getDrivePIDController() {
+    return m_drivePIDController;
+  }
+
+  public PIDController getTurnPIDController() {
+    return m_turnPIDController;
   }
 }

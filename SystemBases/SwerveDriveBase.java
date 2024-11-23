@@ -20,40 +20,42 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /** Represents a swerve drive style drivetrain. */
 public class SwerveDriveBase extends Estoppable {
+  /** Wheel speed */
   public static final double kMaxSpeed = 1.0; // 3 meters per second // TODO: increase
   public static final double kMaxAngularSpeed = (2 * Math.PI) / 4; // 1/4 rotation per second
 
   // The physical dimensions of the robot
-  private final double _robotWidth;
-  private final double _robotLength;
-  private final double _robotWidthOffset;
-  private final double _robotLengthOffset;
-  private final Translation2d m_frontLeftLocation;
-  private final Translation2d m_frontRightLocation;
-  private final Translation2d m_backLeftLocation;
-  private final Translation2d m_backRightLocation;
-  private final Translation2d m_frontLocation;
-  private final Translation2d m_rightLocation;
-  private final Translation2d m_backLocation;
-  private final Translation2d m_leftLocation;
+  protected final double _robotWidth;
+  protected final double _robotLength;
+  protected final double _robotWidthOffset;
+  protected final double _robotLengthOffset;
+  protected final Translation2d m_frontLeftLocation;
+  protected final Translation2d m_frontRightLocation;
+  protected final Translation2d m_backLeftLocation;
+  protected final Translation2d m_backRightLocation;
+  protected final Translation2d m_frontLocation;
+  protected final Translation2d m_rightLocation;
+  protected final Translation2d m_backLocation;
+  protected final Translation2d m_leftLocation;
 
-  private final SwerveModuleBase m_frontLeft;
-  private final SwerveModuleBase m_frontRight;
-  private final SwerveModuleBase m_backLeft;
-  private final SwerveModuleBase m_backRight;
+  protected final SwerveModuleBase m_frontLeft;
+  protected final SwerveModuleBase m_frontRight;
+  protected final SwerveModuleBase m_backLeft;
+  protected final SwerveModuleBase m_backRight;
+  protected final SwerveModuleBase[] modules;
 
-  private final AHRS m_gyro;
-  private final SwerveDriveKinematics m_kinematics;
-  private final SwerveDriveOdometry m_odometry;
-  private StructArrayPublisher<SwerveModuleState> NetworkTablesSwervePublisherDesired;
-  private StructArrayPublisher<SwerveModuleState> NetworkTablesSwervePublisherCurrent;
+  protected final AHRS m_gyro;
+  protected final SwerveDriveKinematics m_kinematics;
+  protected final SwerveDriveOdometry m_odometry;
+  protected StructArrayPublisher<SwerveModuleState> NetworkTablesSwervePublisherDesired;
+  protected StructArrayPublisher<SwerveModuleState> NetworkTablesSwervePublisherCurrent;
 
-  private final SwerveModuleState[] lockPositions = generateLockPositions();
-  private SwerveModuleState[] swerveModuleStates = lockPositions;
+  protected final SwerveModuleState[] lockPositions = generateLockPositions();
+  protected SwerveModuleState[] swerveModuleStates = lockPositions;
 
-  private boolean locked = false;
-  private boolean fieldRelative = true;
-  private boolean brakeMode = false;
+  protected boolean locked = false;
+  protected boolean fieldRelative = true;
+  protected boolean brakeMode = false;
 
   int counter = 0;
 
@@ -89,6 +91,7 @@ public class SwerveDriveBase extends Estoppable {
     m_frontRight = modules[1];
     m_backLeft = modules[2];
     m_backRight = modules[3];
+    this.modules = modules;
 
     m_gyro = new AHRS();
     m_gyro.reset();
@@ -122,7 +125,7 @@ public class SwerveDriveBase extends Estoppable {
     setDriveBrakeMode(brakeMode);
   }
 
-  private void setDriveBrakeMode(boolean brakeMode) {
+  protected void setDriveBrakeMode(boolean brakeMode) {
     this.brakeMode = brakeMode; // Save the brake mode for when we disable X Lock
     m_frontLeft.setDriveBrakeMode(brakeMode);
     m_frontRight.setDriveBrakeMode(brakeMode);
@@ -163,7 +166,7 @@ public class SwerveDriveBase extends Estoppable {
   }
 
   /** Used for using a POV joystick to rotate around corner of robot */
-  private Translation2d POVToTranslate2d(int centerOfRotation) {
+  protected Translation2d POVToTranslate2d(int centerOfRotation) {
     Translation2d rotationCenter;
     switch (centerOfRotation) {
       case -1:
@@ -230,7 +233,7 @@ public class SwerveDriveBase extends Estoppable {
     updateOdometry();
   }
 
-  private void setDesiredStates() {
+  protected void setDesiredStates() {
     m_frontLeft.setDesiredState(swerveModuleStates[0]);
     m_frontRight.setDesiredState(swerveModuleStates[1]);
     m_backLeft.setDesiredState(swerveModuleStates[2]);
@@ -238,7 +241,8 @@ public class SwerveDriveBase extends Estoppable {
   }
 
   /**
-   * Positions to turn all the wheels inward<br>
+   * Positions to turn all the wheels inward
+   * <p>
    * aka X Lock
    */
   private SwerveModuleState[] generateLockPositions() {
