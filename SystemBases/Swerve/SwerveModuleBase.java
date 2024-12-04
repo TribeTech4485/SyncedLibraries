@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.SyncedLibraries.SystemBases;
+package frc.robot.SyncedLibraries.SystemBases.Swerve;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
@@ -14,7 +14,8 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class SwerveModuleBase extends SubsystemBase {
+public abstract class SwerveModuleBase extends SubsystemBase {
+  protected SwerveDriveBase driveTrainBase;
   protected final CANSparkMax m_driveMotor;
   protected final CANSparkMax m_turningMotor;
 
@@ -26,13 +27,17 @@ public class SwerveModuleBase extends SubsystemBase {
 
   protected final double driveGearRatio = 1 / (10 * Math.PI * 15 / 50); // 1 is the gear ratio when I find out
 
+  protected boolean sudoMode = false;
+  protected boolean slowMode = false;
+
   /**
    * Constructs a new SwerveModule.
+   * MUST CALL {@link #inputDriveTrain(SwerveDriveBase)} AFTER CONSTRUCTION
    *
    * @param driveMotor    The motor that drives the module.
    * @param turningMotor  The motor that turns the module.
    * @param turningOffset The offset for the turning encoder. Starting position
-   * @param name          The name of the module. Ie. "FrontLeft"
+   * @param name          The name of the module. Ie. "Front Left"
    */
   public SwerveModuleBase(CANSparkMax driveMotor, CANSparkMax turningMotor, double turningOffset, String name) {
     this.setName(name);
@@ -42,30 +47,40 @@ public class SwerveModuleBase extends SubsystemBase {
 
     m_driveMotor.restoreFactoryDefaults();
     m_driveMotor.setIdleMode(CANSparkMax.IdleMode.kBrake);
-    m_driveMotor.setSmartCurrentLimit(10); // will increase
 
     m_driveEncoder = m_driveMotor.getEncoder();
     m_driveEncoder.setPositionConversionFactor(driveGearRatio);
     m_driveEncoder.setVelocityConversionFactor(driveGearRatio);
 
-    m_drivePIDController = new PIDController(0.5, 0, 0.01);
+    m_drivePIDController = new PIDController(0, 0, 0);
 
     // TURNING MOTOR SETUP
     m_turningMotor = turningMotor;
 
     m_turningMotor.restoreFactoryDefaults();
     m_turningMotor.setIdleMode(CANSparkMax.IdleMode.kCoast);
-    m_turningMotor.setSmartCurrentLimit(10);
 
     m_turningEncoder = m_turningMotor.getAbsoluteEncoder();
-    m_turningEncoder.setPositionConversionFactor(1);
     m_turningEncoder.setZeroOffset(turningOffset);
 
-    m_turnPIDController = new PIDController(1.5, 0, 0.1);
+    m_turnPIDController = new PIDController(0, 0, 0);
     m_turnPIDController.enableContinuousInput(0, 1);
 
     m_turningMotor.burnFlash();
     m_driveMotor.burnFlash();
+  }
+
+  public void inputDriveTrain(SwerveDriveBase driveTrainBase) {
+    this.driveTrainBase = driveTrainBase;
+    // drive motor setup
+    m_driveMotor.setSmartCurrentLimit(driveTrainBase.driveAmps);
+    double[] drivePIDS = driveTrainBase.drivePID;
+    m_drivePIDController.setPID(drivePIDS[0], drivePIDS[1], drivePIDS[2]);
+
+    // turning motor setup
+    m_turningMotor.setSmartCurrentLimit(driveTrainBase.turnAmps);
+    double[] turnPIDS = driveTrainBase.turnPID;
+    m_turnPIDController.setPID(turnPIDS[0], turnPIDS[1], turnPIDS[2]);
   }
 
   /**
@@ -115,10 +130,25 @@ public class SwerveModuleBase extends SubsystemBase {
 
   @Override
   public void periodic() {
-    m_turningMotor.set(m_turnPIDController.calculate(m_turningEncoder.getPosition()));
+    double drivingPower = 0;
+    double turnPower = m_turnPIDController.calculate(m_turningEncoder.getPosition());
 
-    // m_driveMotor.set(m_drivePIDController.calculate(m_driveEncoder.getVelocity())); // TODO
-    m_driveMotor.set(m_drivePIDController.getSetpoint() / 5);
+    if (sudoMode) {
+      if (Math.abs(m_drivePIDController.getSetpoint()) > 0.05) {
+        drivingPower = Math.signum(m_drivePIDController.getSetpoint());
+      } else {
+        drivingPower = 0;
+      }
+    } else {
+      if (slowMode) {
+        drivingPower = m_drivePIDController.calculate(m_driveEncoder.getVelocity() * 0.5);
+      } else {
+        drivingPower = m_drivePIDController.calculate(m_driveEncoder.getVelocity());
+      }
+    }
+
+    m_turningMotor.set(turnPower);
+    m_driveMotor.set(drivingPower);
 
     SmartDashboard.putData(this.getName() + " swerve turning PID", m_turnPIDController);
     SmartDashboard.putNumber(this.getName() + " swerve turning encoder", m_turningEncoder.getPosition());
@@ -173,5 +203,24 @@ public class SwerveModuleBase extends SubsystemBase {
 
   public PIDController getTurnPIDController() {
     return m_turnPIDController;
+  }
+
+  public boolean getSudoMode() {
+    return sudoMode;
+  }
+
+  public void setSudoMode(boolean sudoMode) {
+    this.sudoMode = sudoMode;
+    if (sudoMode) {
+      
+    }
+  }
+
+  public boolean getSlowMode() {
+    return slowMode;
+  }
+
+  public void setSlowMode(boolean slowMode) {
+    this.slowMode = slowMode;
   }
 }

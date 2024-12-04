@@ -7,7 +7,7 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class PhotonVisionBase extends SubsystemBase {
+public abstract class PhotonVisionBase extends SubsystemBase {
   public PhotonCamera camera;
   public boolean hasTarget = false;
   public PhotonPipelineResult latestResult;
@@ -31,6 +31,7 @@ public class PhotonVisionBase extends SubsystemBase {
   public void periodic() {
     double x = 0;
     double y = 0;
+    // TODO: update to use the new API
     latestResult = camera.getLatestResult();
     targets = latestResult.getTargets();
     hasTarget = latestResult.hasTargets();
@@ -41,7 +42,7 @@ public class PhotonVisionBase extends SubsystemBase {
 
       targetXYAngles[0] = x;
       targetXYAngles[1] = y;
-      targetDistance = mainTarget.getBestCameraToTarget().getTranslation().getX(); // TODO: check if correct
+      targetDistance = mainTarget.getBestCameraToTarget().getTranslation().getX();
     }
 
     SmartDashboard.putNumber("TargetX", x);

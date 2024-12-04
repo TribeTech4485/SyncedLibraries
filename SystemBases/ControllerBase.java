@@ -65,7 +65,7 @@ public class ControllerBase {
    * @param port The port of the controller. -1 for ghost controller.
    */
   public ControllerBase(int port) {
-    // automatic controller type detection
+    // TODO: automatic controller type detection
     // this(port, new GenericHID(port).getType() == HIDType.kXInputGamepad,
     // new GenericHID(port).getType() == HIDType.kHIDGamepad,
     // new GenericHID(port).getType() == HIDType.kHIDJoystick);
@@ -265,6 +265,7 @@ public class ControllerBase {
     ESTOPCondition = () -> new Trigger(() -> false);
   }
 
+  /** If joystick: X-axis */
   public double getLeftXRaw() {
     if (port == -1) {
       return 0;
@@ -280,6 +281,7 @@ public class ControllerBase {
     }
   }
 
+  /** If joystick: Y-axis */
   public double getLeftYRaw() {
     if (port == -1) {
       return 0;
@@ -295,6 +297,7 @@ public class ControllerBase {
     }
   }
 
+  /** If joystick: Twist-axis */
   public double getRightXRaw() {
     if (port == -1) {
       return 0;
@@ -310,6 +313,7 @@ public class ControllerBase {
     }
   }
 
+  /** If joystick: Throttle-axis */
   public double getRightYRaw() {
     if (port == -1) {
       return 0;
@@ -325,6 +329,7 @@ public class ControllerBase {
     }
   }
 
+  /** If joystick: 1 or 0 if trigger pressed */
   public double getLeftTriggerRaw() {
     if (port == -1) {
       return 0;
@@ -333,11 +338,14 @@ public class ControllerBase {
       return objectPS4.getL2Axis();
     } else if (isXbox) {
       return objectX.getLeftTriggerAxis();
+    } else if (isJoystick) {
+      return objectJoystick.getTrigger() ? 1 : 0;
     } else {
       return 0;
     }
   }
 
+  /** If joystick: 1 or 0 if trigger pressed */
   public double getRightTriggerRaw() {
     if (port == -1) {
       return 0;
@@ -346,31 +354,39 @@ public class ControllerBase {
       return objectPS4.getR2Axis();
     } else if (isXbox) {
       return objectX.getRightTriggerAxis();
+    } else if (isJoystick) {
+      return objectJoystick.getTrigger() ? 1 : 0;
     } else {
       return 0;
     }
   }
 
+  /** If joystick: X-axis */
   public double getLeftX() {
     return BasicFunctions.deadband(getLeftXRaw(), Controllers.joystickDeadband) * joystickMultiplier;
   }
 
+  /** If joystick: Y-axis */
   public double getLeftY() {
     return BasicFunctions.deadband(getLeftYRaw(), Controllers.joystickDeadband) * joystickMultiplier;
   }
 
+  /** If joystick: Twist-axis */
   public double getRightX() {
     return BasicFunctions.deadband(getRightXRaw(), Controllers.joystickDeadband) * joystickMultiplier;
   }
 
+  /** If joystick: Throttle-axis */
   public double getRightY() {
     return BasicFunctions.deadband(getRightYRaw(), Controllers.joystickDeadband) * joystickMultiplier;
   }
 
+  /** If joystick: 1 or 0 if trigger pressed */
   public double getLeftTrigger() {
     return BasicFunctions.deadband(getLeftTriggerRaw(), Controllers.triggerDeadband) * triggerMultiplier;
   }
 
+  /** If joystick: 1 or 0 if trigger pressed */
   public double getRightTrigger() {
     return BasicFunctions.deadband(getRightTriggerRaw(), Controllers.triggerDeadband)
         * triggerMultiplier;
@@ -381,6 +397,9 @@ public class ControllerBase {
       objectPS4.setRumble(type, rumble);
     } else if (isXbox) {
       objectX.setRumble(type, rumble);
+    } else if (isJoystick) {
+      // How would this work? ;)
+      objectJoystick.setRumble(type, rumble);
     }
   }
 
@@ -452,7 +471,11 @@ public class ControllerBase {
   }
 
   public boolean isJoysticksBeingTouched() {
-    return getLeftX() != 0 || getLeftY() != 0 || getRightX() != 0 || getRightY() != 0;
+    if (!isJoystick) {
+      return getLeftX() != 0 || getLeftY() != 0 || getRightX() != 0 || getRightY() != 0;
+    } else {
+      return getLeftX() != 0 || getLeftY() != 0 || getRightX() != 0;
+    }
   }
 
   public void setJoystickMultiplier(double multiplier) {

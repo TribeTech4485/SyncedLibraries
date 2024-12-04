@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.SyncedLibraries.SystemBases;
+package frc.robot.SyncedLibraries.SystemBases.Swerve;
 
 import com.kauailabs.navx.frc.AHRS;
 
@@ -17,11 +17,13 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.SyncedLibraries.SystemBases.Estoppable;
+import frc.robot.SyncedLibraries.SystemBases.ManipulatorBase;
 
 /** Represents a swerve drive style drivetrain. */
-public class SwerveDriveBase extends Estoppable {
+public abstract class SwerveDriveBase extends Estoppable {
   /** Wheel speed */
-  public static final double kMaxSpeed = 1.0; // 3 meters per second // TODO: increase
+  public static final double kMaxSpeed = 1.0; // TODO: increase max speed
   public static final double kMaxAngularSpeed = (2 * Math.PI) / 4; // 1/4 rotation per second
 
   // The physical dimensions of the robot
@@ -56,6 +58,13 @@ public class SwerveDriveBase extends Estoppable {
   protected boolean locked = false;
   protected boolean fieldRelative = true;
   protected boolean brakeMode = false;
+  protected boolean slowMode = false;
+  protected boolean sudoMode = false;
+
+  public final double[] drivePID = { 0.5, 0, 0.01 };
+  public final double[] turnPID = { 0.5, 0, 0.01 };
+  public final int driveAmps = 10;
+  public final int turnAmps = 10;
 
   int counter = 0;
 
@@ -238,6 +247,31 @@ public class SwerveDriveBase extends Estoppable {
     m_frontRight.setDesiredState(swerveModuleStates[1]);
     m_backLeft.setDesiredState(swerveModuleStates[2]);
     m_backRight.setDesiredState(swerveModuleStates[3]);
+
+    for (SwerveModuleBase module : modules) {
+      if (module.getSudoMode() != sudoMode) {
+        module.setSudoMode(sudoMode);
+      }
+      if (module.getSlowMode() != slowMode) {
+        module.setSlowMode(slowMode);
+      }
+    }
+  }
+
+  public void setFieldRelative(boolean fieldRelative) {
+    this.fieldRelative = fieldRelative;
+  }
+
+  public void setSlowMode(boolean slowMode) {
+    this.slowMode = slowMode;
+  }
+
+  public void setSudoMode(boolean sudoMode) {
+    this.sudoMode = sudoMode;
+  }
+
+  public void resetGyro() {
+    m_gyro.zeroYaw();
   }
 
   /**

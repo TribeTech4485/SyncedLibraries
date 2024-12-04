@@ -6,7 +6,7 @@ package frc.robot.SyncedLibraries.SystemBases;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-/** Add your docs here. */
+/** A subsystem, but you have to have an ESTOP function */
 public abstract class Estoppable extends SubsystemBase {
   /**
    * <b>EMERGENCY STOP</b>

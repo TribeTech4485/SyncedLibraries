@@ -92,4 +92,8 @@ public class AutoControllerSelector {
   public double getRightTrigger() {
     return getController().getRightTrigger();
   }
+
+  public double getPOV() {
+    return getController().getPOV();
+  }
 }
