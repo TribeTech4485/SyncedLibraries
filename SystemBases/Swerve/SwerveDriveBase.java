@@ -262,6 +262,10 @@ public abstract class SwerveDriveBase extends Estoppable {
     this.fieldRelative = fieldRelative;
   }
 
+  public boolean getFieldRelative() {
+    return fieldRelative;
+  }
+
   public void setSlowMode(boolean slowMode) {
     this.slowMode = slowMode;
   }
@@ -286,6 +290,10 @@ public abstract class SwerveDriveBase extends Estoppable {
     lockPositions[2] = new SwerveModuleState(0, new Rotation2d(3 * Math.PI / 4));
     lockPositions[3] = new SwerveModuleState(0, new Rotation2d(5 * Math.PI / 4));
     return lockPositions;
+  }
+
+  public void stop() {
+    inputDrivingX_Y(0, 0, 0, -1);
   }
 
   /**
