@@ -98,7 +98,6 @@ public class ControllerBase {
     }
   }
 
-  @SuppressWarnings("unchecked")
   private void initAsJoystick(int port) {
     this.commObjectJoystick = new CommandJoystick(port);
     this.objectJoystick = commObjectJoystick.getHID();
@@ -143,7 +142,6 @@ public class ControllerBase {
         .and(commObjectJoystick.button(12));
   }
 
-  @SuppressWarnings("unchecked")
   private void initAsPS4(int port) {
     this.commObjectPS4 = new CommandPS4Controller(port);
     this.objectPS4 = commObjectPS4.getHID();
@@ -188,7 +186,6 @@ public class ControllerBase {
         .and(commObjectPS4.R2());
   }
 
-  @SuppressWarnings("unchecked")
   private void initAsXbox(int port) {
     this.commObjectX = new CommandXboxController(port);
     this.objectX = commObjectX.getHID();
@@ -233,7 +230,6 @@ public class ControllerBase {
         .and(commObjectX.rightTrigger());
   }
 
-  @SuppressWarnings("unchecked")
   private void initAsGhost() {
     this.A = new Trigger(() -> false);
     this.B = new Trigger(() -> false);
