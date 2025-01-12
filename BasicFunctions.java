@@ -5,6 +5,7 @@ import frc.robot.SyncedLibraries.SystemBases.ControllerBase;
 import frc.robot.SyncedLibraries.SystemBases.DriveTrainBase;
 import frc.robot.SyncedLibraries.SystemBases.Estoppable;
 import frc.robot.SyncedLibraries.SystemBases.ManipulatorBase;
+import frc.robot.SyncedLibraries.SystemBases.Swerve.SwerveDriveBase;
 
 public class BasicFunctions {
   public static double deadband(double input, double deadband) {
@@ -27,21 +28,23 @@ public class BasicFunctions {
    * <b>ONLY FOR USE IN EMERGENCY</b>
    * <p>
    * YES, ACTUALLY
-   * @param DriveTrain 
+   * 
+   * @param DriveTrain
    * @deprecated Use {@link #KILLIT()} instead
    */
   @Deprecated
-  public static void KILLIT(DriveTrainBase DriveTrain) {
+  public static void KILLIT(Estoppable DriveTrain) {
+
+    DriverStation.reportWarning("ESTOP DriveTrain", false);
+    DriveTrain.ESTOP();
+    System.out.println("Done");
+
     DriverStation.reportError("KILLING IT", true);
     for (Estoppable manipulator : ManipulatorBase.allManipulators) {
       DriverStation.reportWarning("ESTOP " + manipulator.getName(), false);
       manipulator.ESTOP();
       System.out.println("Done");
     }
-
-    DriverStation.reportWarning("ESTOP DriveTrain", false);
-    DriveTrain.ESTOP();
-    System.out.println("Done");
 
     DriverStation.reportError("KILLED IT, EXITING NOW", false);
     System.exit(0);

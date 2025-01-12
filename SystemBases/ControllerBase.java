@@ -1,6 +1,5 @@
 package frc.robot.SyncedLibraries.SystemBases;
 
-import java.util.function.Supplier;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PS4Controller;
 import edu.wpi.first.wpilibj.XboxController;
@@ -31,29 +30,29 @@ public class ControllerBase {
   public CommandJoystick commObjectJoystick;
   public Joystick objectJoystick;
 
-  public Supplier<Trigger> A;
-  public Supplier<Trigger> B;
-  public Supplier<Trigger> X;
-  public Supplier<Trigger> Y;
-  public Supplier<Trigger> LeftBumper;
-  public Supplier<Trigger> RightBumper;
-  public Supplier<Trigger> Share;
-  public Supplier<Trigger> Options;
-  public Supplier<Trigger> LeftTrigger;
-  public Supplier<Trigger> RightTrigger;
-  public Supplier<Trigger> PovUp;
-  public Supplier<Trigger> PovUpLeft;
-  public Supplier<Trigger> PovUpRight;
-  public Supplier<Trigger> PovDown;
-  public Supplier<Trigger> PovDownLeft;
-  public Supplier<Trigger> PovDownRight;
-  public Supplier<Trigger> PovLeft;
-  public Supplier<Trigger> PovRight;
-  public Supplier<Trigger> LeftStickPress;
-  public Supplier<Trigger> RightStickPress;
-  public Supplier<Trigger> ESTOPCondition;
+  public Trigger A;
+  public Trigger B;
+  public Trigger X;
+  public Trigger Y;
+  public Trigger LeftBumper;
+  public Trigger RightBumper;
+  public Trigger Share;
+  public Trigger Options;
+  public Trigger LeftTrigger;
+  public Trigger RightTrigger;
+  public Trigger PovUp;
+  public Trigger PovUpLeft;
+  public Trigger PovUpRight;
+  public Trigger PovDown;
+  public Trigger PovDownLeft;
+  public Trigger PovDownRight;
+  public Trigger PovLeft;
+  public Trigger PovRight;
+  public Trigger LeftStickPress;
+  public Trigger RightStickPress;
+  public Trigger ESTOPCondition;
   /** <b>IS ONE INDEXED TO MATCH WITH {@link #getRawButton()} */
-  public Supplier<Trigger>[] buttons;
+  public Trigger[] buttons;
 
   /**
    * A class to handle controllers.
@@ -103,40 +102,40 @@ public class ControllerBase {
   private void initAsJoystick(int port) {
     this.commObjectJoystick = new CommandJoystick(port);
     this.objectJoystick = commObjectJoystick.getHID();
-    this.A = () -> commObjectJoystick.button(1);
-    this.B = () -> commObjectJoystick.button(2);
-    this.X = () -> commObjectJoystick.button(3);
-    this.Y = () -> commObjectJoystick.button(4);
-    this.LeftBumper = () -> commObjectJoystick.button(5);
-    this.RightBumper = () -> commObjectJoystick.button(6);
-    this.Share = () -> commObjectJoystick.button(7);
-    this.Options = () -> commObjectJoystick.button(8);
-    this.LeftTrigger = () -> commObjectJoystick.button(9);
-    this.RightTrigger = () -> commObjectJoystick.button(10);
-    this.PovUp = () -> commObjectJoystick.button(11);
-    this.PovUpLeft = () -> commObjectJoystick.button(12);
-    this.PovUpRight = () -> commObjectJoystick.button(13);
-    this.PovDown = () -> commObjectJoystick.button(14);
-    this.PovDownLeft = () -> commObjectJoystick.button(15);
-    this.PovDownRight = () -> commObjectJoystick.button(16);
-    this.PovLeft = () -> commObjectJoystick.button(17);
-    this.PovRight = () -> commObjectJoystick.button(18);
-    this.LeftStickPress = () -> commObjectJoystick.button(19);
-    this.RightStickPress = () -> commObjectJoystick.button(20);
+    this.A = commObjectJoystick.button(1);
+    this.B = commObjectJoystick.button(2);
+    this.X = commObjectJoystick.button(3);
+    this.Y = commObjectJoystick.button(4);
+    this.LeftBumper = commObjectJoystick.button(5);
+    this.RightBumper = commObjectJoystick.button(6);
+    this.Share = commObjectJoystick.button(7);
+    this.Options = commObjectJoystick.button(8);
+    this.LeftTrigger = commObjectJoystick.button(9);
+    this.RightTrigger = commObjectJoystick.button(10);
+    this.PovUp = commObjectJoystick.button(11);
+    this.PovUpLeft = commObjectJoystick.button(12);
+    this.PovUpRight = commObjectJoystick.button(13);
+    this.PovDown = commObjectJoystick.button(14);
+    this.PovDownLeft = commObjectJoystick.button(15);
+    this.PovDownRight = commObjectJoystick.button(16);
+    this.PovLeft = commObjectJoystick.button(17);
+    this.PovRight = commObjectJoystick.button(18);
+    this.LeftStickPress = commObjectJoystick.button(19);
+    this.RightStickPress = commObjectJoystick.button(20);
 
     int buttonCount = objectJoystick.getButtonCount();
-    buttons = new Supplier[buttonCount + 1];
+    buttons = new Trigger[buttonCount + 1];
     for (int i = 0; i < buttonCount + 1; i++) {
       if (i == 0) {
-        buttons[i] = () -> new Trigger(() -> false);
+        buttons[i] = new Trigger(() -> false);
         continue;
       }
       final int j = i;
-      buttons[i] = () -> commObjectJoystick.button(j);
+      buttons[i] = commObjectJoystick.button(j);
     }
 
     // All the buttons on the base section
-    ESTOPCondition = () -> commObjectJoystick.button(7)
+    ESTOPCondition = commObjectJoystick.button(7)
         .and(commObjectJoystick.button(8))
         .and(commObjectJoystick.button(9))
         .and(commObjectJoystick.button(10))
@@ -148,40 +147,40 @@ public class ControllerBase {
   private void initAsPS4(int port) {
     this.commObjectPS4 = new CommandPS4Controller(port);
     this.objectPS4 = commObjectPS4.getHID();
-    this.A = () -> commObjectPS4.cross();
-    this.B = () -> commObjectPS4.circle();
-    this.X = () -> commObjectPS4.square();
-    this.Y = () -> commObjectPS4.triangle();
-    this.LeftBumper = () -> commObjectPS4.L1();
-    this.RightBumper = () -> commObjectPS4.R1();
-    this.Share = () -> commObjectPS4.share();
-    this.Options = () -> commObjectPS4.options();
-    this.LeftTrigger = () -> commObjectPS4.L2();
-    this.RightTrigger = () -> commObjectPS4.R2();
-    this.PovUp = () -> commObjectPS4.povUp();
-    this.PovUpLeft = () -> commObjectPS4.povUpLeft();
-    this.PovUpRight = () -> commObjectPS4.povUpRight();
-    this.PovDown = () -> commObjectPS4.povDown();
-    this.PovDownLeft = () -> commObjectPS4.povDownLeft();
-    this.PovDownRight = () -> commObjectPS4.povDownRight();
-    this.PovLeft = () -> commObjectPS4.povLeft();
-    this.PovRight = () -> commObjectPS4.povRight();
-    this.LeftStickPress = () -> commObjectPS4.L3();
-    this.RightStickPress = () -> commObjectPS4.L3();
+    this.A = commObjectPS4.cross();
+    this.B = commObjectPS4.circle();
+    this.X = commObjectPS4.square();
+    this.Y = commObjectPS4.triangle();
+    this.LeftBumper = commObjectPS4.L1();
+    this.RightBumper = commObjectPS4.R1();
+    this.Share = commObjectPS4.share();
+    this.Options = commObjectPS4.options();
+    this.LeftTrigger = commObjectPS4.L2();
+    this.RightTrigger = commObjectPS4.R2();
+    this.PovUp = commObjectPS4.povUp();
+    this.PovUpLeft = commObjectPS4.povUpLeft();
+    this.PovUpRight = commObjectPS4.povUpRight();
+    this.PovDown = commObjectPS4.povDown();
+    this.PovDownLeft = commObjectPS4.povDownLeft();
+    this.PovDownRight = commObjectPS4.povDownRight();
+    this.PovLeft = commObjectPS4.povLeft();
+    this.PovRight = commObjectPS4.povRight();
+    this.LeftStickPress = commObjectPS4.L3();
+    this.RightStickPress = commObjectPS4.L3();
 
     int buttonCount = objectPS4.getButtonCount();
-    buttons = new Supplier[buttonCount + 1];
+    buttons = new Trigger[buttonCount + 1];
     for (int i = 0; i < buttonCount + 1; i++) {
       if (i == 0) {
-        buttons[i] = () -> new Trigger(() -> false);
+        buttons[i] = new Trigger(() -> false);
         continue;
       }
       final int j = i;
-      buttons[i] = () -> commObjectPS4.button(j);
+      buttons[i] = commObjectPS4.button(j);
     }
 
     // All the buttons your hands are already resting on
-    ESTOPCondition = () -> commObjectPS4.L3()
+    ESTOPCondition = commObjectPS4.L3()
         .and(commObjectPS4.R3())
         .and(commObjectPS4.L1())
         .and(commObjectPS4.R1())
@@ -193,40 +192,40 @@ public class ControllerBase {
   private void initAsXbox(int port) {
     this.commObjectX = new CommandXboxController(port);
     this.objectX = commObjectX.getHID();
-    this.A = () -> commObjectX.a();
-    this.B = () -> commObjectX.b();
-    this.X = () -> commObjectX.x();
-    this.Y = () -> commObjectX.y();
-    this.LeftBumper = () -> commObjectX.leftBumper();
-    this.RightBumper = () -> commObjectX.rightBumper();
-    this.Share = () -> commObjectX.start();
-    this.Options = () -> commObjectX.back();
-    this.LeftTrigger = () -> commObjectX.leftTrigger();
-    this.RightTrigger = () -> commObjectX.rightTrigger();
-    this.PovUp = () -> commObjectX.povUp();
-    this.PovUpLeft = () -> commObjectX.povUpLeft();
-    this.PovUpRight = () -> commObjectX.povUpRight();
-    this.PovDown = () -> commObjectX.povDown();
-    this.PovDownLeft = () -> commObjectX.povDownLeft();
-    this.PovDownRight = () -> commObjectX.povDownRight();
-    this.PovLeft = () -> commObjectX.povLeft();
-    this.PovRight = () -> commObjectX.povRight();
-    this.LeftStickPress = () -> commObjectX.leftStick();
-    this.RightStickPress = () -> commObjectX.rightStick();
+    this.A = commObjectX.a();
+    this.B = commObjectX.b();
+    this.X = commObjectX.x();
+    this.Y = commObjectX.y();
+    this.LeftBumper = commObjectX.leftBumper();
+    this.RightBumper = commObjectX.rightBumper();
+    this.Share = commObjectX.start();
+    this.Options = commObjectX.back();
+    this.LeftTrigger = commObjectX.leftTrigger();
+    this.RightTrigger = commObjectX.rightTrigger();
+    this.PovUp = commObjectX.povUp();
+    this.PovUpLeft = commObjectX.povUpLeft();
+    this.PovUpRight = commObjectX.povUpRight();
+    this.PovDown = commObjectX.povDown();
+    this.PovDownLeft = commObjectX.povDownLeft();
+    this.PovDownRight = commObjectX.povDownRight();
+    this.PovLeft = commObjectX.povLeft();
+    this.PovRight = commObjectX.povRight();
+    this.LeftStickPress = commObjectX.leftStick();
+    this.RightStickPress = commObjectX.rightStick();
 
     int buttonCount = objectX.getButtonCount();
-    buttons = new Supplier[buttonCount + 1];
+    buttons = new Trigger[buttonCount + 1];
     for (int i = 0; i < buttonCount + 1; i++) {
       if (i == 0) {
-        buttons[i] = () -> new Trigger(() -> false);
+        buttons[i] = new Trigger(() -> false);
         continue;
       }
       final int j = i;
-      buttons[i] = () -> commObjectX.button(j);
+      buttons[i] = commObjectX.button(j);
     }
 
     // All the buttons your hands are already resting on
-    ESTOPCondition = () -> commObjectX.leftStick()
+    ESTOPCondition = commObjectX.leftStick()
         .and(commObjectX.rightStick())
         .and(commObjectX.leftBumper())
         .and(commObjectX.rightBumper())
@@ -236,33 +235,33 @@ public class ControllerBase {
 
   @SuppressWarnings("unchecked")
   private void initAsGhost() {
-    this.A = () -> new Trigger(() -> false);
-    this.B = () -> new Trigger(() -> false);
-    this.X = () -> new Trigger(() -> false);
-    this.Y = () -> new Trigger(() -> false);
-    this.LeftBumper = () -> new Trigger(() -> false);
-    this.RightBumper = () -> new Trigger(() -> false);
-    this.Share = () -> new Trigger(() -> false);
-    this.Options = () -> new Trigger(() -> false);
-    this.LeftTrigger = () -> new Trigger(() -> false);
-    this.RightTrigger = () -> new Trigger(() -> false);
-    this.PovUp = () -> new Trigger(() -> false);
-    this.PovUpLeft = () -> new Trigger(() -> false);
-    this.PovUpRight = () -> new Trigger(() -> false);
-    this.PovDown = () -> new Trigger(() -> false);
-    this.PovDownLeft = () -> new Trigger(() -> false);
-    this.PovDownRight = () -> new Trigger(() -> false);
-    this.PovLeft = () -> new Trigger(() -> false);
-    this.PovRight = () -> new Trigger(() -> false);
-    this.LeftStickPress = () -> new Trigger(() -> false);
-    this.RightStickPress = () -> new Trigger(() -> false);
+    this.A = new Trigger(() -> false);
+    this.B = new Trigger(() -> false);
+    this.X = new Trigger(() -> false);
+    this.Y = new Trigger(() -> false);
+    this.LeftBumper = new Trigger(() -> false);
+    this.RightBumper = new Trigger(() -> false);
+    this.Share = new Trigger(() -> false);
+    this.Options = new Trigger(() -> false);
+    this.LeftTrigger = new Trigger(() -> false);
+    this.RightTrigger = new Trigger(() -> false);
+    this.PovUp = new Trigger(() -> false);
+    this.PovUpLeft = new Trigger(() -> false);
+    this.PovUpRight = new Trigger(() -> false);
+    this.PovDown = new Trigger(() -> false);
+    this.PovDownLeft = new Trigger(() -> false);
+    this.PovDownRight = new Trigger(() -> false);
+    this.PovLeft = new Trigger(() -> false);
+    this.PovRight = new Trigger(() -> false);
+    this.LeftStickPress = new Trigger(() -> false);
+    this.RightStickPress = new Trigger(() -> false);
 
-    buttons = new Supplier[20];
+    buttons = new Trigger[20];
     for (int i = 0; i < 20; i++) {
-      buttons[i] = () -> new Trigger(() -> false);
+      buttons[i] = new Trigger(() -> false);
     }
 
-    ESTOPCondition = () -> new Trigger(() -> false);
+    ESTOPCondition = new Trigger(() -> false);
   }
 
   /** If joystick: X-axis */

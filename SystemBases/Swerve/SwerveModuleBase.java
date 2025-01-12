@@ -74,12 +74,12 @@ public abstract class SwerveModuleBase extends SubsystemBase {
     this.driveTrainBase = driveTrainBase;
     // drive motor setup
     m_driveMotor.setSmartCurrentLimit(driveTrainBase.driveAmps);
-    double[] drivePIDS = driveTrainBase.drivePID;
+    double[] drivePIDS = driveTrainBase.modulesDrivePID;
     m_drivePIDController.setPID(drivePIDS[0], drivePIDS[1], drivePIDS[2]);
 
     // turning motor setup
     m_turningMotor.setSmartCurrentLimit(driveTrainBase.turnAmps);
-    double[] turnPIDS = driveTrainBase.turnPID;
+    double[] turnPIDS = driveTrainBase.modulesTurnPID;
     m_turnPIDController.setPID(turnPIDS[0], turnPIDS[1], turnPIDS[2]);
   }
 
@@ -222,5 +222,13 @@ public abstract class SwerveModuleBase extends SubsystemBase {
 
   public void setSlowMode(boolean slowMode) {
     this.slowMode = slowMode;
+  }
+
+  public void setDriveAmps(int limit) {
+    m_driveMotor.setSmartCurrentLimit(limit);
+  }
+
+  public void setTurnAmps(int limit) {
+    m_turningMotor.setSmartCurrentLimit(limit);
   }
 }

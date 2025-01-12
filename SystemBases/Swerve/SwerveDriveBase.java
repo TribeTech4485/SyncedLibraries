@@ -6,6 +6,7 @@ package frc.robot.SyncedLibraries.SystemBases.Swerve;
 
 import com.kauailabs.navx.frc.AHRS;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -61,10 +62,12 @@ public abstract class SwerveDriveBase extends Estoppable {
   protected boolean slowMode = false;
   protected boolean sudoMode = false;
 
-  public final double[] drivePID = { 0.5, 0, 0.01 };
-  public final double[] turnPID = { 0.5, 0, 0.01 };
+  public final double[] modulesDrivePID;
+  public final double[] modulesTurnPID;
   public final int driveAmps = 10;
   public final int turnAmps = 10;
+
+  protected final PIDController turnController;
 
   int counter = 0;
 
@@ -75,8 +78,14 @@ public abstract class SwerveDriveBase extends Estoppable {
    * @param length  The length of the robot in feet
    * @param modules An array of SwerveModules in the order of front left, front
    *                right, back left, back right
+   * @param swerveDrivePID The PID values for the drive motors
+   * @param swerveTurnPID  The PID values for the turn motors
+   * @param botTurnPID     The PID values for the bot turning
+   * @param driveAmps      The max amps for the drive motors
+   * @param turnAmps       The max amps for the turn motors
    */
-  public SwerveDriveBase(double width, double length, SwerveModuleBase[] modules) {
+  public SwerveDriveBase(double width, double length, SwerveModuleBase[] modules,
+      double[] swerveDrivePID, double[] swerveTurnPID, double[] botTurnPID, int driveAmps, int turnAmps) {
     NetworkTablesSwervePublisherDesired = NetworkTableInstance.getDefault()
         .getStructArrayTopic("/DesiredSwerveStates", SwerveModuleState.struct).publish();
     NetworkTablesSwervePublisherCurrent = NetworkTableInstance.getDefault()
@@ -118,6 +127,12 @@ public abstract class SwerveDriveBase extends Estoppable {
             m_backRight.getPosition()
         });
 
+        
+        modulesDrivePID = swerveDrivePID;
+        modulesTurnPID = swerveTurnPID;
+        turnController = new PIDController(botTurnPID[0], botTurnPID[1], botTurnPID[2]);
+        turnController.enableContinuousInput(0, Math.PI * 2);
+
     // Add this manipulator to the list of all manipulators for emergency stop
     ManipulatorBase.allManipulators.add(this);
   }
@@ -144,14 +159,27 @@ public abstract class SwerveDriveBase extends Estoppable {
 
   /**
    * Method to drive the robot using joystick info.<br>
-   * All speeds are from -1 to 1.
+   * All speeds are from -1 to 1.<br>
+   * Uses power level for rotation
+   *
+   * @param xSpeed        Speed of the robot in the x direction (forward).
+   * @param ySpeed        Speed of the robot in the y direction (right).
+   * @param rotationSpeed Angular rate of the robot.
+   */
+  public void inputDrivingX_Y(double xSpeed, double ySpeed,
+      double rotationSpeed) {
+    inputDrivingX_Y(xSpeed, ySpeed, rotationSpeed, -1);
+  }
+
+  /**
+   * Method to drive the robot using joystick info.<br>
+   * All speeds are from -1 to 1.<br>
+   * Uses power level for rotation
    *
    * @param xSpeed              Speed of the robot in the x direction (forward).
    * @param ySpeed              Speed of the robot in the y direction (right).
    * @param rotationSpeed       Angular rate of the robot.
-   * @param fieldRelative       Whether the provided x and y speeds are relative
-   *                            to the field.
-   * @param centerOfRotationPOV Input pov value where -1 is center, and 0 is front
+   * @param centerOfRotationPOV Input pov value where -1 is center, and 0 is front, clockwise degrees
    */
   public void inputDrivingX_Y(double xSpeed, double ySpeed,
       double rotationSpeed, int centerOfRotationPOV) {
@@ -172,6 +200,21 @@ public abstract class SwerveDriveBase extends Estoppable {
               0.02),
           centerOfRotation);
     }
+  }
+
+  /**
+   * Method to drive the robot using joystick info.<br>
+   * All speeds are from -1 to 1.<br>
+   * Uses desired angle for rotation
+   *
+   * @param xSpeed      Speed of the robot in the x direction (forward).
+   * @param ySpeed      Speed of the robot in the y direction (right).
+   * @param desiredTheta Desired angle of the robot in radians.
+   * @param centerOfRotationPOV Input pov value where -1 is center, and 0 is front, clockwise degrees
+   */
+  public void inputDrivingX_Y_A(double xSpeed, double ySpeed, double desiredTheta, int centerOfRotationPOV) {
+    turnController.setSetpoint(desiredTheta);
+    inputDrivingX_Y(xSpeed, ySpeed, turnController.calculate(Math.toRadians(m_gyro.getYaw() % 360)));
   }
 
   /** Used for using a POV joystick to rotate around corner of robot */
@@ -276,6 +319,18 @@ public abstract class SwerveDriveBase extends Estoppable {
 
   public void resetGyro() {
     m_gyro.zeroYaw();
+  }
+
+  public void setDriveAmps(int amps) {
+    for (SwerveModuleBase module : modules) {
+      module.setDriveAmps(amps);
+    }
+  }
+
+  public void setTurnAmps(int amps) {
+    for (SwerveModuleBase module : modules) {
+      module.setTurnAmps(amps);
+    }
   }
 
   /**

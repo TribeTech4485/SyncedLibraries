@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 
 /**
  * <strong> To impliment: </strong>
@@ -29,14 +30,18 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 public abstract class ManipulatorBase extends Estoppable {
   /** List of all manipulators for emergency stop */
   public static LinkedList<Estoppable> allManipulators = new LinkedList<Estoppable>();
-  ManipulatorMoveCommand moveCommand;
-  ManipulatorSpeedCommand speedCommand;
-  double positionMultiplier = 1;
-  double speedMultiplier = 1;
-  double maxPower = 1;
-  LinkedList<CANSparkMax> motors = new LinkedList<CANSparkMax>();
-  LinkedList<RelativeEncoder> encoders = new LinkedList<RelativeEncoder>();
-  BooleanSupplier customSensor = () -> false;
+  /** If null, run the {@link #setPositionPID(double, double, double, double)} */
+  protected ManipulatorMoveCommand moveCommand;
+  /** If null, run the {@link #setSpeedPID(double, double, double, double)} */
+  protected ManipulatorSpeedCommand speedCommand;
+  protected double positionMultiplier = 1;
+  protected double speedMultiplier = 1;
+  protected double maxPower = 1;
+  protected double maxPosition = Double.MAX_VALUE;
+  protected double minPosition = -Double.MAX_VALUE;
+  protected LinkedList<CANSparkMax> motors = new LinkedList<CANSparkMax>();
+  protected LinkedList<RelativeEncoder> encoders = new LinkedList<RelativeEncoder>();
+  protected BooleanSupplier customSensor = () -> false;
 
   // ===================== Positional Methods ===================== //
   /** Get the known position of the manipulator in degrees */
@@ -64,6 +69,16 @@ public abstract class ManipulatorBase extends Estoppable {
     positionMultiplier = multiplier;
   }
 
+  /**
+   * Set the max and min position of the manipulator
+   * <p>
+   * If set out of bounds then the manipulator will move to limit when called
+   */
+  public void setPositionBounds(double min, double max) {
+    minPosition = min;
+    maxPosition = max;
+  }
+
   public void setPositionPID(double kP, double kI, double kD, double tolerance) {
     cancelMoveToPosition();
     this.moveCommand = new ManipulatorMoveCommand(this, Integer.MAX_VALUE, tolerance, kP, kI, kD);
@@ -84,10 +99,18 @@ public abstract class ManipulatorBase extends Estoppable {
   /** Move the manipulator to a position in degrees */
   public void moveToPosition(double position) {
     stopCommands();
+    if (position > maxPosition) {
+      position = maxPosition;
+      System.out.println("ManipulatorBase: Position out of bounds" + position + " > " + maxPosition);
+    } else if (position < minPosition) {
+      position = minPosition;
+      System.out.println("ManipulatorBase: Position out of bounds" + position + " < " + minPosition);
+    }
     moveCommand.setTargetPosition(position);
     moveCommand.schedule();
   }
 
+  /** If moveCommand not initialized returns false */
   public boolean isAtPosition() {
     return moveCommand == null ? moveCommand.atPosition : false;
   }
@@ -306,8 +329,7 @@ public abstract class ManipulatorBase extends Estoppable {
    * Do it yourself
    */
   public Command home() {
-    return new InstantCommand(
-        () -> System.out.println("Homing not implemented on subsystem " + getName() + "... Continuing"));
+    return new PrintCommand("Homing not implemented on subsystem " + getName() + "... Continuing");
   }
 
   @Override
@@ -318,6 +340,11 @@ public abstract class ManipulatorBase extends Estoppable {
     SmartDashboard.putBoolean(getName() + " At Speed/Power", isAtSpeed() || isAtPosition());
   }
 
+  /**
+   * When put into test mode, this command will run
+   * <p>
+   * Basically run all systems to show they work
+   */
   public abstract Command test();
 
   /**
