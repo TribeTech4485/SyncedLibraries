@@ -14,15 +14,14 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.SyncedLibraries.SystemBases.Estoppable;
+import frc.robot.SyncedLibraries.SystemBases.Estopable;
 import frc.robot.SyncedLibraries.SystemBases.ManipulatorBase;
 
 /** Represents a swerve drive style drivetrain. */
-public abstract class SwerveDriveBase extends Estoppable {
+public abstract class SwerveDriveBase extends Estopable {
   /** Wheel speed */
   public static final double kMaxSpeed = 1.0; // TODO: increase max speed
   public static final double kMaxAngularSpeed = (2 * Math.PI) / 4; // 1/4 rotation per second
@@ -74,8 +73,8 @@ public abstract class SwerveDriveBase extends Estoppable {
   /**
    * An instance for controlling a swerve drivetrain
    * 
-   * @param width   The width of the robot in feet
-   * @param length  The length of the robot in feet
+   * @param width   The width of the robot in meters
+   * @param length  The length of the robot in meters
    * @param modules An array of SwerveModules in the order of front left, front
    *                right, back left, back right
    * @param swerveDrivePID The PID values for the drive motors
@@ -91,8 +90,8 @@ public abstract class SwerveDriveBase extends Estoppable {
     NetworkTablesSwervePublisherCurrent = NetworkTableInstance.getDefault()
         .getStructArrayTopic("/CurrentSwerveStates", SwerveModuleState.struct).publish();
 
-    _robotWidth = Units.feetToMeters(width);
-    _robotLength = Units.feetToMeters(length);
+    _robotWidth = width;
+    _robotLength = length;
     _robotWidthOffset = _robotWidth / 2;
     _robotLengthOffset = _robotLength / 2;
 
@@ -132,9 +131,6 @@ public abstract class SwerveDriveBase extends Estoppable {
         modulesTurnPID = swerveTurnPID;
         turnController = new PIDController(botTurnPID[0], botTurnPID[1], botTurnPID[2]);
         turnController.enableContinuousInput(0, Math.PI * 2);
-
-    // Add this manipulator to the list of all manipulators for emergency stop
-    ManipulatorBase.allManipulators.add(this);
   }
 
   public void enableXLock() {

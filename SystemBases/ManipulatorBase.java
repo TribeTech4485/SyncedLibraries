@@ -26,9 +26,13 @@ import edu.wpi.first.wpilibj2.command.PrintCommand;
  * <p>
  * You also can use standard subsystem methods
  */
-public abstract class ManipulatorBase extends Estoppable {
-  /** List of all manipulators for emergency stop */
-  public static LinkedList<Estoppable> allManipulators = new LinkedList<Estoppable>();
+public abstract class ManipulatorBase extends Estopable {
+  /**
+   * @deprecated Manually adding is unneccesary, now handled by the
+   *             ESTOPPABLE parent class
+   */
+  @Deprecated
+  public static LinkedList<Estopable> allManipulators = new LinkedList<Estopable>();
   /** If null, run the {@link #setPositionPID(double, double, double, double)} */
   protected ManipulatorMoveCommand moveCommand;
   /** If null, run the {@link #setSpeedPID(double, double, double, double)} */

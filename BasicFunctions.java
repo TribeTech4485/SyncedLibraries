@@ -1,9 +1,7 @@
 package frc.robot.SyncedLibraries;
 
-import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.SyncedLibraries.SystemBases.ControllerBase;
-import frc.robot.SyncedLibraries.SystemBases.Estoppable;
-import frc.robot.SyncedLibraries.SystemBases.ManipulatorBase;
+import frc.robot.SyncedLibraries.SystemBases.Estopable;
 
 public class BasicFunctions {
   public static double deadband(double input, double deadband) {
@@ -28,40 +26,41 @@ public class BasicFunctions {
    * YES, ACTUALLY
    * 
    * @param DriveTrain
-   * @deprecated Use {@link #KILLIT()} instead
+   * @deprecated Use "Estoppable.KILLIT()" instead
    */
   @Deprecated
-  public static void KILLIT(Estoppable DriveTrain) {
+  public static void KILLIT(Estopable DriveTrain) {
+    // DriverStation.reportWarning("ESTOP DriveTrain", false);
+    // DriveTrain.ESTOP();
+    // System.out.println("Done");
+    
+    // DriverStation.reportError("KILLING IT", true);
+    // for (Estoppable manipulator : Estoppable._getAllEstoppables()) {
+      //   DriverStation.reportWarning("ESTOP " + manipulator.getName(), false);
+    //   manipulator.ESTOP();
+    //   System.out.println("Done");
+    // }
 
-    DriverStation.reportWarning("ESTOP DriveTrain", false);
-    DriveTrain.ESTOP();
-    System.out.println("Done");
-
-    DriverStation.reportError("KILLING IT", true);
-    for (Estoppable manipulator : ManipulatorBase.allManipulators) {
-      DriverStation.reportWarning("ESTOP " + manipulator.getName(), false);
-      manipulator.ESTOP();
-      System.out.println("Done");
-    }
-
-    DriverStation.reportError("KILLED IT, EXITING NOW", false);
-    System.exit(0);
+    // DriverStation.reportError("KILLED IT, EXITING NOW", false);
+    // System.exit(0);
   }
 
   /**
    * <b>ONLY FOR USE IN EMERGENCY</b>
    * <p>
    * YES, ACTUALLY
+   * @deprecated Use "Estoppable.KILLIT()" instead
    */
+  @Deprecated
   public static void KILLIT() {
-    DriverStation.reportError("KILLING IT", true);
-    for (Estoppable manipulator : ManipulatorBase.allManipulators) {
-      DriverStation.reportWarning("ESTOP " + manipulator.getName(), false);
-      manipulator.ESTOP();
-      System.out.println("Done");
-    }
+  //   DriverStation.reportError("KILLING IT", true);
+  //   for (Estoppable manipulator : Estoppable._getAllEstoppables()) {
+  //     DriverStation.reportWarning("ESTOP " + manipulator.getName(), false);
+  //     manipulator.ESTOP();
+  //     System.out.println("Done");
+  //   }
 
-    DriverStation.reportError("KILLED IT, EXITING NOW", false);
-    System.exit(0);
+  //   DriverStation.reportError("KILLED IT, EXITING NOW", false);
+  //   System.exit(0);
   }
 }
