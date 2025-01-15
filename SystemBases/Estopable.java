@@ -18,12 +18,13 @@ public abstract class Estopable extends SubsystemBase {
    */
   public Estopable() {
     allEstoppables.add(this);
+    System.out.println("Creating subsystem " + getName());
   }
 
   /**
    * <b>EMERGENCY STOP</b>
    * <p>
-   * WILL STOP THE SYSTEM
+   * WILL STOP THE SUBSYSTEM
    * <p>
    * Recomended to set brake mode to true, unless if the system could be
    * in a position that would be dangerous or would trap a piece.
@@ -31,9 +32,9 @@ public abstract class Estopable extends SubsystemBase {
   public abstract void ESTOP();
 
   /**
-   * <b>ONLY FOR USE IN CASE OF AN <i>EMERGENCY</i>
+   * <b>ONLY FOR USE IN CASE OF AN <i>EMERGENCY
    * <p>
-   * <i>NO TOUCHIE</i></b>
+   * NO TOUCHIE</i></b>
    */
   public static void KILLIT() {
     DriverStation.reportError("KILLING IT", true);

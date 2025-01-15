@@ -87,6 +87,11 @@ public abstract class ManipulatorBase extends Estopable {
     this.moveCommand = new ManipulatorMoveCommand(this, Integer.MAX_VALUE, tolerance, kP, kI, kD);
   }
 
+  public void setPositionPID(ManipulatorMoveCommand command) {
+    cancelMoveToPosition();
+    this.moveCommand = command;
+  }
+
   public ManipulatorMoveCommand getMoveCommand() {
     return moveCommand;
   }
@@ -99,9 +104,25 @@ public abstract class ManipulatorBase extends Estopable {
     return moveCommand.getTargetPosition();
   }
 
-  /** Move the manipulator to a position in degrees */
+  /**
+   * Move the manipulator to a position in degrees or meters
+   * <p>
+   * <b>STOPS COMMANDS</b>
+   */
   public void moveToPosition(double position) {
-    stopCommands();
+    moveToPosition(position, true);
+  }
+
+  /**
+   * Move the manipulator to a position in degrees or meters
+   * <p>
+   * <b>Only run with stopCommands false if the position command is known to be
+   * running</b>
+   */
+  public void moveToPosition(double position, boolean stopCommands) {
+    if (stopCommands) {
+      stopCommands();
+    }
     if (position > maxPosition) {
       position = maxPosition;
       System.out.println("ManipulatorBase: Position out of bounds" + position + " > " + maxPosition);
@@ -110,7 +131,9 @@ public abstract class ManipulatorBase extends Estopable {
       System.out.println("ManipulatorBase: Position out of bounds" + position + " < " + minPosition);
     }
     moveCommand.setTargetPosition(position);
-    moveCommand.schedule();
+    if (stopCommands || !moveCommand.isScheduled()) {
+      moveCommand.schedule();
+    }
   }
 
   /** If moveCommand not initialized returns false */
@@ -160,7 +183,7 @@ public abstract class ManipulatorBase extends Estopable {
   }
 
   /**
-   * Set the raw speed of the motor in the range -1 to 1
+   * Set the raw power of the motor in the range -1 to 1
    * <p>
    * Used for manual control
    * <p>
@@ -172,6 +195,41 @@ public abstract class ManipulatorBase extends Estopable {
 
   public void setMaxPower(double maxPower) {
     this.maxPower = maxPower;
+  }
+
+  /** Get the average voltage of the motors */
+  public double getAveVoltage() {
+    double average = 0;
+    for (CANSparkMax motor : motors) {
+      average += motor.getBusVoltage();
+    }
+    return average / motors.size();
+  }
+
+  /** Same as {@link #getAveVoltage()} but ABSed before averaging */
+  public double getAbsVoltage() {
+    double average = 0;
+    for (CANSparkMax motor : motors) {
+      average += Math.abs(motor.getBusVoltage());
+    }
+    return average / motors.size();
+  }
+
+  /**
+   * Set the raw speed of the motor in the range -1 to 1
+   * <p>
+   * Used for manual control
+   */
+  public void setVoltage(double voltage, boolean stopCommands) {
+    if (stopCommands) {
+      stopCommands();
+    }
+
+    // double line = motors.get(0).getBusVoltage();
+    // voltage = Math.min(line, Math.max(-line, voltage));
+    for (CANSparkMax motor : motors) {
+      motor.setVoltage(voltage);
+    }
   }
 
   // ===================== Speed Methods ===================== //
@@ -291,7 +349,7 @@ public abstract class ManipulatorBase extends Estopable {
     }
   }
 
-  public void setRampRate(int rate) {
+  public void setRampRate(double rate) {
     for (CANSparkMax motor : motors) {
       motor.setOpenLoopRampRate(rate);
       motor.setClosedLoopRampRate(rate);

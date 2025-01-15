@@ -6,16 +6,17 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj.DriverStation;
 
 public class ManipulatorMoveCommand extends Command {
-  private ManipulatorBase manipulator;
-  private double position;
-  private double tolerance;
-  private PIDController pid;
-  private int onTargetCounterStart = 10;
-  private int onTargetCounter = onTargetCounterStart;
-  private boolean endOnTarget = false;
+  protected ManipulatorBase manipulator;
+  protected double position;
+  protected double tolerance;
+  protected PIDController pid;
+  protected int onTargetCounterStart = 10;
+  protected int onTargetCounter = onTargetCounterStart;
+  protected boolean endOnTarget = false;
   public boolean atPosition = false;
 
-  public ManipulatorMoveCommand(ManipulatorBase manipulator, double position, double tolerance, double kP, double kI, double kD) {
+  public ManipulatorMoveCommand(ManipulatorBase manipulator, double position, double tolerance,
+      double kP, double kI, double kD) {
     this.manipulator = manipulator;
     this.position = position;
     this.tolerance = tolerance;

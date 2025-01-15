@@ -5,7 +5,6 @@
 package frc.robot.SyncedLibraries.SystemBases.Swerve;
 
 import com.kauailabs.navx.frc.AHRS;
-
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -84,7 +83,7 @@ public abstract class SwerveDriveBase extends Estopable {
    * @param turnAmps       The max amps for the turn motors
    */
   public SwerveDriveBase(double width, double length, SwerveModuleBase[] modules,
-      double[] swerveDrivePID, double[] swerveTurnPID, double[] botTurnPID, int driveAmps, int turnAmps) {
+      double[] swerveDrivePID, double[] swerveTurnPID, double[] botTurnPID, double maxWheelSpeed, double maxRotationSpeed, int driveAmps, int turnAmps) {
     NetworkTablesSwervePublisherDesired = NetworkTableInstance.getDefault()
         .getStructArrayTopic("/DesiredSwerveStates", SwerveModuleState.struct).publish();
     NetworkTablesSwervePublisherCurrent = NetworkTableInstance.getDefault()

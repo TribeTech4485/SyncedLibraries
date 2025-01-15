@@ -30,6 +30,9 @@ public abstract class SwerveModuleBase extends SubsystemBase {
   protected boolean sudoMode = false;
   protected boolean slowMode = false;
 
+  protected int driveAmps;
+  protected int turnAmps;
+
   /**
    * Constructs a new SwerveModule.
    * MUST CALL {@link #inputDriveTrain(SwerveDriveBase)} AFTER CONSTRUCTION
@@ -212,7 +215,11 @@ public abstract class SwerveModuleBase extends SubsystemBase {
   public void setSudoMode(boolean sudoMode) {
     this.sudoMode = sudoMode;
     if (sudoMode) {
-      
+      m_driveMotor.setSmartCurrentLimit(20);
+      m_turningMotor.setSmartCurrentLimit(20);
+    } else {
+      m_driveMotor.setSmartCurrentLimit(driveAmps);
+      m_turningMotor.setSmartCurrentLimit(turnAmps);
     }
   }
 
@@ -226,9 +233,11 @@ public abstract class SwerveModuleBase extends SubsystemBase {
 
   public void setDriveAmps(int limit) {
     m_driveMotor.setSmartCurrentLimit(limit);
+    driveAmps = limit;
   }
 
   public void setTurnAmps(int limit) {
     m_turningMotor.setSmartCurrentLimit(limit);
+    turnAmps = limit;
   }
 }
