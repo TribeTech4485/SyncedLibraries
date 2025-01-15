@@ -32,12 +32,13 @@ public class ManipulatorFFMoveCommand extends ManipulatorMoveCommand {
      * @param kV              The velocity gain
      * @param kG              The gravity gain (leave at 0 if not using Arm or
      *                        Elevator)
+     * @param kA              The acceleration gain
      * @param maxVelocity     The maximum velocity of the manipulator
      * @param maxAcceleration The maximum acceleration of the manipulator
      */
     public ManipulatorFFMoveCommand(ManipulatorBase manipulator, double position,
             double tolerance, double kP, double kI, double kD, String feedForwardType,
-            double kS, double kV, double kG, double maxVelocity, double maxAcceleration) {
+            double kS, double kV, double kG, double kA, double maxVelocity, double maxAcceleration) {
         super(manipulator, position, tolerance, kP, kI, kD);
 
         TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(maxVelocity, maxAcceleration);
@@ -46,13 +47,13 @@ public class ManipulatorFFMoveCommand extends ManipulatorMoveCommand {
 
         switch (feedForwardType) {
             case "Simple":
-                simpleController = new SimpleMotorFeedforward(kS, kV);
+                simpleController = new SimpleMotorFeedforward(kS, kV, kA);
                 break;
             case "Elevator":
-                elevatorController = new ElevatorFeedforward(kS, kG, kV);
+                elevatorController = new ElevatorFeedforward(kS, kG, kV, kA);
                 break;
             case "Arm":
-                armController = new ArmFeedforward(kS, kG, kV);
+                armController = new ArmFeedforward(kS, kG, kV, kA);
                 break;
             default:
                 System.out.println("Invalid FeedForward type for manipulator \"" + manipulator.getName() + "\", defaulting to Simple. The options are \"Simple\", \"Elevator\", and \"Arm\"");
