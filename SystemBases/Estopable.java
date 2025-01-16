@@ -47,4 +47,8 @@ public abstract class Estopable extends SubsystemBase {
     DriverStation.reportError("KILLED IT, EXITING NOW", false);
     System.exit(0);
   }
+
+  public static Estopable[] getAllEstopables() {
+    return allEstoppables.toArray(new Estopable[0]);
+  }
 }

@@ -32,7 +32,7 @@ public class ManipulatorFFMoveCommand extends ManipulatorMoveCommand {
      * @param kV              The velocity gain
      * @param kG              The gravity gain (leave at 0 if not using Arm or
      *                        Elevator)
-     * @param kA              The acceleration gain
+     * @param kA              The acceleration gain (generally assumed to be 0)
      * @param maxVelocity     The maximum velocity of the manipulator
      * @param maxAcceleration The maximum acceleration of the manipulator
      */
