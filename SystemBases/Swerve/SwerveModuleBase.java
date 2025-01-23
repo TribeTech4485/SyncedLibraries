@@ -4,9 +4,15 @@
 
 package frc.robot.SyncedLibraries.SystemBases.Swerve;
 
-import com.revrobotics.CANSparkMax;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.config.AbsoluteEncoderConfig;
+import com.revrobotics.spark.config.EncoderConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkAbsoluteEncoder;
+import com.revrobotics.spark.SparkAbsoluteEncoder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -16,8 +22,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public abstract class SwerveModuleBase extends SubsystemBase {
   protected SwerveDriveBase driveTrainBase;
-  protected final CANSparkMax m_driveMotor;
-  protected final CANSparkMax m_turningMotor;
+  protected final SparkMax m_driveMotor;
+  protected final SparkMax m_turningMotor;
 
   protected final RelativeEncoder m_driveEncoder;
   protected final SparkAbsoluteEncoder m_turningEncoder;
@@ -42,46 +48,52 @@ public abstract class SwerveModuleBase extends SubsystemBase {
    * @param turningOffset The offset for the turning encoder. Starting position
    * @param name          The name of the module. Ie. "Front Left"
    */
-  public SwerveModuleBase(CANSparkMax driveMotor, CANSparkMax turningMotor, double turningOffset, String name) {
+  public SwerveModuleBase(SparkMax driveMotor, SparkMax turningMotor, double turningOffset, String name) {
     this.setName(name);
 
     // DRIVE MOTOR SETUP
     m_driveMotor = driveMotor;
 
-    m_driveMotor.restoreFactoryDefaults();
-    m_driveMotor.setIdleMode(CANSparkMax.IdleMode.kBrake);
+    m_driveMotor.configure(new SparkMaxConfig()
+        .idleMode(IdleMode.kBrake)
+        .apply(new SparkMaxConfig()
+            .idleMode(IdleMode.kBrake)
+            .apply(new EncoderConfig()
+                .positionConversionFactor(driveGearRatio)
+                .velocityConversionFactor(driveGearRatio))),
+        ResetMode.kResetSafeParameters,  // resetToFactoryDefaults()
+        PersistMode.kPersistParameters); // burnFlash()
 
     m_driveEncoder = m_driveMotor.getEncoder();
-    m_driveEncoder.setPositionConversionFactor(driveGearRatio);
-    m_driveEncoder.setVelocityConversionFactor(driveGearRatio);
 
     m_drivePIDController = new PIDController(0, 0, 0);
 
     // TURNING MOTOR SETUP
     m_turningMotor = turningMotor;
 
-    m_turningMotor.restoreFactoryDefaults();
-    m_turningMotor.setIdleMode(CANSparkMax.IdleMode.kCoast);
+    m_turningMotor.configure(new SparkMaxConfig()
+        .idleMode(IdleMode.kCoast)
+        .apply(new AbsoluteEncoderConfig().zeroOffset(turningOffset)),
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
 
     m_turningEncoder = m_turningMotor.getAbsoluteEncoder();
-    m_turningEncoder.setZeroOffset(turningOffset);
 
     m_turnPIDController = new PIDController(0, 0, 0);
     m_turnPIDController.enableContinuousInput(0, 1);
-
-    m_turningMotor.burnFlash();
-    m_driveMotor.burnFlash();
   }
 
   public void inputDriveTrain(SwerveDriveBase driveTrainBase) {
     this.driveTrainBase = driveTrainBase;
     // drive motor setup
-    m_driveMotor.setSmartCurrentLimit(driveTrainBase.driveAmps);
+    m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(driveTrainBase.driveAmps),
+        ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
     double[] drivePIDS = driveTrainBase.modulesDrivePID;
     m_drivePIDController.setPID(drivePIDS[0], drivePIDS[1], drivePIDS[2]);
 
     // turning motor setup
-    m_turningMotor.setSmartCurrentLimit(driveTrainBase.turnAmps);
+    m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(driveTrainBase.turnAmps),
+        ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
     double[] turnPIDS = driveTrainBase.modulesTurnPID;
     m_turnPIDController.setPID(turnPIDS[0], turnPIDS[1], turnPIDS[2]);
   }
@@ -119,7 +131,7 @@ public abstract class SwerveModuleBase extends SubsystemBase {
 
     SwerveModuleState state = new SwerveModuleState(desiredState.speedMetersPerSecond, desiredState.angle);
     // Optimize the reference state to avoid spinning further than 90 degrees
-    state = SwerveModuleState.optimize(state, getEncoderPos());
+    state.optimize(getEncoderPos());
 
     // Scale speed by cosine of angle error. This scales down movement perpendicular
     // to the desired direction of travel that can occur when modules change
@@ -164,11 +176,8 @@ public abstract class SwerveModuleBase extends SubsystemBase {
   }
 
   public void setDriveBrakeMode(boolean brake) {
-    if (brake) {
-      m_driveMotor.setIdleMode(CANSparkMax.IdleMode.kBrake);
-    } else {
-      m_driveMotor.setIdleMode(CANSparkMax.IdleMode.kCoast);
-    }
+    m_driveMotor.configure(new SparkMaxConfig().idleMode(brake ? IdleMode.kBrake : IdleMode.kCoast),
+        ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
   }
 
   protected double covertFromRadians(double radians) {
@@ -184,11 +193,11 @@ public abstract class SwerveModuleBase extends SubsystemBase {
     return new Rotation2d(convertToRadians(m_turningEncoder.getPosition()));
   }
 
-  public CANSparkMax getTurnMotor() {
+  public SparkMax getTurnMotor() {
     return m_turningMotor;
   }
 
-  public CANSparkMax getDriveMotor() {
+  public SparkMax getDriveMotor() {
     return m_driveMotor;
   }
 
@@ -215,11 +224,15 @@ public abstract class SwerveModuleBase extends SubsystemBase {
   public void setSudoMode(boolean sudoMode) {
     this.sudoMode = sudoMode;
     if (sudoMode) {
-      m_driveMotor.setSmartCurrentLimit(20);
-      m_turningMotor.setSmartCurrentLimit(20);
+      m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(20), ResetMode.kNoResetSafeParameters,
+          PersistMode.kPersistParameters);
+      m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(20), ResetMode.kNoResetSafeParameters,
+          PersistMode.kPersistParameters);
     } else {
-      m_driveMotor.setSmartCurrentLimit(driveAmps);
-      m_turningMotor.setSmartCurrentLimit(turnAmps);
+      m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(driveAmps), ResetMode.kNoResetSafeParameters,
+          PersistMode.kPersistParameters);
+      m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(turnAmps), ResetMode.kNoResetSafeParameters,
+          PersistMode.kPersistParameters);
     }
   }
 
@@ -232,12 +245,14 @@ public abstract class SwerveModuleBase extends SubsystemBase {
   }
 
   public void setDriveAmps(int limit) {
-    m_driveMotor.setSmartCurrentLimit(limit);
+    m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(limit), ResetMode.kNoResetSafeParameters,
+        PersistMode.kPersistParameters);
     driveAmps = limit;
   }
 
   public void setTurnAmps(int limit) {
-    m_turningMotor.setSmartCurrentLimit(limit);
+    m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(limit), ResetMode.kNoResetSafeParameters,
+        PersistMode.kPersistParameters);
     turnAmps = limit;
   }
 }

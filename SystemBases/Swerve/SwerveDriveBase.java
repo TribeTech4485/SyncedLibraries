@@ -4,7 +4,8 @@
 
 package frc.robot.SyncedLibraries.SystemBases.Swerve;
 
-import com.kauailabs.navx.frc.AHRS;
+import com.studica.frc.AHRS;
+import com.studica.frc.AHRS.NavXComType;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -17,7 +18,6 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.SyncedLibraries.SystemBases.Estopable;
-import frc.robot.SyncedLibraries.SystemBases.ManipulatorBase;
 
 /** Represents a swerve drive style drivetrain. */
 public abstract class SwerveDriveBase extends Estopable {
@@ -109,7 +109,7 @@ public abstract class SwerveDriveBase extends Estopable {
     m_backRight = modules[3];
     this.modules = modules;
 
-    m_gyro = new AHRS();
+    m_gyro = new AHRS(NavXComType.kMXP_SPI);
     m_gyro.reset();
 
     m_kinematics = new SwerveDriveKinematics(

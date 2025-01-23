@@ -1,6 +1,7 @@
 package frc.robot.SyncedLibraries.SystemBases;
 
-import com.kauailabs.navx.frc.AHRS;
+import com.studica.frc.AHRS;
+import com.studica.frc.AHRS.NavXComType;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkBase.IdleMode;
@@ -122,7 +123,7 @@ public abstract class DriveTrainBase extends SubsystemBase {
     } else {
       // navX-MXP Gyro instantiation
       try {
-        m_Gyro = new AHRS(SPI.Port.kMXP);
+        m_Gyro = new AHRS(NavXComType.kMXP_SPI);
       } catch (RuntimeException ex) {
         DriverStation.reportError("Error instantiating navX-MXP:  " + ex.getMessage(), true);
       }
