@@ -31,12 +31,6 @@ import edu.wpi.first.wpilibj2.command.PrintCommand;
  * You also can use standard subsystem methods
  */
 public abstract class ManipulatorBase extends Estopable {
-  /**
-   * @deprecated Manually adding is unneccesary, now handled by the
-   *             ESTOPPABLE parent class
-   */
-  @Deprecated
-  public static LinkedList<Estopable> allManipulators = new LinkedList<Estopable>();
   /** If null, run the {@link #setPositionPID(double, double, double, double)} */
   protected ManipulatorMoveCommand moveCommand;
   /** If null, run the {@link #setSpeedPID(double, double, double, double)} */
@@ -336,7 +330,7 @@ public abstract class ManipulatorBase extends Estopable {
   public void setBrakeMode(boolean brakeOnStop) {
     for (SparkMax motor : motors) {
       motor.configure(new SparkMaxConfig().idleMode(brakeOnStop ? IdleMode.kBrake : IdleMode.kCoast),
-          ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+          ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
   }
 
@@ -345,14 +339,14 @@ public abstract class ManipulatorBase extends Estopable {
     for (SparkMax motor : motors) {
       motor.configure(new SparkMaxConfig().inverted(inverted)
           .apply(new EncoderConfig().inverted(inverted)), ResetMode.kNoResetSafeParameters,
-          PersistMode.kPersistParameters);
+          PersistMode.kNoPersistParameters);
     }
   }
 
   public void setCurrentLimit(int limit) {
     for (SparkMax motor : motors) {
       motor.configure(new SparkMaxConfig().smartCurrentLimit(limit), ResetMode.kNoResetSafeParameters,
-          PersistMode.kPersistParameters);
+          PersistMode.kNoPersistParameters);
     }
   }
 
@@ -361,7 +355,7 @@ public abstract class ManipulatorBase extends Estopable {
       motor.configure(new SparkMaxConfig()
           .closedLoopRampRate(rate)
           .openLoopRampRate(rate),
-          ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+          ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
   }
 
@@ -370,7 +364,7 @@ public abstract class ManipulatorBase extends Estopable {
     for (int index : motorIndexes) {
       motors.get(index).configure(new SparkMaxConfig().inverted(inverted).apply(new EncoderConfig().inverted(inverted)),
           ResetMode.kNoResetSafeParameters,
-          PersistMode.kPersistParameters);
+          PersistMode.kNoPersistParameters);
       // motors.get(index).getEncoder().setInverted(inverted);
     }
   }
@@ -419,11 +413,23 @@ public abstract class ManipulatorBase extends Estopable {
    */
   public abstract Command test();
 
-  /**
-   * This will always be silently called upon initialization of any manipulator
-   * subclass, adds itself to the list of all manipulators for emergency stop
-   */
-  public ManipulatorBase() {
-    allManipulators.add(this);
+  public static ManipulatorBase[] getAllManipulators() {
+    Estopable[] estopables = Estopable.getAllEstopables();
+    LinkedList<ManipulatorBase> manipulators = new LinkedList<ManipulatorBase>();
+    for (Estopable estopable : estopables) {
+      if (estopable instanceof ManipulatorBase) {
+        manipulators.add((ManipulatorBase) estopable);
+      }
+    }
+    return manipulators.toArray(new ManipulatorBase[0]);
+  }
+
+  @Override
+  public void onDisable() {
+    // Save motor config
+    for (SparkMax motor : motors) {
+      motor.configure(new SparkMaxConfig(), ResetMode.kNoResetSafeParameters,
+          PersistMode.kPersistParameters);
+    }
   }
 }

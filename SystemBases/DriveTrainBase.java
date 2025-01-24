@@ -305,7 +305,7 @@ public abstract class DriveTrainBase extends SubsystemBase {
   public void setBrakeMode(boolean brake) {
     for (SparkMax motor : motors) {
       motor.configure(new SparkMaxConfig().idleMode(brake ? IdleMode.kBrake : IdleMode.kCoast),
-          ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+          ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
   }
 
@@ -317,7 +317,7 @@ public abstract class DriveTrainBase extends SubsystemBase {
     for (SparkMax motor : motors) {
       motor.configure(new SparkMaxConfig().inverted(!motor.configAccessor.getInverted()),
           ResetMode.kNoResetSafeParameters,
-          PersistMode.kPersistParameters);
+          PersistMode.kNoPersistParameters);
     }
   }
 
@@ -338,5 +338,14 @@ public abstract class DriveTrainBase extends SubsystemBase {
   public void ESTOP() {
     setBrakeMode(true);
     stop();
+  }
+
+  public void onDisable() {
+    stop();
+    for (SparkMax motor : motors) {
+      // Save motor configurations
+      motor.configure(new SparkMaxConfig(),
+          ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    }
   }
 }

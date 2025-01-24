@@ -18,9 +18,9 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.SyncedLibraries.SystemBases.Estopable;
 
-public abstract class SwerveModuleBase extends SubsystemBase {
+public abstract class SwerveModuleBase extends Estopable {
   protected SwerveDriveBase driveTrainBase;
   protected final SparkMax m_driveMotor;
   protected final SparkMax m_turningMotor;
@@ -61,7 +61,7 @@ public abstract class SwerveModuleBase extends SubsystemBase {
             .apply(new EncoderConfig()
                 .positionConversionFactor(driveGearRatio)
                 .velocityConversionFactor(driveGearRatio))),
-        ResetMode.kResetSafeParameters,  // resetToFactoryDefaults()
+        ResetMode.kResetSafeParameters, // resetToFactoryDefaults()
         PersistMode.kPersistParameters); // burnFlash()
 
     m_driveEncoder = m_driveMotor.getEncoder();
@@ -177,7 +177,7 @@ public abstract class SwerveModuleBase extends SubsystemBase {
 
   public void setDriveBrakeMode(boolean brake) {
     m_driveMotor.configure(new SparkMaxConfig().idleMode(brake ? IdleMode.kBrake : IdleMode.kCoast),
-        ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+        ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
   protected double covertFromRadians(double radians) {
@@ -225,14 +225,14 @@ public abstract class SwerveModuleBase extends SubsystemBase {
     this.sudoMode = sudoMode;
     if (sudoMode) {
       m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(20), ResetMode.kNoResetSafeParameters,
-          PersistMode.kPersistParameters);
+          PersistMode.kNoPersistParameters);
       m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(20), ResetMode.kNoResetSafeParameters,
-          PersistMode.kPersistParameters);
+          PersistMode.kNoPersistParameters);
     } else {
       m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(driveAmps), ResetMode.kNoResetSafeParameters,
-          PersistMode.kPersistParameters);
+          PersistMode.kNoPersistParameters);
       m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(turnAmps), ResetMode.kNoResetSafeParameters,
-          PersistMode.kPersistParameters);
+          PersistMode.kNoPersistParameters);
     }
   }
 
@@ -246,13 +246,29 @@ public abstract class SwerveModuleBase extends SubsystemBase {
 
   public void setDriveAmps(int limit) {
     m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(limit), ResetMode.kNoResetSafeParameters,
-        PersistMode.kPersistParameters);
+        PersistMode.kNoPersistParameters);
     driveAmps = limit;
   }
 
   public void setTurnAmps(int limit) {
     m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(limit), ResetMode.kNoResetSafeParameters,
-        PersistMode.kPersistParameters);
+        PersistMode.kNoPersistParameters);
     turnAmps = limit;
+  }
+
+  @Override
+  public void ESTOP() {
+    // Handled by the SwerveDriveBase
+  }
+
+  @Override
+  public void onDisable() {
+    m_driveMotor.set(0);
+    m_turningMotor.set(0);
+
+    m_driveMotor.configure(new SparkMaxConfig(), ResetMode.kNoResetSafeParameters,
+        PersistMode.kPersistParameters);
+    m_turningMotor.configure(new SparkMaxConfig(), ResetMode.kNoResetSafeParameters,
+        PersistMode.kPersistParameters);
   }
 }

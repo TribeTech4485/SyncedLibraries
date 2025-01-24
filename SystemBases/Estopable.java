@@ -51,4 +51,12 @@ public abstract class Estopable extends SubsystemBase {
   public static Estopable[] getAllEstopables() {
     return allEstoppables.toArray(new Estopable[0]);
   }
+
+  /** Runs when robot is disabled
+   * <p>
+   * Reccomended to stop motors and save motor configurations
+   */
+  public void onDisable() {
+    // Override this if you want to do something when the robot is disabled
+  }
 }
