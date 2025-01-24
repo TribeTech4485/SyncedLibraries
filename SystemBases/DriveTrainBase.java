@@ -2,9 +2,12 @@ package frc.robot.SyncedLibraries.SystemBases;
 
 import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
-import com.revrobotics.CANSparkMax;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.SparkMax;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.CANSparkBase.IdleMode;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
@@ -16,13 +19,13 @@ import java.util.LinkedList;
 
 /** USED FOR TANK-DRIVE BASES */
 public abstract class DriveTrainBase extends SubsystemBase {
-  private LinkedList<CANSparkMax> leftMotors = new LinkedList<CANSparkMax>(); // define in constructor
-  private LinkedList<CANSparkMax> rightMotors = new LinkedList<CANSparkMax>(); // define in constructor
-  private LinkedList<CANSparkMax> motors = new LinkedList<CANSparkMax>(); // define in constructor
+  private LinkedList<SparkMax> leftMotors = new LinkedList<SparkMax>(); // define in constructor
+  private LinkedList<SparkMax> rightMotors = new LinkedList<SparkMax>(); // define in constructor
+  private LinkedList<SparkMax> motors = new LinkedList<SparkMax>(); // define in constructor
 
   // define Speed Controller Groups and Differential Drive for use in drive train
-  private CANSparkMax driveMainLeft;
-  private CANSparkMax driveMainRight;
+  private SparkMax driveMainLeft;
+  private SparkMax driveMainRight;
   private DifferentialDrive differentialDrive;
 
   private RelativeEncoder m_leftEncoder;
@@ -57,14 +60,14 @@ public abstract class DriveTrainBase extends SubsystemBase {
    * @param pulsesPerRevolution Pulses per revolution of the encoders
    * @param disableShifter      Whether to disable the shifter
    */
-  public DriveTrainBase(CANSparkMax[] leftDriveMotors, CANSparkMax[] rightDriveMotors, PneumaticsModuleType moduleType,
+  public DriveTrainBase(SparkMax[] leftDriveMotors, SparkMax[] rightDriveMotors, PneumaticsModuleType moduleType,
       int[] GearChangerPorts, boolean kSkipGyro, double maxSpeed, int driveAmpsMax, double drivingRamp,
       double wheelDiameter, double pulsesPerRevolution, boolean disableShifter) {
     System.out.print("Instatntiating drivetrain");
-    for (CANSparkMax motor : leftDriveMotors) {
+    for (SparkMax motor : leftDriveMotors) {
       leftMotors.add(motor);
     }
-    for (CANSparkMax motor : rightDriveMotors) {
+    for (SparkMax motor : rightDriveMotors) {
       rightMotors.add(motor);
     }
 
@@ -72,19 +75,18 @@ public abstract class DriveTrainBase extends SubsystemBase {
     motors.addAll(rightMotors);
 
     // Update motor config
-    for (CANSparkMax motor : motors) {
-      motor.restoreFactoryDefaults();
-      motor.setSmartCurrentLimit(driveAmpsMax);
-      motor.setClosedLoopRampRate(drivingRamp);
-      motor.setOpenLoopRampRate(drivingRamp);
-      motor.setIdleMode(IdleMode.kCoast);
-      motor.enableVoltageCompensation(12);
-      motor.setInverted(false);
-      motor.burnFlash();
+    for (SparkMax motor : motors) {
+      motor.configure(new SparkMaxConfig()
+      .smartCurrentLimit(driveAmpsMax)
+      .closedLoopRampRate(drivingRamp)
+      .openLoopRampRate(drivingRamp)
+      .idleMode(IdleMode.kCoast)
+      .inverted(false),
+          ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     // Sync side motors
-    for (CANSparkMax motor : leftDriveMotors) {
+    for (SparkMax motor : leftDriveMotors) {
       motor.setInverted(false);
       if (motor == leftMotors.get(0)) {
         driveMainLeft = motor;
@@ -92,7 +94,7 @@ public abstract class DriveTrainBase extends SubsystemBase {
         // motor.follow(driveMainLeft);
       }
     }
-    for (CANSparkMax motor : rightDriveMotors) {
+    for (SparkMax motor : rightDriveMotors) {
       motor.setInverted(false);
       if (motor == rightMotors.get(0)) {
         driveMainRight = motor;
@@ -166,23 +168,23 @@ public abstract class DriveTrainBase extends SubsystemBase {
       System.out.println("**driveTrain power L/R: " + leftDrivePercent + " | " + rightDrivePercent);
     }
     if (Math.abs(leftDrivePercent) > 0.01) {
-      for (CANSparkMax motor : leftMotors) {
+      for (SparkMax motor : leftMotors) {
         motor.set(leftDrivePercent);
       }
       // driveMainLeft.set(leftDrivePercent);
     } else {
-      for (CANSparkMax motor : leftMotors) {
+      for (SparkMax motor : leftMotors) {
         motor.stopMotor();
       }
       // driveMainLeft.stopMotor();
     }
     if (Math.abs(rightDrivePercent) > 0.01) {
-      for (CANSparkMax motor : rightMotors) {
+      for (SparkMax motor : rightMotors) {
         motor.set(-rightDrivePercent);
       }
       // driveMainRight.set(rightDrivePercent);
     } else {
-      for (CANSparkMax motor : rightMotors) {
+      for (SparkMax motor : rightMotors) {
         motor.stopMotor();
       }
       // driveMainRight.stopMotor();
@@ -293,30 +295,25 @@ public abstract class DriveTrainBase extends SubsystemBase {
 
   public double getAveCurrent() {
     double current = 0;
-    for (CANSparkMax motor : motors) {
+    for (SparkMax motor : motors) {
       current += motor.getOutputCurrent();
     }
     return current / motors.size();
   }
 
   public void setBrakeMode(boolean brake) {
-    if (brake) {
-      for (CANSparkMax motor : motors) {
-        motor.setIdleMode(IdleMode.kBrake);
-      }
-    } else {
-      for (CANSparkMax motor : motors) {
-        motor.setIdleMode(IdleMode.kCoast);
-      }
+    for (SparkMax motor : motors) {
+      motor.configure(new SparkMaxConfig().idleMode(brake ? IdleMode.kBrake : IdleMode.kCoast),
+          ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
     }
   }
 
-  public CANSparkMax[] getAllMotors() {
-    return motors.toArray(new CANSparkMax[0]);
+  public SparkMax[] getAllMotors() {
+    return motors.toArray(new SparkMax[0]);
   }
 
   public void invertAll() {
-    for (CANSparkMax motor : motors) {
+    for (SparkMax motor : motors) {
       motor.setInverted(!motor.getInverted());
     }
   }

@@ -5,7 +5,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj.DriverStation;
 
-import com.revrobotics.CANSparkMax;
+import com.revrobotics.spark.SparkMax;
 import com.revrobotics.RelativeEncoder;
 
 public class ManipulatorSpeedCommand extends Command {
@@ -14,7 +14,7 @@ public class ManipulatorSpeedCommand extends Command {
   private double tolerance;
   private boolean endOnTarget = false;
   private PIDController[] pid;
-  private CANSparkMax[] motors;
+  private SparkMax[] motors;
   private RelativeEncoder[] encoders;
   public int onTargetCounterStart = 1;
   private int onTargetCounter = onTargetCounterStart;

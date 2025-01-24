@@ -1,7 +1,14 @@
 package frc.robot.SyncedLibraries.SystemBases;
 
-import com.revrobotics.CANSparkMax;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.config.EncoderConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.RelativeEncoder;
+
+import java.time.format.ResolverStyle;
 import java.util.LinkedList;
 import java.util.function.BooleanSupplier;
 
@@ -42,7 +49,7 @@ public abstract class ManipulatorBase extends Estopable {
   protected double maxPower = 1;
   protected double maxPosition = Double.MAX_VALUE;
   protected double minPosition = -Double.MAX_VALUE;
-  protected LinkedList<CANSparkMax> motors = new LinkedList<CANSparkMax>();
+  protected LinkedList<SparkMax> motors = new LinkedList<SparkMax>();
   protected LinkedList<RelativeEncoder> encoders = new LinkedList<RelativeEncoder>();
   protected BooleanSupplier customSensor = () -> false;
 
@@ -152,7 +159,7 @@ public abstract class ManipulatorBase extends Estopable {
   /** Get the raw speed of the motor in the range -1 to 1 */
   public double getAvePower() {
     double average = 0;
-    for (CANSparkMax motor : motors) {
+    for (SparkMax motor : motors) {
       average += motor.get();
     }
     return average / motors.size();
@@ -161,7 +168,7 @@ public abstract class ManipulatorBase extends Estopable {
   /** Same as {@link #getAvePower()} but ABSed before averaging */
   public double getAbsPower() {
     double average = 0;
-    for (CANSparkMax motor : motors) {
+    for (SparkMax motor : motors) {
       average += Math.abs(motor.get());
     }
     return average / motors.size();
@@ -177,7 +184,7 @@ public abstract class ManipulatorBase extends Estopable {
       stopCommands();
     }
     percent = Math.min(maxPower, Math.max(-maxPower, percent));
-    for (CANSparkMax motor : motors) {
+    for (SparkMax motor : motors) {
       motor.set(percent);
     }
   }
@@ -200,7 +207,7 @@ public abstract class ManipulatorBase extends Estopable {
   /** Get the average voltage of the motors */
   public double getAveVoltage() {
     double average = 0;
-    for (CANSparkMax motor : motors) {
+    for (SparkMax motor : motors) {
       average += motor.getBusVoltage();
     }
     return average / motors.size();
@@ -209,7 +216,7 @@ public abstract class ManipulatorBase extends Estopable {
   /** Same as {@link #getAveVoltage()} but ABSed before averaging */
   public double getAbsVoltage() {
     double average = 0;
-    for (CANSparkMax motor : motors) {
+    for (SparkMax motor : motors) {
       average += Math.abs(motor.getBusVoltage());
     }
     return average / motors.size();
@@ -227,7 +234,7 @@ public abstract class ManipulatorBase extends Estopable {
 
     // double line = motors.get(0).getBusVoltage();
     // voltage = Math.min(line, Math.max(-line, voltage));
-    for (CANSparkMax motor : motors) {
+    for (SparkMax motor : motors) {
       motor.setVoltage(voltage);
     }
   }
@@ -288,20 +295,20 @@ public abstract class ManipulatorBase extends Estopable {
   /** Adds all the encoders from the motors into the encoders list */
   protected void updateEncoders() {
     encoders.clear();
-    for (CANSparkMax motor : motors) {
+    for (SparkMax motor : motors) {
       encoders.add(motor.getEncoder());
     }
   }
 
   /** Do I really need to explain this? */
-  public void addMotors(CANSparkMax... motors) {
-    for (CANSparkMax motor : motors) {
+  public void addMotors(SparkMax... motors) {
+    for (SparkMax motor : motors) {
       this.motors.add(motor);
     }
     updateEncoders();
   }
 
-  public CANSparkMax getMotor(int index) {
+  public SparkMax getMotor(int index) {
     return motors.get(index);
   }
 
@@ -309,8 +316,8 @@ public abstract class ManipulatorBase extends Estopable {
     return encoders.get(index);
   }
 
-  public CANSparkMax[] getMotors() {
-    return motors.toArray(new CANSparkMax[0]);
+  public SparkMax[] getMotors() {
+    return motors.toArray(new SparkMax[0]);
   }
 
   public RelativeEncoder[] getEncoders() {
@@ -323,36 +330,41 @@ public abstract class ManipulatorBase extends Estopable {
    * DOES NOT STOP COMMANDS
    */
   public void stop() {
-    for (CANSparkMax motor : motors) {
+    for (SparkMax motor : motors) {
       motor.stopMotor();
     }
   }
 
   /** Not available on all setups */
   public void setBrakeMode(boolean brakeOnStop) {
-    for (CANSparkMax motor : motors) {
-      motor.setIdleMode(brakeOnStop ? CANSparkMax.IdleMode.kBrake : CANSparkMax.IdleMode.kCoast);
+    for (SparkMax motor : motors) {
+      motor.configure(new SparkMaxConfig().idleMode(brakeOnStop ? IdleMode.kBrake : IdleMode.kCoast),
+          ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
     }
   }
 
   /** Use to invert all motor functions, including encoders */
   public void setInverted(boolean inverted) {
-    for (CANSparkMax motor : motors) {
-      motor.setInverted(inverted);
-      motor.getEncoder().setInverted(inverted);
+    for (SparkMax motor : motors) {
+      motor.configure(new SparkMaxConfig().inverted(inverted)
+          .apply(new EncoderConfig().inverted(inverted)), ResetMode.kNoResetSafeParameters,
+          PersistMode.kPersistParameters);
     }
   }
 
   public void setCurrentLimit(int limit) {
-    for (CANSparkMax motor : motors) {
-      motor.setSmartCurrentLimit(limit);
+    for (SparkMax motor : motors) {
+      motor.configure(new SparkMaxConfig().smartCurrentLimit(limit), ResetMode.kNoResetSafeParameters,
+          PersistMode.kPersistParameters);
     }
   }
 
   public void setRampRate(double rate) {
-    for (CANSparkMax motor : motors) {
-      motor.setOpenLoopRampRate(rate);
-      motor.setClosedLoopRampRate(rate);
+    for (SparkMax motor : motors) {
+      motor.configure(new SparkMaxConfig()
+          .closedLoopRampRate(rate)
+          .openLoopRampRate(rate),
+          ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
     }
   }
 
@@ -360,6 +372,9 @@ public abstract class ManipulatorBase extends Estopable {
   public void invertSpecificMotors(boolean inverted, int... motorIndexes) {
     for (int index : motorIndexes) {
       motors.get(index).setInverted(inverted);
+      motors.get(index).configure(new SparkMaxConfig().inverted(inverted).apply(new EncoderConfig().inverted(inverted)),
+          ResetMode.kNoResetSafeParameters,
+          PersistMode.kPersistParameters);
       // motors.get(index).getEncoder().setInverted(inverted);
     }
   }
