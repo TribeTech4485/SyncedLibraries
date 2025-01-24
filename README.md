@@ -1,4 +1,10 @@
-# IMPORTANT
+# IMPORTANT: NOT USABLE FOR BEFORE 2025
+
+The reworking of CANSparkMax for the 2025 season breaks compatibility with old systems. Given the lack of back-compatability,
+many other changes were made removing deprecated functions and other refactioning to imporove cleanlieness.\
+Last compatable commit: [f047dbe](https://github.com/TribeTech4485/SyncedLibraries/commit/f047dbe1a0dbf6bf40d245322331d21139da2d80)
+
+## General information
 
 Never put anything robot specific within this folder/repo. This is suppossed to be shared between all future robots to provide more consistency within robot designs. Always put in a directory named `SyncedLibraries`
 
@@ -19,16 +25,14 @@ And you're done!
 
 Add to readmes of projects containing:
 
-# TO SAVE
+## TO SAVE
 
-Always use the command line git to install as shown below, or it will not work:
-
+Always use the command line git to install as shown below, or it will not work:\
 `git clone --recurse-submodules {URL}`
 
-Odds are, if you are reading this because you cloned through the GUI, so use the command below while in the repo to fix:
-
+Odds are, if you are reading this because you cloned through the GUI, so use the command below while in the repo to fix:\
 `git submodule update --init --recursive`
 
-# When using
+## When using
 
-Also note the sub-repository [SyncedLibraries](https://github.com/TribeTech4485/SyncedLibraries). The README should explain the basics.
+Also note the sub-repository [SyncedLibraries](https://github.com/TribeTech4485/SyncedLibraries). The README should explain the basics of how to operate.
