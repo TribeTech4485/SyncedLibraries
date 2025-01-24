@@ -7,11 +7,8 @@ import com.revrobotics.spark.config.EncoderConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.RelativeEncoder;
-
-import java.time.format.ResolverStyle;
 import java.util.LinkedList;
 import java.util.function.BooleanSupplier;
-
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -371,7 +368,6 @@ public abstract class ManipulatorBase extends Estopable {
   /** Use to invert specific motors {@link #setInverted(boolean)} */
   public void invertSpecificMotors(boolean inverted, int... motorIndexes) {
     for (int index : motorIndexes) {
-      motors.get(index).setInverted(inverted);
       motors.get(index).configure(new SparkMaxConfig().inverted(inverted).apply(new EncoderConfig().inverted(inverted)),
           ResetMode.kNoResetSafeParameters,
           PersistMode.kPersistParameters);

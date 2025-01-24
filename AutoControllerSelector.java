@@ -13,6 +13,7 @@ import frc.robot.SyncedLibraries.SystemBases.ControllerBase;
  * <p>
  * ONLY CHECKS IF JOYSTICK ARE BEING TOUCHED, NOT THE BUTTONS
  */
+@Deprecated
 public class AutoControllerSelector {
 
   /**

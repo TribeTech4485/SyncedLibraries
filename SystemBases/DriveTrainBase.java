@@ -13,7 +13,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.LinkedList;
 
@@ -77,17 +76,18 @@ public abstract class DriveTrainBase extends SubsystemBase {
     // Update motor config
     for (SparkMax motor : motors) {
       motor.configure(new SparkMaxConfig()
-      .smartCurrentLimit(driveAmpsMax)
-      .closedLoopRampRate(drivingRamp)
-      .openLoopRampRate(drivingRamp)
-      .idleMode(IdleMode.kCoast)
-      .inverted(false),
+          .smartCurrentLimit(driveAmpsMax)
+          .closedLoopRampRate(drivingRamp)
+          .openLoopRampRate(drivingRamp)
+          .idleMode(IdleMode.kCoast)
+          .inverted(false),
           ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     // Sync side motors
     for (SparkMax motor : leftDriveMotors) {
-      motor.setInverted(false);
+      motor.configure(new SparkMaxConfig().inverted(false), ResetMode.kNoResetSafeParameters,
+          PersistMode.kPersistParameters);
       if (motor == leftMotors.get(0)) {
         driveMainLeft = motor;
       } else {
@@ -95,7 +95,8 @@ public abstract class DriveTrainBase extends SubsystemBase {
       }
     }
     for (SparkMax motor : rightDriveMotors) {
-      motor.setInverted(false);
+      motor.configure(new SparkMaxConfig().inverted(false), ResetMode.kNoResetSafeParameters,
+          PersistMode.kPersistParameters);
       if (motor == rightMotors.get(0)) {
         driveMainRight = motor;
       } else {
@@ -314,7 +315,9 @@ public abstract class DriveTrainBase extends SubsystemBase {
 
   public void invertAll() {
     for (SparkMax motor : motors) {
-      motor.setInverted(!motor.getInverted());
+      motor.configure(new SparkMaxConfig().inverted(!motor.configAccessor.getInverted()),
+          ResetMode.kNoResetSafeParameters,
+          PersistMode.kPersistParameters);
     }
   }
 
