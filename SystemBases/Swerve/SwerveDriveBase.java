@@ -14,6 +14,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -22,8 +23,7 @@ import frc.robot.SyncedLibraries.SystemBases.Estopable;
 /** Represents a swerve drive style drivetrain. */
 public abstract class SwerveDriveBase extends Estopable {
   /** Wheel speed */
-  public static final double kMaxSpeed = 1.0; // TODO: increase max speed
-  public static final double kMaxAngularSpeed = (2 * Math.PI) / 4; // 1/4 rotation per second
+  public final TrapezoidProfile.Constraints drivingConstraints;
 
   // The physical dimensions of the robot
   protected final double _robotWidth;
@@ -54,16 +54,10 @@ public abstract class SwerveDriveBase extends Estopable {
   protected final SwerveModuleState[] lockPositions = generateLockPositions();
   protected SwerveModuleState[] swerveModuleStates = lockPositions;
 
-  protected boolean locked = false;
   protected boolean fieldRelative = true;
   protected boolean brakeMode = false;
   protected boolean slowMode = false;
   protected boolean sudoMode = false;
-
-  public final double[] modulesDrivePID;
-  public final double[] modulesTurnPID;
-  public final int driveAmps = 10;
-  public final int turnAmps = 10;
 
   protected final PIDController turnController;
 
@@ -72,18 +66,18 @@ public abstract class SwerveDriveBase extends Estopable {
   /**
    * An instance for controlling a swerve drivetrain
    * 
-   * @param width   The width of the robot in meters
-   * @param length  The length of the robot in meters
-   * @param modules An array of SwerveModules in the order of front left, front
-   *                right, back left, back right
-   * @param swerveDrivePID The PID values for the drive motors
-   * @param swerveTurnPID  The PID values for the turn motors
-   * @param botTurnPID     The PID values for the bot turning
-   * @param driveAmps      The max amps for the drive motors
-   * @param turnAmps       The max amps for the turn motors
+   * @param width           The width of the robot in meters
+   * @param length          The length of the robot in meters
+   * @param modules         An array of SwerveModules in the order of front left,
+   *                        front right, back left, back right
+   * @param swerveDrivePIDF The PID values for the drive motors: P,I,D,S,V,A
+   * @param swerveTurnPIDF  The PID values for the turn motors: P,I,D
+   * @param botTurnPID      The PID values for the bot turning
+   * @param driveAmps       The max amps for the drive motors
+   * @param turnAmps        The max amps for the turn motors
    */
-  public SwerveDriveBase(double width, double length, SwerveModuleBase[] modules,
-      double[] swerveDrivePID, double[] swerveTurnPID, double[] botTurnPID, double maxWheelSpeed, double maxRotationSpeed, int driveAmps, int turnAmps) {
+  public SwerveDriveBase(double width, double length, SwerveModuleBase[] modules, double[] botTurnPID,
+      TrapezoidProfile.Constraints drivingConstraints, double maxRotationSpeed) {
     NetworkTablesSwervePublisherDesired = NetworkTableInstance.getDefault()
         .getStructArrayTopic("/DesiredSwerveStates", SwerveModuleState.struct).publish();
     NetworkTablesSwervePublisherCurrent = NetworkTableInstance.getDefault()
@@ -125,22 +119,19 @@ public abstract class SwerveDriveBase extends Estopable {
             m_backRight.getPosition()
         });
 
-        
-        modulesDrivePID = swerveDrivePID;
-        modulesTurnPID = swerveTurnPID;
-        turnController = new PIDController(botTurnPID[0], botTurnPID[1], botTurnPID[2]);
-        turnController.enableContinuousInput(0, Math.PI * 2);
+    turnController = new PIDController(botTurnPID[0], botTurnPID[1], botTurnPID[2]);
+    turnController.enableContinuousInput(0, Math.PI * 2);
+
+    this.drivingConstraints = drivingConstraints;
   }
 
   public void enableXLock() {
-    locked = true;
     setDriveBrakeMode(true);
     swerveModuleStates = lockPositions;
     setDesiredStates();
   }
 
   public void disableXLock() {
-    locked = false;
     setDriveBrakeMode(brakeMode);
   }
 
@@ -168,33 +159,33 @@ public abstract class SwerveDriveBase extends Estopable {
 
   /**
    * Method to drive the robot using joystick info.<br>
-   * All speeds are from -1 to 1.<br>
+   * All speeds are in meters/s
+   * <br>
    * Uses power level for rotation
    *
    * @param xSpeed              Speed of the robot in the x direction (forward).
    * @param ySpeed              Speed of the robot in the y direction (right).
    * @param rotationSpeed       Angular rate of the robot.
-   * @param centerOfRotationPOV Input pov value where -1 is center, and 0 is front, clockwise degrees
+   * @param centerOfRotationPOV Input pov value where -1 is center, and 0 is
+   *                            front, clockwise degrees
    */
   public void inputDrivingX_Y(double xSpeed, double ySpeed,
       double rotationSpeed, int centerOfRotationPOV) {
+    // Calculate the swerve module states from the requested speeds
+    swerveModuleStates = m_kinematics.toSwerveModuleStates(
+        // Account for time between updates
+        ChassisSpeeds.discretize(
+            ChassisSpeeds.fromFieldRelativeSpeeds(
+                xSpeed, -ySpeed, rotationSpeed,
+                fieldRelative ? m_gyro.getRotation2d() : Rotation2d.fromDegrees(0)),
+            0.02),
+        POVToTranslate2d(centerOfRotationPOV));
+  }
 
-    if (!locked) {
-      xSpeed *= kMaxSpeed;
-      ySpeed *= kMaxSpeed;
-      rotationSpeed *= kMaxAngularSpeed;
-      Translation2d centerOfRotation = POVToTranslate2d(centerOfRotationPOV);
-
-      // Calculate the swerve module states from the requested speeds
-      swerveModuleStates = m_kinematics.toSwerveModuleStates(
-          // Account for time between updates
-          ChassisSpeeds.discretize(
-              ChassisSpeeds.fromFieldRelativeSpeeds(
-                  xSpeed, -ySpeed, rotationSpeed,
-                  fieldRelative ? m_gyro.getRotation2d() : Rotation2d.fromDegrees(0)),
-              0.02),
-          centerOfRotation);
-    }
+  public void inputDrivingSpeeds(ChassisSpeeds speeds, int centerOfRotationPOV) {
+    swerveModuleStates = m_kinematics.toSwerveModuleStates(
+        ChassisSpeeds.discretize(speeds, 0.02),
+        POVToTranslate2d(centerOfRotationPOV));
   }
 
   /**
@@ -202,10 +193,11 @@ public abstract class SwerveDriveBase extends Estopable {
    * All speeds are from -1 to 1.<br>
    * Uses desired angle for rotation
    *
-   * @param xSpeed      Speed of the robot in the x direction (forward).
-   * @param ySpeed      Speed of the robot in the y direction (right).
-   * @param desiredTheta Desired angle of the robot in radians.
-   * @param centerOfRotationPOV Input pov value where -1 is center, and 0 is front, clockwise degrees
+   * @param xSpeed              Speed of the robot in the x direction (forward).
+   * @param ySpeed              Speed of the robot in the y direction (right).
+   * @param desiredTheta        Desired angle of the robot in radians.
+   * @param centerOfRotationPOV Input pov value where -1 is center, and 0 is
+   *                            front, clockwise degrees
    */
   public void inputDrivingX_Y_A(double xSpeed, double ySpeed, double desiredTheta, int centerOfRotationPOV) {
     turnController.setSetpoint(desiredTheta);
@@ -264,7 +256,8 @@ public abstract class SwerveDriveBase extends Estopable {
 
   @Override
   public void periodic() {
-    SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
+    SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates,
+        drivingConstraints.maxVelocity);
     setDesiredStates();
 
     NetworkTablesSwervePublisherDesired.set(swerveModuleStates);
@@ -280,20 +273,12 @@ public abstract class SwerveDriveBase extends Estopable {
     updateOdometry();
   }
 
+  /** Send the positions to the modules */
   protected void setDesiredStates() {
     m_frontLeft.setDesiredState(swerveModuleStates[0]);
     m_frontRight.setDesiredState(swerveModuleStates[1]);
     m_backLeft.setDesiredState(swerveModuleStates[2]);
     m_backRight.setDesiredState(swerveModuleStates[3]);
-
-    for (SwerveModuleBase module : modules) {
-      if (module.getSudoMode() != sudoMode) {
-        module.setSudoMode(sudoMode);
-      }
-      if (module.getSlowMode() != slowMode) {
-        module.setSlowMode(slowMode);
-      }
-    }
   }
 
   public void setFieldRelative(boolean fieldRelative) {
@@ -306,10 +291,16 @@ public abstract class SwerveDriveBase extends Estopable {
 
   public void setSlowMode(boolean slowMode) {
     this.slowMode = slowMode;
+    for (SwerveModuleBase module : modules) {
+      module.setSlowMode(slowMode);
+    }
   }
 
   public void setSudoMode(boolean sudoMode) {
     this.sudoMode = sudoMode;
+    for (SwerveModuleBase module : modules) {
+      module.setSudoMode(sudoMode);
+    }
   }
 
   public void resetGyro() {
@@ -326,6 +317,14 @@ public abstract class SwerveDriveBase extends Estopable {
     for (SwerveModuleBase module : modules) {
       module.setTurnAmps(amps);
     }
+  }
+
+  public SwerveDriveKinematics getKinematics() {
+    return m_kinematics;
+  }
+
+  public SwerveDriveOdometry getOdometry() {
+    return m_odometry;
   }
 
   /**

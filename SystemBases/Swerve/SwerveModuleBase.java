@@ -8,30 +8,34 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.config.AbsoluteEncoderConfig;
-import com.revrobotics.spark.config.EncoderConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkAbsoluteEncoder;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.SyncedLibraries.SystemBases.Estopable;
 
 public abstract class SwerveModuleBase extends Estopable {
-  protected SwerveDriveBase driveTrainBase;
   protected final SparkMax m_driveMotor;
   protected final SparkMax m_turningMotor;
 
   protected final RelativeEncoder m_driveEncoder;
   protected final SparkAbsoluteEncoder m_turningEncoder;
 
-  protected final PIDController m_drivePIDController;
+  protected final TrapezoidProfile.Constraints m_driveConstraints;
+  protected final ProfiledPIDController m_drivePIDController;
   protected final PIDController m_turnPIDController;
+  protected final SimpleMotorFeedforward m_driveFeedforward;
 
-  protected final double driveGearRatio = 1 / (10 * Math.PI * 15 / 50); // 1 is the gear ratio when I find out
+  // protected final double driveGearRatio = 1 / (10 * Math.PI * 15 / 50); // 1 is
+  // the gear ratio when I find out
 
   protected boolean sudoMode = false;
   protected boolean slowMode = false;
@@ -40,62 +44,51 @@ public abstract class SwerveModuleBase extends Estopable {
   protected int turnAmps;
 
   /**
-   * Constructs a new SwerveModule.
-   * MUST CALL {@link #inputDriveTrain(SwerveDriveBase)} AFTER CONSTRUCTION
-   *
-   * @param driveMotor    The motor that drives the module.
-   * @param turningMotor  The motor that turns the module.
-   * @param turningOffset The offset for the turning encoder. Starting position
-   * @param name          The name of the module. Ie. "Front Left"
+   * @param driveMotor       The motor that drives the module.
+   * @param turningMotor     The motor that turns the module.
+   * @param turningOffset    The offset for the turning encoder. Starting position
+   * @param name             The name of the module. Ie. "Front Left"
+   * @param driveConfig      The configuration for the drive motor.
+   * @param turningConfig    The configuration for the turning motor.
+   * @param drivePIDF        The PIDF values for the drive motor: P, I, D, S, V, A
+   * @param turnPID          The PID values for the turning motor: P, I, D
+   * @param driveConstraints The constraints for the drive motor.
    */
-  public SwerveModuleBase(SparkMax driveMotor, SparkMax turningMotor, double turningOffset, String name) {
+  public SwerveModuleBase(SparkMax driveMotor, SparkMax turningMotor, double turningOffset, String name,
+      SparkMaxConfig driveConfig, SparkMaxConfig turningConfig,
+      double[] drivePIDF, double[] turnPID, TrapezoidProfile.Constraints driveConstraints) {
     this.setName(name);
 
     // DRIVE MOTOR SETUP
     m_driveMotor = driveMotor;
 
-    m_driveMotor.configure(new SparkMaxConfig()
-        .idleMode(IdleMode.kBrake)
-        .apply(new SparkMaxConfig()
-            .idleMode(IdleMode.kBrake)
-            .apply(new EncoderConfig()
-                .positionConversionFactor(driveGearRatio)
-                .velocityConversionFactor(driveGearRatio))),
+    m_driveMotor.configure(driveConfig.apply(
+        new AbsoluteEncoderConfig().zeroOffset(turningOffset))
+    // .positionConversionFactor(driveGearRatio)
+    // .velocityConversionFactor(driveGearRatio))
+        ,
         ResetMode.kResetSafeParameters, // resetToFactoryDefaults()
         PersistMode.kPersistParameters); // burnFlash()
 
     m_driveEncoder = m_driveMotor.getEncoder();
-
-    m_drivePIDController = new PIDController(0, 0, 0);
+    m_driveConstraints = driveConstraints;
+    m_drivePIDController = new ProfiledPIDController(drivePIDF[0], drivePIDF[1], drivePIDF[2], m_driveConstraints);
+    m_driveFeedforward = new SimpleMotorFeedforward(drivePIDF[3], drivePIDF[4], drivePIDF[5]);
 
     // TURNING MOTOR SETUP
     m_turningMotor = turningMotor;
 
-    m_turningMotor.configure(new SparkMaxConfig()
-        .idleMode(IdleMode.kCoast)
-        .apply(new AbsoluteEncoderConfig().zeroOffset(turningOffset)),
+    m_turningMotor.configure(turningConfig,
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
 
     m_turningEncoder = m_turningMotor.getAbsoluteEncoder();
 
-    m_turnPIDController = new PIDController(0, 0, 0);
-    m_turnPIDController.enableContinuousInput(0, 1);
-  }
+    m_turnPIDController = new PIDController(turnPID[0], turnPID[1], turnPID[2]);
+    m_turnPIDController.enableContinuousInput(0, 2 * Math.PI);
 
-  public void inputDriveTrain(SwerveDriveBase driveTrainBase) {
-    this.driveTrainBase = driveTrainBase;
-    // drive motor setup
-    m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(driveTrainBase.driveAmps),
-        ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-    double[] drivePIDS = driveTrainBase.modulesDrivePID;
-    m_drivePIDController.setPID(drivePIDS[0], drivePIDS[1], drivePIDS[2]);
-
-    // turning motor setup
-    m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(driveTrainBase.turnAmps),
-        ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
-    double[] turnPIDS = driveTrainBase.modulesTurnPID;
-    m_turnPIDController.setPID(turnPIDS[0], turnPIDS[1], turnPIDS[2]);
+    driveAmps = m_driveMotor.configAccessor.getSmartCurrentLimit();
+    turnAmps = m_turningMotor.configAccessor.getSmartCurrentLimit();
   }
 
   /**
@@ -104,11 +97,8 @@ public abstract class SwerveModuleBase extends Estopable {
    * @return The current state of the module.
    */
   public SwerveModuleState getState() {
-    // return new SwerveModuleState(
-    // m_driveEncoder.getVelocity(), new
-    // Rotation2d(m_turningEncoder.getPosition()));
     return new SwerveModuleState(
-        m_driveMotor.get(), getEncoderPos());
+        m_driveEncoder.getVelocity(), getEncoderPos());
   }
 
   /**
@@ -139,8 +129,8 @@ public abstract class SwerveModuleBase extends Estopable {
     state.speedMetersPerSecond *= state.angle.minus(encoderRotation).getCos();
 
     // set the wanted position, actual moving done in periodic
-    m_drivePIDController.setSetpoint(state.speedMetersPerSecond);
-    m_turnPIDController.setSetpoint(covertFromRadians(state.angle.getRadians()));
+    m_drivePIDController.setGoal(state.speedMetersPerSecond);
+    m_turnPIDController.setSetpoint(state.angle.getRadians());
   }
 
   @Override
@@ -149,21 +139,23 @@ public abstract class SwerveModuleBase extends Estopable {
     double turnPower = m_turnPIDController.calculate(m_turningEncoder.getPosition());
 
     if (sudoMode) {
-      if (Math.abs(m_drivePIDController.getSetpoint()) > 0.05) {
-        drivingPower = Math.signum(m_drivePIDController.getSetpoint());
+      if (Math.abs(m_drivePIDController.getGoal().velocity) > 0.05) {
+        drivingPower = Math.signum(m_drivePIDController.getGoal().velocity) * 12;
       } else {
         drivingPower = 0;
       }
     } else {
       if (slowMode) {
-        drivingPower = m_drivePIDController.calculate(m_driveEncoder.getVelocity() * 0.5);
+        drivingPower = m_drivePIDController.calculate(m_driveEncoder.getVelocity() * 0.5)
+            + m_driveFeedforward.calculate(m_drivePIDController.getGoal().velocity);
       } else {
-        drivingPower = m_drivePIDController.calculate(m_driveEncoder.getVelocity());
+        drivingPower = m_drivePIDController.calculate(m_driveEncoder.getVelocity())
+            + m_driveFeedforward.calculate(m_drivePIDController.getGoal().velocity);
       }
     }
 
-    m_turningMotor.set(turnPower);
-    m_driveMotor.set(drivingPower);
+    m_turningMotor.setVoltage(turnPower);
+    m_driveMotor.setVoltage(drivingPower);
 
     SmartDashboard.putData(this.getName() + " swerve turning PID", m_turnPIDController);
     SmartDashboard.putNumber(this.getName() + " swerve turning encoder", m_turningEncoder.getPosition());
@@ -180,17 +172,9 @@ public abstract class SwerveModuleBase extends Estopable {
         ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
-  protected double covertFromRadians(double radians) {
-    return (radians / (-2 * Math.PI)) + (1 / 2);
-  }
-
-  protected double convertToRadians(double position) {
-    return (-(position - (1 / 2))) * (2 * Math.PI);
-  }
-
   /** Converts to radians */
   public Rotation2d getEncoderPos() {
-    return new Rotation2d(convertToRadians(m_turningEncoder.getPosition()));
+    return new Rotation2d(m_turningEncoder.getPosition());
   }
 
   public SparkMax getTurnMotor() {
@@ -209,7 +193,7 @@ public abstract class SwerveModuleBase extends Estopable {
     return m_turningEncoder;
   }
 
-  public PIDController getDrivePIDController() {
+  public ProfiledPIDController getDrivePIDController() {
     return m_drivePIDController;
   }
 
@@ -224,15 +208,15 @@ public abstract class SwerveModuleBase extends Estopable {
   public void setSudoMode(boolean sudoMode) {
     this.sudoMode = sudoMode;
     if (sudoMode) {
-      m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(20), ResetMode.kNoResetSafeParameters,
-          PersistMode.kNoPersistParameters);
-      m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(20), ResetMode.kNoResetSafeParameters,
-          PersistMode.kNoPersistParameters);
+      m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(20),
+          ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+      m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(20),
+          ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     } else {
-      m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(driveAmps), ResetMode.kNoResetSafeParameters,
-          PersistMode.kNoPersistParameters);
-      m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(turnAmps), ResetMode.kNoResetSafeParameters,
-          PersistMode.kNoPersistParameters);
+      m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(driveAmps),
+          ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+      m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(turnAmps),
+          ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
   }
 
@@ -245,20 +229,19 @@ public abstract class SwerveModuleBase extends Estopable {
   }
 
   public void setDriveAmps(int limit) {
-    m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(limit), ResetMode.kNoResetSafeParameters,
-        PersistMode.kNoPersistParameters);
+    m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(limit),
+        ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     driveAmps = limit;
   }
 
   public void setTurnAmps(int limit) {
-    m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(limit), ResetMode.kNoResetSafeParameters,
-        PersistMode.kNoPersistParameters);
+    m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(limit),
+        ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     turnAmps = limit;
   }
 
   @Override
   public void ESTOP() {
-    // Handled by the SwerveDriveBase
   }
 
   @Override
@@ -266,9 +249,9 @@ public abstract class SwerveModuleBase extends Estopable {
     m_driveMotor.set(0);
     m_turningMotor.set(0);
 
-    m_driveMotor.configure(new SparkMaxConfig(), ResetMode.kNoResetSafeParameters,
-        PersistMode.kPersistParameters);
-    m_turningMotor.configure(new SparkMaxConfig(), ResetMode.kNoResetSafeParameters,
-        PersistMode.kPersistParameters);
+    m_driveMotor.configure(new SparkMaxConfig(),
+        ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
+    m_turningMotor.configure(new SparkMaxConfig(),
+        ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
   }
 }

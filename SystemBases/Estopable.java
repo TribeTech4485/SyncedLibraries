@@ -7,11 +7,13 @@ package frc.robot.SyncedLibraries.SystemBases;
 import java.util.LinkedList;
 
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /** A subsystem, but you have to have an ESTOP function */
 public abstract class Estopable extends SubsystemBase {
   private static LinkedList<Estopable> allEstoppables = new LinkedList<Estopable>();
+  private static Boolean previouslyDisabled;
 
   /**
    * Silently adds itself to the list of all estoppables for in case of emergency
@@ -19,6 +21,27 @@ public abstract class Estopable extends SubsystemBase {
   public Estopable() {
     allEstoppables.add(this);
     System.out.println("Creating subsystem " + getName());
+
+    if (previouslyDisabled == null) {
+      // injects the function onDisableAll that runs when the robot is disabled
+      // TODO: verify that onDisable runs when the robot is disabled
+      previouslyDisabled = false;
+      new Command() {
+        @Override
+        public void execute() {
+          boolean isDisabled = DriverStation.isDisabled();
+          if (isDisabled && !previouslyDisabled) {
+            onDisableAll();
+          }
+          previouslyDisabled = isDisabled;
+        }
+
+        @Override
+        public boolean isFinished() {
+          return false;
+        }
+      }.schedule();
+    }
   }
 
   /**
@@ -52,11 +75,20 @@ public abstract class Estopable extends SubsystemBase {
     return allEstoppables.toArray(new Estopable[0]);
   }
 
-  /** Runs when robot is disabled
+  /**
+   * Runs when robot is disabled
    * <p>
    * Reccomended to stop motors and save motor configurations
    */
   public void onDisable() {
     // Override this if you want to do something when the robot is disabled
   }
+
+  private static void onDisableAll() {
+    for (Estopable stopable : allEstoppables) {
+      stopable.onDisable();
+    }
+    System.out.println("============================================");
+  }
+
 }

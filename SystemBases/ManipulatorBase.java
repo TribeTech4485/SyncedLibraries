@@ -136,7 +136,7 @@ public abstract class ManipulatorBase extends Estopable {
 
   /** If moveCommand not initialized returns false */
   public boolean isAtPosition() {
-    return moveCommand == null ? moveCommand.atPosition : false;
+    return moveCommand == null ? false : moveCommand.atPosition;
   }
 
   public final void cancelMoveToPosition() {
@@ -266,7 +266,7 @@ public abstract class ManipulatorBase extends Estopable {
   }
 
   public boolean isAtSpeed() {
-    return speedCommand == null ? speedCommand.atSpeed : false;
+    return speedCommand == null ? false : speedCommand.atSpeed;
   }
 
   public void setSpeedPID(double kP, double kI, double kD, double tolerance) {
