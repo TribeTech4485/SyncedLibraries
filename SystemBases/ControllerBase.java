@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PS4Controller;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -16,12 +17,10 @@ import frc.robot.SyncedLibraries.Controllers;
  * If joystick, use left joystick for XY and the buttons list for buttons
  */
 public class ControllerBase {
-  public boolean isPS4;
-  public boolean isXbox;
-  public boolean isJoystick = false;
-  public int port;
-  private double joystickMultiplier = 1;
-  private double triggerMultiplier = 1;
+  public final boolean isPS4;
+  public final boolean isXbox;
+  public final boolean isJoystick;
+  public final int port;
 
   public CommandXboxController commObjectX;
   public XboxController objectX;
@@ -36,7 +35,7 @@ public class ControllerBase {
   public Trigger Y;
   public Trigger LeftBumper;
   public Trigger RightBumper;
-  public Trigger Share;
+  public Trigger Start;
   public Trigger Options;
   public Trigger LeftTrigger;
   public Trigger RightTrigger;
@@ -51,7 +50,10 @@ public class ControllerBase {
   public Trigger LeftStickPress;
   public Trigger RightStickPress;
   public Trigger ESTOPCondition;
-  /** <b>IS ONE INDEXED TO MATCH WITH {@link #getRawButton()} */
+  public Trigger AnyButton;
+  /**
+   * <b>IS ONE INDEXED TO MATCH WITH {@link #getRawButton()}, 0th returns false
+   */
   public Trigger[] buttons;
 
   /**
@@ -68,7 +70,6 @@ public class ControllerBase {
     // this(port, new GenericHID(port).getType() == HIDType.kXInputGamepad,
     // new GenericHID(port).getType() == HIDType.kHIDGamepad,
     // new GenericHID(port).getType() == HIDType.kHIDJoystick);
-
     this(port, true, false, false);
   }
 
@@ -96,6 +97,7 @@ public class ControllerBase {
       initAsXbox(port);
       // initAsGhost();
     }
+    ESTOPCondition.whileTrue(new InstantCommand(Estopable::KILLIT));
   }
 
   private void initAsJoystick(int port) {
@@ -107,7 +109,7 @@ public class ControllerBase {
     this.Y = commObjectJoystick.button(4);
     this.LeftBumper = commObjectJoystick.button(5);
     this.RightBumper = commObjectJoystick.button(6);
-    this.Share = commObjectJoystick.button(7);
+    this.Start = commObjectJoystick.button(7);
     this.Options = commObjectJoystick.button(8);
     this.LeftTrigger = commObjectJoystick.button(9);
     this.RightTrigger = commObjectJoystick.button(10);
@@ -134,12 +136,18 @@ public class ControllerBase {
     }
 
     // All the buttons on the base section
-    ESTOPCondition = commObjectJoystick.button(7)
+    this.ESTOPCondition = commObjectJoystick.button(7)
         .and(commObjectJoystick.button(8))
         .and(commObjectJoystick.button(9))
         .and(commObjectJoystick.button(10))
         .and(commObjectJoystick.button(11))
         .and(commObjectJoystick.button(12));
+
+    this.AnyButton = A.or(B).or(X).or(Y).or(LeftBumper)
+        .or(RightBumper).or(Start).or(Options).or(LeftTrigger)
+        .or(RightTrigger).or(PovUp).or(PovUpLeft).or(PovUpRight)
+        .or(PovDown).or(PovDownLeft).or(PovDownRight).or(PovLeft)
+        .or(PovRight).or(LeftStickPress).or(RightStickPress);
   }
 
   private void initAsPS4(int port) {
@@ -151,7 +159,7 @@ public class ControllerBase {
     this.Y = commObjectPS4.triangle();
     this.LeftBumper = commObjectPS4.L1();
     this.RightBumper = commObjectPS4.R1();
-    this.Share = commObjectPS4.share();
+    this.Start = commObjectPS4.share();
     this.Options = commObjectPS4.options();
     this.LeftTrigger = commObjectPS4.L2();
     this.RightTrigger = commObjectPS4.R2();
@@ -178,12 +186,18 @@ public class ControllerBase {
     }
 
     // All the buttons your hands are already resting on
-    ESTOPCondition = commObjectPS4.L3()
+    this.ESTOPCondition = commObjectPS4.L3()
         .and(commObjectPS4.R3())
         .and(commObjectPS4.L1())
         .and(commObjectPS4.R1())
         .and(commObjectPS4.L2())
         .and(commObjectPS4.R2());
+
+    this.AnyButton = A.or(B).or(X).or(Y).or(LeftBumper)
+        .or(RightBumper).or(Start).or(Options).or(LeftTrigger)
+        .or(RightTrigger).or(PovUp).or(PovUpLeft).or(PovUpRight)
+        .or(PovDown).or(PovDownLeft).or(PovDownRight).or(PovLeft)
+        .or(PovRight).or(LeftStickPress).or(RightStickPress);
   }
 
   private void initAsXbox(int port) {
@@ -195,10 +209,10 @@ public class ControllerBase {
     this.Y = commObjectX.y();
     this.LeftBumper = commObjectX.leftBumper();
     this.RightBumper = commObjectX.rightBumper();
-    this.Share = commObjectX.start();
+    this.Start = commObjectX.start();
     this.Options = commObjectX.back();
-    this.LeftTrigger = commObjectX.leftTrigger();
-    this.RightTrigger = commObjectX.rightTrigger();
+    this.LeftTrigger = commObjectX.leftTrigger(Controllers.triggerSetpoint);
+    this.RightTrigger = commObjectX.rightTrigger(Controllers.triggerSetpoint);
     this.PovUp = commObjectX.povUp();
     this.PovUpLeft = commObjectX.povUpLeft();
     this.PovUpRight = commObjectX.povUpRight();
@@ -222,12 +236,18 @@ public class ControllerBase {
     }
 
     // All the buttons your hands are already resting on
-    ESTOPCondition = commObjectX.leftStick()
+    this.ESTOPCondition = commObjectX.leftStick()
         .and(commObjectX.rightStick())
         .and(commObjectX.leftBumper())
         .and(commObjectX.rightBumper())
         .and(commObjectX.leftTrigger())
         .and(commObjectX.rightTrigger());
+
+    this.AnyButton = A.or(B).or(X).or(Y).or(LeftBumper)
+        .or(RightBumper).or(Start).or(Options).or(LeftTrigger)
+        .or(RightTrigger).or(PovUp).or(PovUpLeft).or(PovUpRight)
+        .or(PovDown).or(PovDownLeft).or(PovDownRight).or(PovLeft)
+        .or(PovRight).or(LeftStickPress).or(RightStickPress);
   }
 
   private void initAsGhost() {
@@ -237,7 +257,7 @@ public class ControllerBase {
     this.Y = new Trigger(() -> false);
     this.LeftBumper = new Trigger(() -> false);
     this.RightBumper = new Trigger(() -> false);
-    this.Share = new Trigger(() -> false);
+    this.Start = new Trigger(() -> false);
     this.Options = new Trigger(() -> false);
     this.LeftTrigger = new Trigger(() -> false);
     this.RightTrigger = new Trigger(() -> false);
@@ -251,13 +271,13 @@ public class ControllerBase {
     this.PovRight = new Trigger(() -> false);
     this.LeftStickPress = new Trigger(() -> false);
     this.RightStickPress = new Trigger(() -> false);
+    this.ESTOPCondition = new Trigger(() -> false);
 
     buttons = new Trigger[20];
     for (int i = 0; i < 20; i++) {
       buttons[i] = new Trigger(() -> false);
     }
 
-    ESTOPCondition = new Trigger(() -> false);
   }
 
   /** If joystick: X-axis */
@@ -358,33 +378,32 @@ public class ControllerBase {
 
   /** If joystick: X-axis */
   public double getLeftX() {
-    return BasicFunctions.deadband(getLeftXRaw(), Controllers.joystickDeadband) * joystickMultiplier;
+    return BasicFunctions.deadband(getLeftXRaw(), Controllers.joystickDeadband);
   }
 
   /** If joystick: Y-axis */
   public double getLeftY() {
-    return BasicFunctions.deadband(getLeftYRaw(), Controllers.joystickDeadband) * joystickMultiplier;
+    return BasicFunctions.deadband(getLeftYRaw(), Controllers.joystickDeadband);
   }
 
   /** If joystick: Twist-axis */
   public double getRightX() {
-    return BasicFunctions.deadband(getRightXRaw(), Controllers.joystickDeadband) * joystickMultiplier;
+    return BasicFunctions.deadband(getRightXRaw(), Controllers.joystickDeadband);
   }
 
   /** If joystick: Throttle-axis */
   public double getRightY() {
-    return BasicFunctions.deadband(getRightYRaw(), Controllers.joystickDeadband) * joystickMultiplier;
+    return BasicFunctions.deadband(getRightYRaw(), Controllers.joystickDeadband);
   }
 
   /** If joystick: 1 or 0 if trigger pressed */
   public double getLeftTrigger() {
-    return BasicFunctions.deadband(getLeftTriggerRaw(), Controllers.triggerDeadband) * triggerMultiplier;
+    return BasicFunctions.deadband(getLeftTriggerRaw(), Controllers.triggerDeadband);
   }
 
   /** If joystick: 1 or 0 if trigger pressed */
   public double getRightTrigger() {
-    return BasicFunctions.deadband(getRightTriggerRaw(), Controllers.triggerDeadband)
-        * triggerMultiplier;
+    return BasicFunctions.deadband(getRightTriggerRaw(), Controllers.triggerDeadband);
   }
 
   public void setRumble(RumbleType type, double rumble) {
@@ -398,87 +417,12 @@ public class ControllerBase {
     }
   }
 
-  /**
-   * ALWAYS RETURNS TRUE, DO NOT USE
-   * 
-   * @deprecated
-   *             Use isJoysticksBeingTouched() instead, but does not include
-   *             buttons
-   */
-  @Deprecated
-  public boolean isBeingTouched() {
-    return true;
-    // if (A.get().getAsBoolean()) {
-    // return true;
-    // } else if (B.get().getAsBoolean()) {
-    // return true;
-    // } else if (X.get().getAsBoolean()) {
-    // return true;
-    // } else if (Y.get().getAsBoolean()) {
-    // return true;
-    // } else if (LeftBumper.get().getAsBoolean()) {
-    // return true;
-    // } else if (RightBumper.get().getAsBoolean()) {
-    // return true;
-    // } else if (Share.get().getAsBoolean()) {
-    // return true;
-    // } else if (Options.get().getAsBoolean()) {
-    // return true;
-    // } else if (LeftTrigger.get().getAsBoolean()) {
-    // return true;
-    // } else if (RightTrigger.get().getAsBoolean()) {
-    // return true;
-    // } else if (PovUp.get().getAsBoolean()) {
-    // return true;
-    // } else if (PovUpLeft.get().getAsBoolean()) {
-    // return true;
-    // } else if (PovUpRight.get().getAsBoolean()) {
-    // return true;
-    // } else if (PovDown.get().getAsBoolean()) {
-    // return true;
-    // } else if (PovDownLeft.get().getAsBoolean()) {
-    // return true;
-    // } else if (PovDownRight.get().getAsBoolean()) {
-    // return true;
-    // } else if (PovLeft.get().getAsBoolean()) {
-    // return true;
-    // } else if (PovRight.get().getAsBoolean()) {
-    // return true;
-    // } else if (LeftStickPress.get().getAsBoolean()) {
-    // return true;
-    // } else if (RightStickPress.get().getAsBoolean()) {
-    // return true;
-    // } else if (getLeftXRaw() != 0) {
-    // return true;
-    // } else if (getLeftYRaw() != 0) {
-    // return true;
-    // } else if (getRightXRaw() != 0) {
-    // return true;
-    // } else if (getRightYRaw() != 0) {
-    // return true;
-    // } else if (getLeftTriggerRaw() != 0) {
-    // return true;
-    // } else if (getRightTriggerRaw() != 0) {
-    // return true;
-    // } else {
-    // return false;
-    // }
-  }
-
-  public boolean isJoysticksBeingTouched() {
+  public boolean areJoysticksBeingTouched() {
     if (!isJoystick) {
       return getLeftX() != 0 || getLeftY() != 0 || getRightX() != 0 || getRightY() != 0;
     } else {
       return getLeftX() != 0 || getLeftY() != 0 || getRightX() != 0;
     }
-  }
-
-  public void setJoystickMultiplier(double multiplier) {
-    this.joystickMultiplier = multiplier;
-  }
-
-  public void setTriggerMultiplier(double multiplier) {
-    this.triggerMultiplier = multiplier;
   }
 
   public boolean isPluggedIn() {

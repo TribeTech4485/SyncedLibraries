@@ -53,7 +53,7 @@ public class AutoControllerSelector {
       if (!controller.isPluggedIn()) {
         continue;
       }
-      if (controller.isJoysticksBeingTouched()) {
+      if (controller.areJoysticksBeingTouched()) {
         return controller;
       } else {
         // System.out.println("Controller on port " + controller.port + " not plugged

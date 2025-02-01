@@ -17,8 +17,12 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.SyncedLibraries.SystemBases.Estopable;
+import org.littletonrobotics.urcl.URCL;
 
 /** Represents a swerve drive style drivetrain. */
 public abstract class SwerveDriveBase extends Estopable {
@@ -58,8 +62,11 @@ public abstract class SwerveDriveBase extends Estopable {
   protected boolean brakeMode = false;
   protected boolean slowMode = false;
   protected boolean sudoMode = false;
+  protected boolean voltageControlMode = false;
 
   protected final PIDController turnController;
+
+  private SysIdRoutine sysIdRoutine;
 
   int counter = 0;
 
@@ -145,7 +152,8 @@ public abstract class SwerveDriveBase extends Estopable {
 
   /**
    * Method to drive the robot using joystick info.<br>
-   * All speeds are from -1 to 1.<br>
+   * All speeds are in meters/s or radians/s
+   * <br>
    * Uses power level for rotation
    *
    * @param xSpeed        Speed of the robot in the x direction (forward).
@@ -159,7 +167,7 @@ public abstract class SwerveDriveBase extends Estopable {
 
   /**
    * Method to drive the robot using joystick info.<br>
-   * All speeds are in meters/s
+   * All speeds are in meters/s or radians/s
    * <br>
    * Uses power level for rotation
    *
@@ -172,14 +180,10 @@ public abstract class SwerveDriveBase extends Estopable {
   public void inputDrivingX_Y(double xSpeed, double ySpeed,
       double rotationSpeed, int centerOfRotationPOV) {
     // Calculate the swerve module states from the requested speeds
-    swerveModuleStates = m_kinematics.toSwerveModuleStates(
-        // Account for time between updates
-        ChassisSpeeds.discretize(
-            ChassisSpeeds.fromFieldRelativeSpeeds(
-                xSpeed, -ySpeed, rotationSpeed,
-                fieldRelative ? m_gyro.getRotation2d() : Rotation2d.fromDegrees(0)),
-            0.02),
-        POVToTranslate2d(centerOfRotationPOV));
+    inputDrivingSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
+        xSpeed, -ySpeed, rotationSpeed,
+        fieldRelative ? m_gyro.getRotation2d() : Rotation2d.fromDegrees(0)),
+        centerOfRotationPOV);
   }
 
   public void inputDrivingSpeeds(ChassisSpeeds speeds, int centerOfRotationPOV) {
@@ -199,9 +203,21 @@ public abstract class SwerveDriveBase extends Estopable {
    * @param centerOfRotationPOV Input pov value where -1 is center, and 0 is
    *                            front, clockwise degrees
    */
-  public void inputDrivingX_Y_A(double xSpeed, double ySpeed, double desiredTheta, int centerOfRotationPOV) {
-    turnController.setSetpoint(desiredTheta);
+  public void inputDrivingX_Y_A(double xSpeed, double ySpeed, Rotation2d desiredTheta, int centerOfRotationPOV) {
+    turnController.setSetpoint(desiredTheta.getRadians());
     inputDrivingX_Y(xSpeed, ySpeed, turnController.calculate(Math.toRadians(m_gyro.getYaw() % 360)));
+  }
+
+  /**
+   * Modifies the speed in the swerveModuleStates so that the 'speed' is the
+   * driving voltage and tells the modules to interprit the 'speed' as a voltage,
+   * not a setpoint
+   */
+  public void inputDriveVoltages(double voltage) {
+    for (SwerveModuleState state : swerveModuleStates) {
+      state.speedMetersPerSecond = voltage;
+    }
+    voltageControlMode = true;
   }
 
   /** Used for using a POV joystick to rotate around corner of robot */
@@ -279,6 +295,12 @@ public abstract class SwerveDriveBase extends Estopable {
     m_frontRight.setDesiredState(swerveModuleStates[1]);
     m_backLeft.setDesiredState(swerveModuleStates[2]);
     m_backRight.setDesiredState(swerveModuleStates[3]);
+    for (SwerveModuleBase module : modules) {
+      module.setDriveBrakeMode(brakeMode);
+      module.setVoltageControlMode(voltageControlMode);
+      module.setSlowMode(slowMode);
+      module.setSudoMode(sudoMode);
+    }
   }
 
   public void setFieldRelative(boolean fieldRelative) {
@@ -291,18 +313,53 @@ public abstract class SwerveDriveBase extends Estopable {
 
   public void setSlowMode(boolean slowMode) {
     this.slowMode = slowMode;
-    for (SwerveModuleBase module : modules) {
-      module.setSlowMode(slowMode);
-    }
   }
 
+  /** Push mode */
   public void setSudoMode(boolean sudoMode) {
     this.sudoMode = sudoMode;
-    for (SwerveModuleBase module : modules) {
-      module.setSudoMode(sudoMode);
+    this.voltageControlMode = sudoMode;
+  }
+
+  public void setBrakeMode(boolean brakeMode) {
+    this.brakeMode = brakeMode;
+  }
+
+  public boolean getBrakeMode() {
+    return brakeMode;
+  }
+
+  public void setVoltageControlMode(boolean voltageControlMode) {
+    this.voltageControlMode = voltageControlMode;
+  }
+
+  public boolean getVoltageControlMode() {
+    return voltageControlMode;
+  }
+
+  /**
+   * Sets the speed of the swerveModuleStates to the input
+   * <p>
+   * Recommended for use with {@link #setVoltageControlMode(boolean)}
+   */
+  public void manualSetSpeed(double speed) {
+    for (SwerveModuleState state : swerveModuleStates) {
+      state.speedMetersPerSecond = speed;
     }
   }
 
+  public void manualSetDirection(Rotation2d direction) {
+    for (SwerveModuleState state : swerveModuleStates) {
+      state.angle = direction;
+    }
+  }
+
+  private void setManualVoltage(Voltage voltage) {
+    setVoltageControlMode(true);
+    manualSetSpeed(voltage.magnitude());
+  }
+
+  /** Zeros the heading, reccomended for Field Oriented driving */
   public void resetGyro() {
     m_gyro.zeroYaw();
   }
@@ -353,5 +410,27 @@ public abstract class SwerveDriveBase extends Estopable {
    */
   public void ESTOP() {
     enableXLock();
+  }
+
+  public void prepareSysID() {
+    URCL.start();
+    sysIdRoutine = new SysIdRoutine(new SysIdRoutine.Config(),
+        new SysIdRoutine.Mechanism(this::setManualVoltage, null, this));
+  }
+
+  public Command quasistaticSysID(SysIdRoutine.Direction direction) {
+    manualSetDirection(new Rotation2d());
+    return sysIdRoutine.quasistatic(direction);
+  }
+
+  public Command dynamicSysID(SysIdRoutine.Direction direction) {
+    manualSetDirection(new Rotation2d());
+    return sysIdRoutine.dynamic(direction);
+  }
+
+  public void setSlowModeMultiplier(double multiplier) {
+    for (SwerveModuleBase module : modules) {
+      module.setSlowModeMultiplier(multiplier);
+    }
   }
 }

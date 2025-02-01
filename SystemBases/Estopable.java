@@ -5,15 +5,15 @@
 package frc.robot.SyncedLibraries.SystemBases;
 
 import java.util.LinkedList;
-
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-/** A subsystem, but you have to have an ESTOP function */
+/** A {@link SubsystemBase}, but you have to have an ESTOP function */
 public abstract class Estopable extends SubsystemBase {
   private static LinkedList<Estopable> allEstoppables = new LinkedList<Estopable>();
   private static Boolean previouslyDisabled;
+  private static boolean allowFullEstop = !DriverStation.isFMSAttached();
 
   /**
    * Silently adds itself to the list of all estoppables for in case of emergency
@@ -67,8 +67,21 @@ public abstract class Estopable extends SubsystemBase {
       System.out.println("Done");
     }
 
-    DriverStation.reportError("KILLED IT, EXITING NOW", false);
-    System.exit(0);
+    if (allowFullEstop) {
+      DriverStation.reportError("KILLED IT, EXITING NOW", false);
+      System.exit(0);
+    } else {
+      DriverStation.reportError("CONNECTED TO FMS, NOT KILLING THE CODE", false);
+    }
+  }
+
+  /**
+   * <b>NOT FOR INSTANTIATED OBJECTS</b>
+   * <p>
+   * FOR {@link #KILLIT()}, don't stop the code.
+   */
+  public static void dontAllowFullEstop() {
+    allowFullEstop = false;
   }
 
   public static Estopable[] getAllEstopables() {
@@ -88,7 +101,8 @@ public abstract class Estopable extends SubsystemBase {
     for (Estopable stopable : allEstoppables) {
       stopable.onDisable();
     }
-    System.out.println("============================================");
+    System.out
+        .println("=======================This is a test to see if onDisable works (in Estopable)=====================");
   }
 
 }

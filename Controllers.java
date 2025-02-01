@@ -6,11 +6,17 @@ import frc.robot.SyncedLibraries.SystemBases.ControllerBase;
 public class Controllers {
   public static double joystickDeadband;
   public static double triggerDeadband;
+  public static double triggerSetpoint;
 
-  public Controllers(double joystickDeadband, double triggerDeadband) {
+  public Controllers(double joystickDeadband, double triggerDeadband, double triggerSetpoint) {
     Controllers.joystickDeadband = joystickDeadband;
     Controllers.triggerDeadband = triggerDeadband;
+    Controllers.triggerSetpoint = triggerSetpoint;
     fullUpdate();
+  }
+
+  public Controllers() {
+    this(0.05, 0.05, 0.5);
   }
 
   // Port-bound controllers

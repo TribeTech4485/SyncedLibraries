@@ -39,9 +39,13 @@ public abstract class SwerveModuleBase extends Estopable {
 
   protected boolean sudoMode = false;
   protected boolean slowMode = false;
+  protected boolean voltageControlMode = false;
+
+  protected double slowModeMultiplier = 0.5;
 
   protected int driveAmps;
   protected int turnAmps;
+  protected int breakerMaxAmps = 30;
 
   /**
    * @param driveMotor       The motor that drives the module.
@@ -135,27 +139,35 @@ public abstract class SwerveModuleBase extends Estopable {
 
   @Override
   public void periodic() {
-    double drivingPower = 0;
-    double turnPower = m_turnPIDController.calculate(m_turningEncoder.getPosition());
+    double drivingVoltage = 0;
+    double turningVoltage = m_turnPIDController.calculate(m_turningEncoder.getPosition());
 
-    if (sudoMode) {
-      if (Math.abs(m_drivePIDController.getGoal().velocity) > 0.05) {
-        drivingPower = Math.signum(m_drivePIDController.getGoal().velocity) * 12;
+    if (voltageControlMode) {
+      if (sudoMode) {
+        // Sudo mode, drive motors will be at 12 volts
+        if (Math.abs(m_drivePIDController.getGoal().velocity) > 0.05) {
+          drivingVoltage = Math.signum(m_drivePIDController.getGoal().velocity) * 12;
+        } else {
+          drivingVoltage = 0;
+        }
       } else {
-        drivingPower = 0;
+        // Using voltage control, but not sudo mode
+        drivingVoltage = m_drivePIDController.getGoal().velocity;
       }
     } else {
       if (slowMode) {
-        drivingPower = m_drivePIDController.calculate(m_driveEncoder.getVelocity() * 0.5)
-            + m_driveFeedforward.calculate(m_drivePIDController.getGoal().velocity);
+        // Uses half the speed for slow mode
+        drivingVoltage = m_drivePIDController.calculate(m_driveEncoder.getVelocity() * slowModeMultiplier)
+            + m_driveFeedforward.calculate(m_drivePIDController.getSetpoint().velocity * slowModeMultiplier);
       } else {
-        drivingPower = m_drivePIDController.calculate(m_driveEncoder.getVelocity())
-            + m_driveFeedforward.calculate(m_drivePIDController.getGoal().velocity);
+        // Normal speed
+        drivingVoltage = m_drivePIDController.calculate(m_driveEncoder.getVelocity())
+            + m_driveFeedforward.calculate(m_drivePIDController.getSetpoint().velocity);
       }
     }
 
-    m_turningMotor.setVoltage(turnPower);
-    m_driveMotor.setVoltage(drivingPower);
+    m_turningMotor.setVoltage(turningVoltage);
+    m_driveMotor.setVoltage(drivingVoltage);
 
     SmartDashboard.putData(this.getName() + " swerve turning PID", m_turnPIDController);
     SmartDashboard.putNumber(this.getName() + " swerve turning encoder", m_turningEncoder.getPosition());
@@ -207,17 +219,13 @@ public abstract class SwerveModuleBase extends Estopable {
 
   public void setSudoMode(boolean sudoMode) {
     this.sudoMode = sudoMode;
-    if (sudoMode) {
-      m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(20),
-          ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-      m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(20),
-          ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-    } else {
-      m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(driveAmps),
-          ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-      m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(turnAmps),
-          ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-    }
+    m_driveMotor.configure(new SparkMaxConfig()
+        .smartCurrentLimit(sudoMode ? breakerMaxAmps : driveAmps),
+        ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    m_turningMotor.configure(new SparkMaxConfig()
+        .smartCurrentLimit(sudoMode ? breakerMaxAmps : turnAmps),
+        ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    setVoltageControlMode(sudoMode);
   }
 
   public boolean getSlowMode() {
@@ -226,6 +234,20 @@ public abstract class SwerveModuleBase extends Estopable {
 
   public void setSlowMode(boolean slowMode) {
     this.slowMode = slowMode;
+  }
+
+  public void setSlowModeMultiplier(double multiplier) {
+    slowModeMultiplier = multiplier;
+  }
+
+  /** Danger, drive motors will interprit the speeds as voltages!! */
+  public void setVoltageControlMode(boolean voltageControl) {
+    voltageControlMode = voltageControl;
+
+  }
+
+  public boolean getVoltageControlMode() {
+    return voltageControlMode;
   }
 
   public void setDriveAmps(int limit) {

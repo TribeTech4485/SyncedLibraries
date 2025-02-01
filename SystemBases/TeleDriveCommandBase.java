@@ -1,92 +1,115 @@
 package frc.robot.SyncedLibraries.SystemBases;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.SyncedLibraries.SystemBases.Swerve.SwerveDriveBase;
 
-public class TeleDriveCommandBase extends Command {
+public abstract class TeleDriveCommandBase extends Command {
   // TODO: Add swerve drive support
-  protected ControllerBase[] controllers = null;
-  protected final boolean swerveDrive;
+  protected final ControllerBase[] controllers = new ControllerBase[3];
   protected double deadBand = 0.1;
-  /** Set to false to disable warning upon startup */
-  protected boolean defaultExecute = true;
-  /**
-   * Up to 3 drivers
-   * <p>
-   * First axis is controller number, typically just use 0
-   * <p>
-   * Second axis is the joystick values, in the order of:
-   * <p>
-   * <i>
-   * Left Y, Right Y, Left X, Right X, POV
-   * </i>
-   */
-  protected double[][] ys = new double[2][5];
-  protected SwerveDriveBase swerveTrain; // TODO
-  protected boolean straightMode = false;
+  protected DriveModes driveMode = DriveModes.DESIRED_ANGLE;
+  protected SwerveDriveBase swerveTrain;
+  protected boolean x_locked = false;
+  private boolean haveTriggersBeenBound = false;
 
-  public TeleDriveCommandBase(SwerveDriveBase driveTrain, ControllerBase controller) {
+  public TeleDriveCommandBase(SwerveDriveBase driveTrain, ControllerBase... controllers) {
     addRequirements(driveTrain);
-    swerveDrive = true;
+    // TODO: Add tank drive support
     this.swerveTrain = driveTrain;
+    for (int i = 0; i < this.controllers.length; i++) {
+      if (controllers.length <= i) {
+        this.controllers[i] = new ControllerBase(-1);
+        continue;
+      }
+      this.controllers[i] = controllers[i];
+    }
+    swerveTrain.setDefaultCommand(this);
+  }
+
+  @Override
+  public void initialize() {
+    // In case if not called in configureBindings()
+    setNormalTriggerBinds();
   }
 
   @Override
   public void execute() {
-    ys = getJoys();
-    swerveTrain.inputDrivingX_Y_A(ys[0][2], ys[0][0], Math.atan2(ys[0][1], ys[0][3]), (int) ys[0][4]);
-
-    // This is a warning to the programmer that they should override this method
-    if (defaultExecute) {
-      defaultExecute = false;
-      DriverStation.reportWarning("TeleDriveCommandBase: execute() not overridden.\n" +
-          "Nothing is wrong with this, but reccomended to put further joystick controls here.", false);
+    if (!DriverStation.isTeleopEnabled()) {
+      return;
     }
-  }
+    if (!x_locked) {
+      switch (driveMode) {
+        case DESIRED_ANGLE:
+          Rotation2d rotation;
+          if (controllers[0].getLeftX() == 0 && controllers[0].getLeftY() == 0) {
+            rotation = null;
+          } else {
+            rotation = new Rotation2d(controllers[0].getRightX(), controllers[0].getRightY());
+          }
 
-  public void straightDrive(boolean straight) {
-    straightMode = straight;
-  }
+          if (rotation == null) {
+            swerveTrain.inputDrivingX_Y(controllers[0].getLeftX(), controllers[0].getLeftY(), 0, -1);
+          } else {
+            swerveTrain.inputDrivingX_Y_A(controllers[0].getLeftX(), controllers[0].getLeftY(),
+                rotation, -1);
+          }
+          break;
 
-  @Override
-  public void end(boolean interrupted) {
-    // driveTrain.stop();
-  }
-
-  @Override
-  public boolean isFinished() {
-    return DriverStation.isDisabled();
+        case ROTATION_SPEED:
+          swerveTrain.inputDrivingX_Y(controllers[0].getLeftX(), controllers[0].getLeftY(), controllers[0].getRightX());
+          break;
+      }
+    }
   }
 
   /**
-   * The first array is the driver/priority, nested array is the joystick values
-   * <br>
-   * Left Y, Right Y, Left X, Right X, POV
-   * If joystick: X, Y, Twist, Throttle, POV
+   * Keybinds that will be synchronized between all robot drivers
+   * <p>
+   * Call this in RobotContainer.configureBindings() for readability
    */
-  protected double[][] getJoys() {
-    if (controllers != null) {
-      double[][] toReturn = new double[3][5];
-      for (int i = 0; i < controllers.length; i++) {
-        if (controllers[i] != null) {
-          toReturn[i] = new double[] {
-              controllers[i].getLeftY(),
-              controllers[i].getRightY(),
-              controllers[i].getLeftX(),
-              controllers[i].getRightX(),
-              controllers[i].getPOV()
-          };
-        } else {
-          toReturn[i] = zeros();
-        }
-      }
-      return toReturn;
+  public void setNormalTriggerBinds() {
+    // Leave ABXY for year specific commands
+    if (haveTriggersBeenBound) {
+      return;
     }
-    return new double[][] { zeros(), zeros(), zeros() };
+    haveTriggersBeenBound = true;
+
+    controllers[0].LeftStickPress.onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(true)));
+    controllers[0].RightStickPress.onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(false)));
+
+    controllers[0].LeftStickPress.and(controllers[0].RightStickPress)
+        .onTrue(new InstantCommand(swerveTrain::enableXLock))
+        .onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(false)))
+        .onTrue(new InstantCommand(() -> x_locked = true))
+        .onFalse(new InstantCommand(swerveTrain::disableXLock))
+        .onFalse(new InstantCommand(() -> x_locked = false));
+
+    controllers[0].RightTrigger.onTrue(new InstantCommand(() -> swerveTrain.setBrakeMode(true)));
+    controllers[0].RightTrigger.onFalse(new InstantCommand(() -> swerveTrain.setBrakeMode(false)));
+
+    controllers[0].LeftTrigger.onTrue(new InstantCommand(() -> swerveTrain.setSlowMode(true)));
+    controllers[0].LeftTrigger.onFalse(new InstantCommand(() -> swerveTrain.setSlowMode(false)));
+
+    // the right one
+    controllers[0].Start.onTrue(new InstantCommand(swerveTrain::resetGyro));
+    // the left one
+    controllers[0].Options.onTrue(new InstantCommand(() -> {
+      // Cancel all other commands using the drive train
+      if (swerveTrain.getCurrentCommand() != this) {
+        swerveTrain.getCurrentCommand().cancel();
+      }
+    }));
+
+    controllers[0].RightBumper.onTrue(new InstantCommand(() -> driveMode = DriveModes.DESIRED_ANGLE))
+        .onTrue(new InstantCommand(() -> swerveTrain.setFieldRelative(true)));
+    controllers[0].LeftBumper.onTrue(new InstantCommand(() -> driveMode = DriveModes.ROTATION_SPEED))
+        .onTrue(new InstantCommand(() -> swerveTrain.setFieldRelative(false)));
   }
 
-  private double[] zeros() {
-    return new double[] { 0, 0, 0, 0, 0 };
+  protected enum DriveModes {
+    DESIRED_ANGLE, ROTATION_SPEED
   }
 }
