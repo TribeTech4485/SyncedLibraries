@@ -51,6 +51,8 @@ public class ControllerBase {
   public Trigger RightStickPress;
   public Trigger ESTOPCondition;
   public Trigger AnyButton;
+  public Trigger RightJoyMoved;
+  public Trigger LeftJoyMoved;
   /**
    * <b>IS ONE INDEXED TO MATCH WITH {@link #getRawButton()}, 0th returns false
    */
@@ -123,6 +125,8 @@ public class ControllerBase {
     this.PovRight = commObjectJoystick.button(18);
     this.LeftStickPress = commObjectJoystick.button(19);
     this.RightStickPress = commObjectJoystick.button(20);
+    this.RightJoyMoved = new Trigger(() -> (getLeftX() != 0 || getLeftY() != 0));
+    this.LeftJoyMoved = new Trigger(() -> (getLeftX() != 0 || getLeftY() != 0));
 
     int buttonCount = objectJoystick.getButtonCount();
     buttons = new Trigger[buttonCount + 1];
@@ -173,6 +177,8 @@ public class ControllerBase {
     this.PovRight = commObjectPS4.povRight();
     this.LeftStickPress = commObjectPS4.L3();
     this.RightStickPress = commObjectPS4.L3();
+    this.RightJoyMoved = new Trigger(() -> (getRightX() != 0 || getRightY() != 0));
+    this.LeftJoyMoved = new Trigger(() -> (getLeftX() != 0 || getLeftY() != 0));
 
     int buttonCount = objectPS4.getButtonCount();
     buttons = new Trigger[buttonCount + 1];
@@ -223,6 +229,8 @@ public class ControllerBase {
     this.PovRight = commObjectX.povRight();
     this.LeftStickPress = commObjectX.leftStick();
     this.RightStickPress = commObjectX.rightStick();
+    this.RightJoyMoved = new Trigger(() -> (getRightX() != 0 || getRightY() != 0));
+    this.LeftJoyMoved = new Trigger(() -> (getLeftX() != 0 || getLeftY() != 0));
 
     int buttonCount = objectX.getButtonCount();
     buttons = new Trigger[buttonCount + 1];

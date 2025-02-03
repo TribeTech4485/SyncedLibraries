@@ -107,7 +107,7 @@ public abstract class ManipulatorBase extends Estopable {
   }
 
   /**
-   * Move the manipulator to a position in degrees or meters
+   * Move the manipulator to a position in radians or meters
    * <p>
    * <b>STOPS COMMANDS</b>
    */
@@ -116,7 +116,7 @@ public abstract class ManipulatorBase extends Estopable {
   }
 
   /**
-   * Move the manipulator to a position in degrees or meters
+   * Move the manipulator to a position in radians or meters
    * <p>
    * <b>Only run with stopCommands false if the position command is known to be
    * running</b>

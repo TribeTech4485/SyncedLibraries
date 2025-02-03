@@ -43,18 +43,12 @@ public abstract class TeleDriveCommandBase extends Command {
     if (!x_locked) {
       switch (driveMode) {
         case DESIRED_ANGLE:
-          Rotation2d rotation;
           if (controllers[0].getLeftX() == 0 && controllers[0].getLeftY() == 0) {
-            rotation = null;
-          } else {
-            rotation = new Rotation2d(controllers[0].getRightX(), controllers[0].getRightY());
-          }
-
-          if (rotation == null) {
+            // If the joystick is not being used, don't rotate
             swerveTrain.inputDrivingX_Y(controllers[0].getLeftX(), controllers[0].getLeftY(), 0, -1);
           } else {
             swerveTrain.inputDrivingX_Y_A(controllers[0].getLeftX(), controllers[0].getLeftY(),
-                rotation, -1);
+                new Rotation2d(controllers[0].getRightX(), controllers[0].getRightY()), -1);
           }
           break;
 
@@ -71,7 +65,7 @@ public abstract class TeleDriveCommandBase extends Command {
    * Call this in RobotContainer.configureBindings() for readability
    */
   public void setNormalTriggerBinds() {
-    // Leave ABXY for year specific commands
+    // Leave ABXY and POV for year specific commands
     if (haveTriggersBeenBound) {
       return;
     }
