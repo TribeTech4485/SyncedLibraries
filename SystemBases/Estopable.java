@@ -12,7 +12,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 /** A {@link SubsystemBase}, but you have to have an ESTOP function */
 public abstract class Estopable extends SubsystemBase {
   private static LinkedList<Estopable> allEstoppables = new LinkedList<Estopable>();
-  private static Boolean previouslyDisabled;
+  private static Command disableCommand;
+  private static boolean previouslyDisabled = true;
   private static boolean allowFullEstop = !DriverStation.isFMSAttached();
 
   /**
@@ -22,11 +23,10 @@ public abstract class Estopable extends SubsystemBase {
     allEstoppables.add(this);
     System.out.println("Creating subsystem " + getName());
 
-    if (previouslyDisabled == null) {
+    if (disableCommand == null) {
       // injects the function onDisableAll that runs when the robot is disabled
       // TODO: verify that onDisable runs when the robot is disabled
-      previouslyDisabled = false;
-      new Command() {
+      disableCommand = new Command() {
         @Override
         public void execute() {
           boolean isDisabled = DriverStation.isDisabled();
@@ -40,7 +40,13 @@ public abstract class Estopable extends SubsystemBase {
         public boolean isFinished() {
           return false;
         }
-      }.schedule();
+
+        @Override
+        public boolean runsWhenDisabled() {
+          return true;
+        }
+      };
+      disableCommand.schedule();
     }
   }
 

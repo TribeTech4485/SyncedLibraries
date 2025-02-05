@@ -32,6 +32,8 @@ import edu.wpi.first.wpilibj2.command.PrintCommand;
  * 5.) Adjust speed and position multipliers if needed
  * <p>
  * You also can use standard {@link SubsystemBase} methods
+ * <p>
+ * Add a loop to run all tests to Robot.testInit()
  */
 public abstract class ManipulatorBase extends Estopable {
   /** If null, run the {@link #setPositionPID(double, double, double, double)} */
@@ -443,6 +445,16 @@ public abstract class ManipulatorBase extends Estopable {
     for (SparkMax motor : motors) {
       motor.configure(new SparkMaxConfig(), ResetMode.kNoResetSafeParameters,
           PersistMode.kPersistParameters);
+    }
+  }
+
+  public ManipulatorBase() {
+    // Make sure the amp limit is reasonable
+    for (SparkMax motor : motors) {
+      if (motor.configAccessor.getSmartCurrentLimit() > breakerMaxAmps) {
+        motor.configure(new SparkMaxConfig().smartCurrentLimit(breakerMaxAmps), ResetMode.kNoResetSafeParameters,
+            PersistMode.kNoPersistParameters);
+      }
     }
   }
 }

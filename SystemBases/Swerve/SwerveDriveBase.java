@@ -18,6 +18,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -413,7 +414,8 @@ public abstract class SwerveDriveBase extends Estopable {
   }
 
   public void prepareSysID() {
-    URCL.start();
+    URCL.start(DataLogManager.getLog());
+
     sysIdRoutine = new SysIdRoutine(new SysIdRoutine.Config(),
         new SysIdRoutine.Mechanism(this::setManualVoltage, null, this));
   }

@@ -3,7 +3,11 @@ package frc.robot.SyncedLibraries;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
+
+import org.littletonrobotics.urcl.URCL;
+
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.SyncedLibraries.SystemBases.ManipulatorBase;
@@ -57,5 +61,10 @@ public class ManipulatorBaseSysID {
   /** Voltage ramp, no accel */
   public Command dynamicReverse() {
     return sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse);
+  }
+
+  /** Start rev logger (Run once at beginning) */
+  public static void startURCL() {
+    URCL.start(DataLogManager.getLog());
   }
 }
