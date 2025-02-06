@@ -5,9 +5,11 @@
 package frc.robot.SyncedLibraries.SystemBases.Swerve;
 
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.config.AbsoluteEncoderConfig;
+import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.RelativeEncoder;
@@ -59,15 +61,14 @@ public abstract class SwerveModuleBase extends Estopable {
    * @param driveConstraints The constraints for the drive motor.
    */
   public SwerveModuleBase(SparkMax driveMotor, SparkMax turningMotor, double turningOffset, String name,
-      SparkMaxConfig driveConfig, SparkMaxConfig turningConfig,
+      SparkBaseConfig driveConfig, SparkBaseConfig turningConfig,
       double[] drivePIDF, double[] turnPID, TrapezoidProfile.Constraints driveConstraints) {
     this.setName(name);
 
     // DRIVE MOTOR SETUP
     m_driveMotor = driveMotor;
 
-    m_driveMotor.configure(driveConfig.apply(
-        new AbsoluteEncoderConfig().zeroOffset(turningOffset))
+    m_driveMotor.configure(driveConfig
     // .positionConversionFactor(driveGearRatio)
     // .velocityConversionFactor(driveGearRatio))
         ,
@@ -82,7 +83,9 @@ public abstract class SwerveModuleBase extends Estopable {
     // TURNING MOTOR SETUP
     m_turningMotor = turningMotor;
 
-    m_turningMotor.configure(turningConfig,
+    m_turningMotor.configure(turningConfig.apply(
+        new AbsoluteEncoderConfig().zeroOffset(
+            turningOffset)),
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
 
@@ -133,8 +136,11 @@ public abstract class SwerveModuleBase extends Estopable {
     state.speedMetersPerSecond *= state.angle.minus(encoderRotation).getCos();
 
     // set the wanted position, actual moving done in periodic
-    m_drivePIDController.setGoal(state.speedMetersPerSecond);
+    // m_drivePIDController.setGoal(state.speedMetersPerSecond);
     m_turnPIDController.setSetpoint(state.angle.getRadians());
+
+    m_driveMotor.getClosedLoopController().setReference(state.speedMetersPerSecond,
+        ControlType.kMAXMotionVelocityControl);
   }
 
   @Override
@@ -142,41 +148,43 @@ public abstract class SwerveModuleBase extends Estopable {
     double drivingVoltage = 0;
     double turningVoltage = m_turnPIDController.calculate(m_turningEncoder.getPosition());
 
-    if (voltageControlMode) {
-      if (sudoMode) {
-        // Sudo mode, drive motors will be at 12 volts
-        if (Math.abs(m_drivePIDController.getGoal().velocity) > 0.05) {
-          drivingVoltage = Math.signum(m_drivePIDController.getGoal().velocity) * 12;
+    if (true) {
+      if (voltageControlMode) {
+        if (sudoMode) {
+          // Sudo mode, drive motors will be at 12 volts
+          if (Math.abs(m_drivePIDController.getGoal().velocity) > 0.05) {
+            drivingVoltage = Math.signum(m_drivePIDController.getGoal().velocity) * 12;
+          } else {
+            drivingVoltage = 0;
+          }
         } else {
-          drivingVoltage = 0;
+          // Using voltage control, but not sudo mode
+          drivingVoltage = m_drivePIDController.getGoal().velocity;
         }
       } else {
-        // Using voltage control, but not sudo mode
-        drivingVoltage = m_drivePIDController.getGoal().velocity;
-      }
-    } else {
-      if (slowMode) {
-        // Uses half the speed for slow mode
-        drivingVoltage = m_drivePIDController.calculate(m_driveEncoder.getVelocity() * slowModeMultiplier)
-            + m_driveFeedforward.calculate(m_drivePIDController.getSetpoint().velocity * slowModeMultiplier);
-      } else {
-        // Normal speed
-        drivingVoltage = m_drivePIDController.calculate(m_driveEncoder.getVelocity())
-            + m_driveFeedforward.calculate(m_drivePIDController.getSetpoint().velocity);
+        if (slowMode) {
+          // Uses half the speed for slow mode
+          drivingVoltage = m_drivePIDController.calculate(m_driveEncoder.getVelocity() * slowModeMultiplier)
+              + m_driveFeedforward.calculate(m_drivePIDController.getSetpoint().velocity * slowModeMultiplier);
+        } else {
+          // Normal speed
+          drivingVoltage = m_drivePIDController.calculate(m_driveEncoder.getVelocity())
+              + m_driveFeedforward.calculate(m_drivePIDController.getSetpoint().velocity);
+        }
       }
     }
 
     m_turningMotor.setVoltage(turningVoltage);
     m_driveMotor.setVoltage(drivingVoltage);
 
-    SmartDashboard.putData(this.getName() + " swerve turning PID", m_turnPIDController);
-    SmartDashboard.putNumber(this.getName() + " swerve turning encoder", m_turningEncoder.getPosition());
-    SmartDashboard.putNumber(this.getName() + " swerve turning degrees", getEncoderPos().getDegrees());
-    SmartDashboard.putNumber(this.getName() + " swerve turning power", m_turningMotor.get());
+    SmartDashboard.putData(getName() + " swerve turning PID", m_turnPIDController);
+    SmartDashboard.putNumber(getName() + " swerve turning encoder", m_turningEncoder.getPosition());
+    SmartDashboard.putNumber(getName() + " swerve turning degrees", getEncoderPos().getDegrees());
+    SmartDashboard.putNumber(getName() + " swerve turning power", m_turningMotor.get());
 
-    SmartDashboard.putData(this.getName() + " swerve driving PID", m_drivePIDController);
-    SmartDashboard.putNumber(this.getName() + " swerve driving speed", m_driveEncoder.getVelocity());
-    SmartDashboard.putNumber(this.getName() + " swerve driving power", m_driveMotor.get());
+    SmartDashboard.putData(getName() + " swerve driving PID", m_drivePIDController);
+    SmartDashboard.putNumber(getName() + " swerve driving speed", m_driveEncoder.getVelocity());
+    SmartDashboard.putNumber(getName() + " swerve driving power", m_driveMotor.get());
   }
 
   public void setDriveBrakeMode(boolean brake) {

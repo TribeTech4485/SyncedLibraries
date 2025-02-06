@@ -182,7 +182,7 @@ public abstract class SwerveDriveBase extends Estopable {
       double rotationSpeed, int centerOfRotationPOV) {
     // Calculate the swerve module states from the requested speeds
     inputDrivingSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
-        xSpeed, -ySpeed, rotationSpeed,
+        -ySpeed, -xSpeed, rotationSpeed,
         fieldRelative ? m_gyro.getRotation2d() : Rotation2d.fromDegrees(0)),
         centerOfRotationPOV);
   }

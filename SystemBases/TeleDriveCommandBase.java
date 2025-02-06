@@ -2,6 +2,7 @@ package frc.robot.SyncedLibraries.SystemBases;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.SyncedLibraries.SystemBases.Swerve.SwerveDriveBase;
@@ -10,7 +11,7 @@ public abstract class TeleDriveCommandBase extends Command {
   // TODO: Add swerve drive support
   protected final ControllerBase[] controllers = new ControllerBase[3];
   protected double deadBand = 0.1;
-  protected DriveModes driveMode = DriveModes.DESIRED_ANGLE;
+  protected DriveModes driveMode = DriveModes.ROTATION_SPEED;
   protected SwerveDriveBase swerveTrain;
   protected boolean x_locked = false;
   private boolean haveTriggersBeenBound = false;
@@ -43,7 +44,7 @@ public abstract class TeleDriveCommandBase extends Command {
     if (!x_locked) {
       switch (driveMode) {
         case DESIRED_ANGLE:
-          if (controllers[0].getLeftX() == 0 && controllers[0].getLeftY() == 0) {
+          if (controllers[0].getRightX() == 0 && controllers[0].getRightY() == 0) {
             // If the joystick is not being used, don't rotate
             swerveTrain.inputDrivingX_Y(controllers[0].getLeftX(), controllers[0].getLeftY(), 0, -1);
           } else {
@@ -57,6 +58,8 @@ public abstract class TeleDriveCommandBase extends Command {
           break;
       }
     }
+
+    SmartDashboard.putString("Driving mode", driveMode.toString());
   }
 
   /**
