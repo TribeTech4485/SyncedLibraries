@@ -136,11 +136,11 @@ public abstract class SwerveModuleBase extends Estopable {
     state.speedMetersPerSecond *= state.angle.minus(encoderRotation).getCos();
 
     // set the wanted position, actual moving done in periodic
-    // m_drivePIDController.setGoal(state.speedMetersPerSecond);
+    m_drivePIDController.setGoal(state.speedMetersPerSecond);
     m_turnPIDController.setSetpoint(state.angle.getRadians());
 
-    m_driveMotor.getClosedLoopController().setReference(state.speedMetersPerSecond,
-        ControlType.kMAXMotionVelocityControl);
+    // m_driveMotor.getClosedLoopController().setReference(state.speedMetersPerSecond,
+    //     ControlType.kMAXMotionVelocityControl);
   }
 
   @Override
@@ -174,8 +174,9 @@ public abstract class SwerveModuleBase extends Estopable {
       }
     }
 
-    m_turningMotor.setVoltage(turningVoltage);
+    m_turningMotor.setVoltage(-turningVoltage);
     m_driveMotor.setVoltage(drivingVoltage);
+    // m_driveMotor.setVoltage(0);
 
     SmartDashboard.putData(getName() + " swerve turning PID", m_turnPIDController);
     SmartDashboard.putNumber(getName() + " swerve turning encoder", m_turningEncoder.getPosition());

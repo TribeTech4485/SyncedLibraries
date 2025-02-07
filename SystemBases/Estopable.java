@@ -46,7 +46,7 @@ public abstract class Estopable extends SubsystemBase {
           return true;
         }
       };
-      disableCommand.schedule();
+      // disableCommand.schedule();
     }
   }
 

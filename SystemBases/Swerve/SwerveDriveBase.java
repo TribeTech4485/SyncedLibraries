@@ -182,7 +182,7 @@ public abstract class SwerveDriveBase extends Estopable {
       double rotationSpeed, int centerOfRotationPOV) {
     // Calculate the swerve module states from the requested speeds
     inputDrivingSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
-        -ySpeed, -xSpeed, rotationSpeed,
+        -xSpeed, -ySpeed, rotationSpeed,
         fieldRelative ? m_gyro.getRotation2d() : Rotation2d.fromDegrees(0)),
         centerOfRotationPOV);
   }
@@ -300,7 +300,7 @@ public abstract class SwerveDriveBase extends Estopable {
       module.setDriveBrakeMode(brakeMode);
       module.setVoltageControlMode(voltageControlMode);
       module.setSlowMode(slowMode);
-      module.setSudoMode(sudoMode);
+      // module.setSudoMode(sudoMode);
     }
   }
 
@@ -393,9 +393,9 @@ public abstract class SwerveDriveBase extends Estopable {
   private SwerveModuleState[] generateLockPositions() {
     SwerveModuleState[] lockPositions = new SwerveModuleState[4];
     lockPositions[0] = new SwerveModuleState(0, new Rotation2d(1 * Math.PI / 4));
-    lockPositions[1] = new SwerveModuleState(0, new Rotation2d(7 * Math.PI / 4));
+    lockPositions[1] = new SwerveModuleState(0, new Rotation2d(2 * Math.PI / 4));
     lockPositions[2] = new SwerveModuleState(0, new Rotation2d(3 * Math.PI / 4));
-    lockPositions[3] = new SwerveModuleState(0, new Rotation2d(5 * Math.PI / 4));
+    lockPositions[3] = new SwerveModuleState(0, new Rotation2d(4 * Math.PI / 4));
     return lockPositions;
   }
 

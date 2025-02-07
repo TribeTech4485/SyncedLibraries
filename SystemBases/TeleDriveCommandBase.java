@@ -46,15 +46,15 @@ public abstract class TeleDriveCommandBase extends Command {
         case DESIRED_ANGLE:
           if (controllers[0].getRightX() == 0 && controllers[0].getRightY() == 0) {
             // If the joystick is not being used, don't rotate
-            swerveTrain.inputDrivingX_Y(controllers[0].getLeftX(), controllers[0].getLeftY(), 0, -1);
+            swerveTrain.inputDrivingX_Y(-controllers[0].getLeftX(), controllers[0].getLeftY(), 0);
           } else {
-            swerveTrain.inputDrivingX_Y_A(controllers[0].getLeftX(), controllers[0].getLeftY(),
+            swerveTrain.inputDrivingX_Y_A(-controllers[0].getLeftX(), controllers[0].getLeftY(),
                 new Rotation2d(controllers[0].getRightX(), controllers[0].getRightY()), -1);
           }
           break;
 
         case ROTATION_SPEED:
-          swerveTrain.inputDrivingX_Y(controllers[0].getLeftX(), controllers[0].getLeftY(), controllers[0].getRightX());
+          swerveTrain.inputDrivingX_Y(controllers[0].getLeftY(), controllers[0].getLeftX(), controllers[0].getRightX());
           break;
       }
     }
