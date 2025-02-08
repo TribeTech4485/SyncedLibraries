@@ -5,7 +5,6 @@
 package frc.robot.SyncedLibraries.SystemBases.Swerve;
 
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.config.AbsoluteEncoderConfig;
@@ -15,14 +14,13 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkAbsoluteEncoder;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.SyncedLibraries.SystemBases.Estopable;
+import frc.robot.SyncedLibraries.SystemBases.Utils.VelocityFFController;
 
 public abstract class SwerveModuleBase extends Estopable {
   protected final SparkMax m_driveMotor;
@@ -32,9 +30,10 @@ public abstract class SwerveModuleBase extends Estopable {
   protected final SparkAbsoluteEncoder m_turningEncoder;
 
   protected final TrapezoidProfile.Constraints m_driveConstraints;
-  protected final ProfiledPIDController m_drivePIDController;
+  // protected final ProfiledPIDController m_drivePIDController;
   protected final PIDController m_turnPIDController;
-  protected final SimpleMotorFeedforward m_driveFeedforward;
+  // protected final SimpleMotorFeedforward m_driveFeedforward;
+  protected final VelocityFFController m_drivePIDFController;
 
   // protected final double driveGearRatio = 1 / (10 * Math.PI * 15 / 50); // 1 is
   // the gear ratio when I find out
@@ -77,8 +76,9 @@ public abstract class SwerveModuleBase extends Estopable {
 
     m_driveEncoder = m_driveMotor.getEncoder();
     m_driveConstraints = driveConstraints;
-    m_drivePIDController = new ProfiledPIDController(drivePIDF[0], drivePIDF[1], drivePIDF[2], m_driveConstraints);
-    m_driveFeedforward = new SimpleMotorFeedforward(drivePIDF[3], drivePIDF[4], drivePIDF[5]);
+    m_drivePIDFController = new VelocityFFController(drivePIDF[0], drivePIDF[1], drivePIDF[2], drivePIDF[3],
+        drivePIDF[4],
+        drivePIDF[5], driveConstraints.maxVelocity, driveConstraints.maxAcceleration);
 
     // TURNING MOTOR SETUP
     m_turningMotor = turningMotor;
@@ -127,20 +127,25 @@ public abstract class SwerveModuleBase extends Estopable {
     Rotation2d encoderRotation = getEncoderPos();
 
     SwerveModuleState state = new SwerveModuleState(desiredState.speedMetersPerSecond, desiredState.angle);
-    // Optimize the reference state to avoid spinning further than 90 degrees
-    state.optimize(getEncoderPos());
+    // SwerveModuleState state = desiredState;
 
-    // Scale speed by cosine of angle error. This scales down movement perpendicular
-    // to the desired direction of travel that can occur when modules change
-    // directions. This results in smoother driving.
-    state.speedMetersPerSecond *= state.angle.minus(encoderRotation).getCos();
+    state.optimize(getEncoderPos());
+    state.cosineScale(getEncoderPos());
 
     // set the wanted position, actual moving done in periodic
-    m_drivePIDController.setGoal(state.speedMetersPerSecond);
-    m_turnPIDController.setSetpoint(state.angle.getRadians());
+    if (slowMode && !voltageControlMode) {
+      m_drivePIDFController.setGoal(state.speedMetersPerSecond * slowModeMultiplier);
+    } else {
+      m_drivePIDFController.setGoal(state.speedMetersPerSecond);
+    }
+    if (state.speedMetersPerSecond == 0 && m_driveEncoder.getVelocity() >= 0.1 && !voltageControlMode) {
+      // slowing down but not stopped yet (and not in voltage control mode)
+    } else {
+      m_turnPIDController.setSetpoint(state.angle.getRadians());
+    }
 
     // m_driveMotor.getClosedLoopController().setReference(state.speedMetersPerSecond,
-    //     ControlType.kMAXMotionVelocityControl);
+    // ControlType.kMAXMotionVelocityControl);
   }
 
   @Override
@@ -152,25 +157,17 @@ public abstract class SwerveModuleBase extends Estopable {
       if (voltageControlMode) {
         if (sudoMode) {
           // Sudo mode, drive motors will be at 12 volts
-          if (Math.abs(m_drivePIDController.getGoal().velocity) > 0.05) {
-            drivingVoltage = Math.signum(m_drivePIDController.getGoal().velocity) * 12;
+          if (Math.abs(m_drivePIDFController.getGoal().velocity) > 0.05) {
+            drivingVoltage = Math.signum(m_drivePIDFController.getGoal().velocity) * 12;
           } else {
             drivingVoltage = 0;
           }
         } else {
           // Using voltage control, but not sudo mode
-          drivingVoltage = m_drivePIDController.getGoal().velocity;
+          drivingVoltage = m_drivePIDFController.getGoal().velocity;
         }
       } else {
-        if (slowMode) {
-          // Uses half the speed for slow mode
-          drivingVoltage = m_drivePIDController.calculate(m_driveEncoder.getVelocity() * slowModeMultiplier)
-              + m_driveFeedforward.calculate(m_drivePIDController.getSetpoint().velocity * slowModeMultiplier);
-        } else {
-          // Normal speed
-          drivingVoltage = m_drivePIDController.calculate(m_driveEncoder.getVelocity())
-              + m_driveFeedforward.calculate(m_drivePIDController.getSetpoint().velocity);
-        }
+        drivingVoltage = m_drivePIDFController.calculate(m_driveEncoder.getVelocity());
       }
     }
 
@@ -183,7 +180,7 @@ public abstract class SwerveModuleBase extends Estopable {
     SmartDashboard.putNumber(getName() + " swerve turning degrees", getEncoderPos().getDegrees());
     SmartDashboard.putNumber(getName() + " swerve turning power", m_turningMotor.get());
 
-    SmartDashboard.putData(getName() + " swerve driving PID", m_drivePIDController);
+    SmartDashboard.putData(getName() + " swerve driving PID", m_drivePIDFController);
     SmartDashboard.putNumber(getName() + " swerve driving speed", m_driveEncoder.getVelocity());
     SmartDashboard.putNumber(getName() + " swerve driving power", m_driveMotor.get());
   }
@@ -214,8 +211,8 @@ public abstract class SwerveModuleBase extends Estopable {
     return m_turningEncoder;
   }
 
-  public ProfiledPIDController getDrivePIDController() {
-    return m_drivePIDController;
+  public VelocityFFController getDrivePIDController() {
+    return m_drivePIDFController;
   }
 
   public PIDController getTurnPIDController() {
@@ -273,6 +270,8 @@ public abstract class SwerveModuleBase extends Estopable {
 
   @Override
   public void ESTOP() {
+    // handled in SwerveDriveBase
+    m_drivePIDFController.pidController.reset(0);
   }
 
   @Override

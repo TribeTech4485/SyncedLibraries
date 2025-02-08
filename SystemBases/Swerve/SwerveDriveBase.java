@@ -391,11 +391,11 @@ public abstract class SwerveDriveBase extends Estopable {
    * aka X Lock
    */
   private SwerveModuleState[] generateLockPositions() {
-    SwerveModuleState[] lockPositions = new SwerveModuleState[4];
+    final SwerveModuleState[] lockPositions = new SwerveModuleState[4];
     lockPositions[0] = new SwerveModuleState(0, new Rotation2d(1 * Math.PI / 4));
-    lockPositions[1] = new SwerveModuleState(0, new Rotation2d(2 * Math.PI / 4));
+    lockPositions[1] = new SwerveModuleState(0, new Rotation2d(7 * Math.PI / 4));
     lockPositions[2] = new SwerveModuleState(0, new Rotation2d(3 * Math.PI / 4));
-    lockPositions[3] = new SwerveModuleState(0, new Rotation2d(4 * Math.PI / 4));
+    lockPositions[3] = new SwerveModuleState(0, new Rotation2d(5 * Math.PI / 4));
     return lockPositions;
   }
 

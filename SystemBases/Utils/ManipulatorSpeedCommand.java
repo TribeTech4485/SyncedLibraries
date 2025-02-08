@@ -1,10 +1,10 @@
-package frc.robot.SyncedLibraries.SystemBases;
+package frc.robot.SyncedLibraries.SystemBases.Utils;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj.DriverStation;
-
+import frc.robot.SyncedLibraries.SystemBases.ManipulatorBase;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.RelativeEncoder;
 
@@ -19,9 +19,9 @@ public class ManipulatorSpeedCommand extends Command {
   public int onTargetCounterStart = 1;
   private int onTargetCounter = onTargetCounterStart;
   public boolean atSpeed = false;
-  
+
   public ManipulatorSpeedCommand(ManipulatorBase manipulator, double speed, double tolerance, double kP, double kI,
-  double kD) {
+      double kD) {
     this.manipulator = manipulator;
     this.targetSpeed = speed;
     this.tolerance = tolerance;

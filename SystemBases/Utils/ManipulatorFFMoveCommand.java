@@ -1,10 +1,11 @@
-package frc.robot.SyncedLibraries.SystemBases;
+package frc.robot.SyncedLibraries.SystemBases.Utils;
 
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import frc.robot.SyncedLibraries.SystemBases.ManipulatorBase;
 
 /**
  * Nearly identical to the ManipulatorMoveCommand, but with FeedForward

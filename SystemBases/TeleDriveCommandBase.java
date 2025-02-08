@@ -77,7 +77,7 @@ public abstract class TeleDriveCommandBase extends Command {
     controllers[0].LeftStickPress.onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(true)));
     controllers[0].RightStickPress.onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(false)));
 
-    controllers[0].LeftStickPress.and(controllers[0].RightStickPress)
+    controllers[0].A.and(controllers[0].A)
         .onTrue(new InstantCommand(swerveTrain::enableXLock))
         .onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(false)))
         .onTrue(new InstantCommand(() -> x_locked = true))

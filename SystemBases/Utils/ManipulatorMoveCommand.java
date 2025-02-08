@@ -1,9 +1,10 @@
-package frc.robot.SyncedLibraries.SystemBases;
+package frc.robot.SyncedLibraries.SystemBases.Utils;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj.DriverStation;
+import frc.robot.SyncedLibraries.SystemBases.ManipulatorBase;
 
 public class ManipulatorMoveCommand extends Command {
   protected ManipulatorBase manipulator;
