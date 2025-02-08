@@ -129,8 +129,8 @@ public abstract class SwerveModuleBase extends Estopable {
     SwerveModuleState state = new SwerveModuleState(desiredState.speedMetersPerSecond, desiredState.angle);
     // SwerveModuleState state = desiredState;
 
-    state.optimize(getEncoderPos());
-    state.cosineScale(getEncoderPos());
+    state.optimize(encoderRotation);
+    state.cosineScale(encoderRotation);
 
     // set the wanted position, actual moving done in periodic
     if (slowMode && !voltageControlMode) {
