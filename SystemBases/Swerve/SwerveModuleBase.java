@@ -284,4 +284,8 @@ public abstract class SwerveModuleBase extends Estopable {
     m_turningMotor.configure(new SparkMaxConfig(),
         ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters);
   }
+
+  public boolean getDriveBrakeMode() {
+    return m_driveMotor.configAccessor.getIdleMode() == IdleMode.kBrake;
+  }
 }

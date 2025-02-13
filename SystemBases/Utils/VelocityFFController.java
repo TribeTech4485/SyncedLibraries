@@ -46,11 +46,15 @@ public class VelocityFFController implements Sendable, AutoCloseable {
     builder.addDoubleProperty("d", pidController::getD, pidController::setD);
     builder.addDoubleProperty("f", () -> kS, (value) -> kS = value);
     builder.addDoubleProperty("v", () -> kV, (value) -> kV = value);
-    builder.addDoubleProperty("a", ffController::getKv,
+    builder.addDoubleProperty("a", this::getKa,
         (value) -> ffController = new SimpleMotorFeedforward(0, value));
     builder.addDoubleProperty("setpoint", () -> pidController.getSetpoint().position, pidController::setGoal);
     builder.addDoubleProperty("velocity", () -> pidController.getSetpoint().position, null);
     builder.addDoubleProperty("error", pidController::getPositionError, null);
+  }
+
+  private double getKa() {
+    return ffController.getKv();
   }
 
   @Override

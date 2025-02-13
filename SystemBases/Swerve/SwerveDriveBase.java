@@ -296,11 +296,20 @@ public abstract class SwerveDriveBase extends Estopable {
     m_frontRight.setDesiredState(swerveModuleStates[1]);
     m_backLeft.setDesiredState(swerveModuleStates[2]);
     m_backRight.setDesiredState(swerveModuleStates[3]);
+
     for (SwerveModuleBase module : modules) {
-      module.setDriveBrakeMode(brakeMode);
-      module.setVoltageControlMode(voltageControlMode);
-      module.setSlowMode(slowMode);
-      // module.setSudoMode(sudoMode);
+      if (module.getVoltageControlMode() != voltageControlMode) {
+        module.setVoltageControlMode(voltageControlMode);
+      }
+      if (module.getDriveBrakeMode() != brakeMode) {
+        module.setDriveBrakeMode(brakeMode);
+      }
+      if (module.getSlowMode() != slowMode) {
+        module.setSlowMode(slowMode);
+      }
+      if (module.getSudoMode() != sudoMode) {
+        module.setSudoMode(sudoMode);
+      }
     }
   }
 
