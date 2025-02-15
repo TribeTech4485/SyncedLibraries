@@ -40,7 +40,7 @@ public class ManipulatorBaseSysID {
   }
 
   private void setVoltage(Voltage voltage) {
-    manipulatorBase.setVoltage(voltage.magnitude(), false);
+    manipulatorBase.setVoltage(voltage, false);
   }
 
   /** Voltage steps, check accel */

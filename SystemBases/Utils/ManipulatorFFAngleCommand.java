@@ -1,17 +1,24 @@
 package frc.robot.SyncedLibraries.SystemBases.Utils;
 
+import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
+import static edu.wpi.first.units.Units.Volts;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import frc.robot.SyncedLibraries.SystemBases.ManipulatorBase;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularAcceleration;
+import edu.wpi.first.units.measure.AngularVelocity;
+import frc.robot.SyncedLibraries.SystemBases.AngleManipulatorBase;
 
 /**
  * Nearly identical to the ManipulatorMoveCommand, but with FeedForward
  * controllers
  */
-public class ManipulatorFFMoveCommand extends ManipulatorMoveCommand {
+public class ManipulatorFFAngleCommand extends ManipulatorAngleCommand {
   protected SimpleMotorFeedforward simpleController;
   protected ElevatorFeedforward elevatorController;
   protected ArmFeedforward armController;
@@ -21,7 +28,8 @@ public class ManipulatorFFMoveCommand extends ManipulatorMoveCommand {
   private ProfiledPIDController pidProfiled;
 
   /**
-   * Just like {@link ManipulatorMoveCommand}, but with a selectable FeedForward
+   * Just like {@link ManipulatorDistanceCommand}, but with a selectable
+   * FeedForward
    * 
    * @param manipulator     The manipulator to control
    * @param position        The position to move to
@@ -39,14 +47,15 @@ public class ManipulatorFFMoveCommand extends ManipulatorMoveCommand {
    * @param maxVelocity     The maximum velocity of the manipulator
    * @param maxAcceleration The maximum acceleration of the manipulator
    */
-  public ManipulatorFFMoveCommand(ManipulatorBase manipulator, double position,
-      double tolerance, double kP, double kI, double kD, FeedForwardType feedForwardType,
-      double kS, double kV, double kG, double kA, double maxVelocity, double maxAcceleration) {
+  public ManipulatorFFAngleCommand(AngleManipulatorBase manipulator, Angle position,
+      Angle tolerance, double kP, double kI, double kD, FeedForwardType feedForwardType,
+      double kS, double kV, double kG, double kA, AngularVelocity maxVelocity, AngularAcceleration maxAcceleration) {
     super(manipulator, position, tolerance, kP, kI, kD);
 
-    TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(maxVelocity, maxAcceleration);
+    TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(
+        maxVelocity.in(RadiansPerSecond), maxAcceleration.in(RadiansPerSecondPerSecond));
     pidProfiled = new ProfiledPIDController(kP, kI, kD, constraints);
-    pidProfiled.setTolerance(tolerance);
+    pidProfiled.setTolerance(tolerance.in(Radians));
 
     switch (feedForwardType) {
       case SimpleMotor:
@@ -83,13 +92,14 @@ public class ManipulatorFFMoveCommand extends ManipulatorMoveCommand {
   @Override
   public void initialize() {
     manipulator.stop();
-    pidProfiled.reset(new TrapezoidProfile.State(manipulator.getPosition(), manipulator.getCurrentSpeed()));
-    pidProfiled.setGoal(position);
+    pidProfiled.reset(new TrapezoidProfile.State(manipulator.getAngle().in(Radians),
+        manipulator.getCurrentSpeed().in(RadiansPerSecond)));
+    pidProfiled.setGoal(targetPosition.in(Radians));
   }
 
   @Override
   public void execute() {
-    manipulator.setVoltage(pidProfiled.calculate(manipulator.getPosition()) + getFF(),
+    manipulator.setVoltage(Volts.of(pidProfiled.calculate(manipulator.getAngle().in(Radians)) + getFF()),
         false);
     atPosition = isAtPosition();
   }

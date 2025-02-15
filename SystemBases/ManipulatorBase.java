@@ -7,16 +7,17 @@ import com.revrobotics.spark.config.EncoderConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.RelativeEncoder;
+import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 import java.util.LinkedList;
 import java.util.function.BooleanSupplier;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
-import frc.robot.SyncedLibraries.SystemBases.Utils.ManipulatorMoveCommand;
-import frc.robot.SyncedLibraries.SystemBases.Utils.ManipulatorSpeedCommand;
 
 /**
  * <strong> To impliment: </strong>
@@ -28,131 +29,17 @@ import frc.robot.SyncedLibraries.SystemBases.Utils.ManipulatorSpeedCommand;
  * <p>
  * 3.) Add the motors
  * <p>
- * 4.) Run the set___PID methods
- * in the constructor to set the PID values.
- * <p>
- * 5.) Adjust speed and position multipliers if needed
+ * 4.) Adjust speed and position multipliers if needed
  * <p>
  * You also can use standard {@link SubsystemBase} methods
  * <p>
  * Add a loop to run all tests to Robot.testInit()
  */
 public abstract class ManipulatorBase extends Estopable {
-  /** If null, run the {@link #setPositionPID(double, double, double, double)} */
-  protected ManipulatorMoveCommand moveCommand;
-  /** If null, run the {@link #setSpeedPID(double, double, double, double)} */
-  protected ManipulatorSpeedCommand speedCommand;
   protected int breakerMaxAmps = 20;
-  protected double maxPosition = Double.MAX_VALUE;
-  protected double minPosition = -Double.MAX_VALUE;
   protected LinkedList<SparkMax> motors = new LinkedList<SparkMax>();
   protected LinkedList<RelativeEncoder> encoders = new LinkedList<RelativeEncoder>();
   protected BooleanSupplier customSensor = () -> false;
-
-  // ===================== Positional Methods ===================== //
-  /** Get the known position of the manipulator in radians/meters */
-  public double getPosition() {
-    double average = 0;
-    for (RelativeEncoder encoder : encoders) {
-      average += encoder.getPosition();
-    }
-    return (average / encoders.size());
-  }
-
-  /**
-   * Set the known position of the manipulator in degrees.
-   * <p>
-   * USE SPARINGLY
-   */
-  public void _setPosition(double position) {
-    for (RelativeEncoder encoder : encoders) {
-      encoder.setPosition(position);
-    }
-  }
-
-  /** Set multiplier to convert from encoder values to degrees on manipulator */
-  public void setPositionMultiplier(double multiplier) {
-    for (SparkMax motor : motors) {
-      motor.configure(new SparkMaxConfig().apply(new EncoderConfig().positionConversionFactor(multiplier)),
-          ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-    }
-  }
-
-  /**
-   * Set the max and min position of the manipulator
-   * <p>
-   * If set out of bounds then the manipulator will move to limit when called
-   */
-  public void setPositionBounds(double min, double max) {
-    minPosition = min;
-    maxPosition = max;
-  }
-
-  public void setPositionPID(double kP, double kI, double kD, double tolerance) {
-    cancelMoveToPosition();
-    this.moveCommand = new ManipulatorMoveCommand(this, Integer.MAX_VALUE, tolerance, kP, kI, kD);
-  }
-
-  public void setPositionPID(ManipulatorMoveCommand command) {
-    cancelMoveToPosition();
-    this.moveCommand = command;
-  }
-
-  public ManipulatorMoveCommand getMoveCommand() {
-    return moveCommand;
-  }
-
-  /** Get the target position of the manipulator in degrees */
-  public double getTargetPosition() {
-    if (moveCommand == null) {
-      return Integer.MAX_VALUE;
-    }
-    return moveCommand.getTargetPosition();
-  }
-
-  /**
-   * Move the manipulator to a position in radians or meters
-   * <p>
-   * <b>STOPS COMMANDS</b>
-   */
-  public void moveToPosition(double position) {
-    moveToPosition(position, true);
-  }
-
-  /**
-   * Move the manipulator to a position in radians or meters
-   * <p>
-   * <b>Only run with stopCommands false if the position command is known to be
-   * running</b>
-   */
-  public void moveToPosition(double position, boolean stopCommands) {
-    if (stopCommands) {
-      stopCommands();
-    }
-    if (position > maxPosition) {
-      position = maxPosition;
-      System.out.println("ManipulatorBase: Position out of bounds" + position + " > " + maxPosition);
-    } else if (position < minPosition) {
-      position = minPosition;
-      System.out.println("ManipulatorBase: Position out of bounds" + position + " < " + minPosition);
-    }
-    moveCommand.setTargetPosition(position);
-    if (stopCommands || !moveCommand.isScheduled()) {
-      moveCommand.schedule();
-    }
-  }
-
-  /** If moveCommand not initialized returns false */
-  public boolean isAtPosition() {
-    return moveCommand == null ? false : moveCommand.atPosition;
-  }
-
-  public final void cancelMoveToPosition() {
-    if (moveCommand != null && moveCommand.isScheduled()) {
-      CommandScheduler.getInstance().cancel(moveCommand);
-      System.out.println("ManipulatorBase: Cancelling move command");
-    }
-  }
 
   // ===================== Raw Speed Methods ===================== //
   /** Get the raw speed of the motor in the range -1 to 1 */
@@ -180,7 +67,7 @@ public abstract class ManipulatorBase extends Estopable {
    */
   public void setPower(double percent, boolean stopCommands) {
     if (stopCommands) {
-      stopCommands();
+      stopCommand();
     }
     for (SparkMax motor : motors) {
       motor.set(percent);
@@ -202,7 +89,7 @@ public abstract class ManipulatorBase extends Estopable {
   public double getAveVoltage() {
     double average = 0;
     for (SparkMax motor : motors) {
-      average += motor.getBusVoltage();
+      average += motor.getBusVoltage() * motor.get();
     }
     return average / motors.size();
   }
@@ -211,7 +98,7 @@ public abstract class ManipulatorBase extends Estopable {
   public double getAbsVoltage() {
     double average = 0;
     for (SparkMax motor : motors) {
-      average += Math.abs(motor.getBusVoltage());
+      average += Math.abs(motor.getBusVoltage() * motor.get());
     }
     return average / motors.size();
   }
@@ -221,9 +108,9 @@ public abstract class ManipulatorBase extends Estopable {
    * <p>
    * Used for manual control
    */
-  public void setVoltage(double voltage, boolean stopCommands) {
+  public void setVoltage(Voltage voltage, boolean stopCommands) {
     if (stopCommands) {
-      stopCommands();
+      stopCommand();
     }
 
     // double line = motors.get(0).getBusVoltage();
@@ -235,7 +122,10 @@ public abstract class ManipulatorBase extends Estopable {
 
   // ===================== Speed Methods ===================== //
 
-  /** Set multiplier to convert from encoder values to rpm on manipulator */
+  /**
+   * Set multiplier to convert from encoder values to <b>radians/s</b> on
+   * manipulator
+   */
   public void setSpeedMultiplier(double multiplier) {
     for (SparkMax motor : motors) {
       motor.configure(new SparkMaxConfig().apply(new EncoderConfig().velocityConversionFactor(multiplier)),
@@ -243,48 +133,14 @@ public abstract class ManipulatorBase extends Estopable {
     }
   }
 
-  /** Get the live speed of the motor in rpm */
-  public double getCurrentSpeed() {
+  /** Get the live speed of the motor */
+  public AngularVelocity getCurrentSpeed() {
     double average = 0;
     for (RelativeEncoder encoder : encoders) {
       average += encoder.getVelocity();
     }
-    return (average / encoders.size());
-  }
-
-  /** Get the target speed of the motor in rpm */
-  public double getTargetSpeed() {
-    if (speedCommand == null) {
-      return Integer.MAX_VALUE;
-    }
-    return speedCommand.getTargetSpeed();
-  }
-
-  /** Set the speed of the motor in rpm */
-  public void setTargetSpeed(double rpm) {
-    stopCommands();
-    speedCommand.setTargetSpeed(rpm);
-    speedCommand.schedule();
-  }
-
-  public ManipulatorSpeedCommand getSpeedCommand() {
-    return speedCommand;
-  }
-
-  public boolean isAtSpeed() {
-    return speedCommand == null ? false : speedCommand.atSpeed;
-  }
-
-  public void setSpeedPID(double kP, double kI, double kD, double tolerance) {
-    cancelSpeedCommand();
-    this.speedCommand = new ManipulatorSpeedCommand(this, Integer.MAX_VALUE, tolerance, kP, kI, kD);
-  }
-
-  public final void cancelSpeedCommand() {
-    if (speedCommand != null && speedCommand.isScheduled()) {
-      CommandScheduler.getInstance().cancel(speedCommand);
-      System.out.println("ManipulatorBase: Cancelling speed command");
-    }
+    average /= encoders.size();
+    return RadiansPerSecond.of(average);
   }
 
   // ===================== Utility Methods ===================== //
@@ -368,6 +224,10 @@ public abstract class ManipulatorBase extends Estopable {
     breakerMaxAmps = amps;
   }
 
+  /**
+   * Outdated way of controlling acceleration,
+   * 1 means one second to go from 0-100%
+   */
   public void setRampRate(double rate) {
     for (SparkMax motor : motors) {
       motor.configure(new SparkMaxConfig()
@@ -393,17 +253,7 @@ public abstract class ManipulatorBase extends Estopable {
   }
 
   public boolean isSpinning() {
-    return getCurrentSpeed() != 0;
-  }
-
-  public void stopCommands() {
-    cancelMoveToPosition();
-    cancelSpeedCommand();
-  }
-
-  public void fullStop() {
-    stopCommands();
-    stop();
+    return getCurrentSpeed().in(RadiansPerSecond) <= 0.01;
   }
 
   /**
@@ -417,10 +267,8 @@ public abstract class ManipulatorBase extends Estopable {
 
   @Override
   public void periodic() {
-    SmartDashboard.putNumber(getName() + " Position", getPosition());
-    SmartDashboard.putNumber(getName() + " Speed", getCurrentSpeed());
+    SmartDashboard.putNumber(getName() + " Speed (rpm)", getCurrentSpeed().in(RPM));
     SmartDashboard.putNumber(getName() + " Power", getAvePower());
-    SmartDashboard.putBoolean(getName() + " At Speed/Power", isAtSpeed() || isAtPosition());
   }
 
   /**
@@ -442,12 +290,27 @@ public abstract class ManipulatorBase extends Estopable {
   }
 
   @Override
+  /**
+   * Runs when the robot is disabled, base method saves motor config
+   */
   public void onDisable() {
     // Save motor config
     for (SparkMax motor : motors) {
       motor.configure(new SparkMaxConfig(), ResetMode.kNoResetSafeParameters,
           PersistMode.kPersistParameters);
     }
+  }
+
+  /**
+   * Stops the speed/position command
+   */
+  public void stopCommand() {
+    System.out.println("ManipulatorBase" + getName() + " stopCommand() not implemented");
+  }
+
+  public void fullStop() {
+    stop();
+    stopCommand();
   }
 
   public ManipulatorBase() {

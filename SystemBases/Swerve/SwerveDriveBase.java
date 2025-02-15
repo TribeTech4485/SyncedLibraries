@@ -17,12 +17,17 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.SyncedLibraries.SystemBases.Estopable;
+
+import static edu.wpi.first.units.Units.Meters;
+
 import org.littletonrobotics.urcl.URCL;
 
 /** Represents a swerve drive style drivetrain. */
@@ -84,15 +89,15 @@ public abstract class SwerveDriveBase extends Estopable {
    * @param driveAmps       The max amps for the drive motors
    * @param turnAmps        The max amps for the turn motors
    */
-  public SwerveDriveBase(double width, double length, SwerveModuleBase[] modules, double[] botTurnPID,
-      TrapezoidProfile.Constraints drivingConstraints, double maxRotationSpeed) {
+  public SwerveDriveBase(Distance width, Distance length, SwerveModuleBase[] modules, double[] botTurnPID,
+      TrapezoidProfile.Constraints drivingConstraints, AngularVelocity maxRotationSpeed) {
     NetworkTablesSwervePublisherDesired = NetworkTableInstance.getDefault()
         .getStructArrayTopic("/DesiredSwerveStates", SwerveModuleState.struct).publish();
     NetworkTablesSwervePublisherCurrent = NetworkTableInstance.getDefault()
         .getStructArrayTopic("/CurrentSwerveStates", SwerveModuleState.struct).publish();
 
-    _robotWidth = width;
-    _robotLength = length;
+    _robotWidth = width.in(Meters);
+    _robotLength = length.in(Meters);
     _robotWidthOffset = _robotWidth / 2;
     _robotLengthOffset = _robotLength / 2;
 

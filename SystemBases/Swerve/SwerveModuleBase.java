@@ -11,6 +11,8 @@ import com.revrobotics.spark.config.AbsoluteEncoderConfig;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkAbsoluteEncoder;
 import edu.wpi.first.math.controller.PIDController;
@@ -77,8 +79,7 @@ public abstract class SwerveModuleBase extends Estopable {
     m_driveEncoder = m_driveMotor.getEncoder();
     m_driveConstraints = driveConstraints;
     m_drivePIDFController = new VelocityFFController(drivePIDF[0], drivePIDF[1], drivePIDF[2], drivePIDF[3],
-        drivePIDF[4],
-        drivePIDF[5], driveConstraints.maxVelocity, driveConstraints.maxAcceleration);
+        drivePIDF[4], drivePIDF[5], RotationsPerSecondPerSecond.of(driveConstraints.maxAcceleration));
 
     // TURNING MOTOR SETUP
     m_turningMotor = turningMotor;
@@ -134,9 +135,9 @@ public abstract class SwerveModuleBase extends Estopable {
 
     // set the wanted position, actual moving done in periodic
     if (slowMode && !voltageControlMode) {
-      m_drivePIDFController.setGoal(state.speedMetersPerSecond * slowModeMultiplier);
+      m_drivePIDFController.setGoal(RotationsPerSecond.of(state.speedMetersPerSecond * slowModeMultiplier));
     } else {
-      m_drivePIDFController.setGoal(state.speedMetersPerSecond);
+      m_drivePIDFController.setGoal(RotationsPerSecond.of(state.speedMetersPerSecond));
     }
     if (state.speedMetersPerSecond == 0 && m_driveEncoder.getVelocity() >= 0.1 && !voltageControlMode) {
       // slowing down but not stopped yet (and not in voltage control mode)
@@ -157,17 +158,18 @@ public abstract class SwerveModuleBase extends Estopable {
       if (voltageControlMode) {
         if (sudoMode) {
           // Sudo mode, drive motors will be at 12 volts
-          if (Math.abs(m_drivePIDFController.getGoal().velocity) > 0.05) {
-            drivingVoltage = Math.signum(m_drivePIDFController.getGoal().velocity) * 12;
+          if (Math.abs(m_drivePIDFController.getGoal().in(RotationsPerSecond)) > 0.05) {
+            drivingVoltage = Math.signum(m_drivePIDFController.getGoal().in(RotationsPerSecond)) * 12;
           } else {
             drivingVoltage = 0;
           }
         } else {
           // Using voltage control, but not sudo mode
-          drivingVoltage = m_drivePIDFController.getGoal().velocity;
+          drivingVoltage = m_drivePIDFController.getGoal().in(RotationsPerSecond);
         }
       } else {
-        drivingVoltage = m_drivePIDFController.calculate(m_driveEncoder.getVelocity());
+        drivingVoltage = m_drivePIDFController.calculate(RotationsPerSecond.of(m_driveEncoder.getVelocity()))
+            .magnitude();
       }
     }
 
