@@ -115,9 +115,11 @@ public abstract class AngleManipulatorBase extends ManipulatorBase {
   }
 
   public final void cancelMoveToPosition() {
-    if (moveCommand.isScheduled()) {
-      CommandScheduler.getInstance().cancel(moveCommand);
-      System.out.println("ManipulatorBase: Cancelling move command");
+    if (moveCommand != null) {
+      if (moveCommand.isScheduled()) {
+        CommandScheduler.getInstance().cancel(moveCommand);
+        System.out.println("ManipulatorBase: Cancelling move command");
+      }
     }
   }
 
