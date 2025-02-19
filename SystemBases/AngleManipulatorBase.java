@@ -40,6 +40,12 @@ public abstract class AngleManipulatorBase extends ManipulatorBase {
   /** If null, run the {@link #setPositionPID(double, double, double, double)} */
   protected ManipulatorAngleCommand moveCommand;
 
+  public void _setAngle(Angle angle) {
+    for (RelativeEncoder encoder : encoders) {
+      encoder.setPosition(angle.in(Radians));
+    }
+  }
+
   public Angle getAngle() {
     double average = 0;
     for (RelativeEncoder encoder : encoders) {
