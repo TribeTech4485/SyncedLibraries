@@ -100,9 +100,11 @@ public abstract class TeleDriveCommandBase extends Command {
       }
     }));
 
-    controllers[0].RightBumper.onTrue(new InstantCommand(() -> driveMode = DriveModes.DESIRED_ANGLE))
+    controllers[0].RightBumper
+    // .onTrue(new InstantCommand(() -> driveMode = DriveModes.DESIRED_ANGLE))
         .onTrue(new InstantCommand(() -> swerveTrain.setFieldRelative(true)));
-    controllers[0].LeftBumper.onTrue(new InstantCommand(() -> driveMode = DriveModes.ROTATION_SPEED))
+    controllers[0].LeftBumper
+    // .onTrue(new InstantCommand(() -> driveMode = DriveModes.ROTATION_SPEED))
         .onTrue(new InstantCommand(() -> swerveTrain.setFieldRelative(false)));
   }
 

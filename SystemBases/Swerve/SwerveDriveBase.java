@@ -301,7 +301,7 @@ public abstract class SwerveDriveBase extends Estopable {
     m_frontRight.setDesiredState(swerveModuleStates[1]);
     m_backLeft.setDesiredState(swerveModuleStates[2]);
     m_backRight.setDesiredState(swerveModuleStates[3]);
-
+    if (false) {
     for (SwerveModuleBase module : modules) {
       if (module.getVoltageControlMode() != voltageControlMode) {
         module.setVoltageControlMode(voltageControlMode);
@@ -316,6 +316,7 @@ public abstract class SwerveDriveBase extends Estopable {
         module.setSudoMode(sudoMode);
       }
     }
+  }
   }
 
   public void setFieldRelative(boolean fieldRelative) {
