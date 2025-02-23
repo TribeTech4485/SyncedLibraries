@@ -10,20 +10,21 @@ import static edu.wpi.first.units.Units.Radians;
 public class ManipulatorAngleCommand extends Command {
   protected AngleManipulatorBase manipulator;
   protected Angle targetPosition;
-  protected Angle tolerance;
   protected PIDController pid;
   protected int onTargetCounterStart = 10;
   protected int onTargetCounter = onTargetCounterStart;
+  public Angle tolerance = Radians.of(0.1);
   protected boolean endOnTarget = false;
   public boolean atPosition = false;
+  protected final PIDConfig pidConfig;
 
-  public ManipulatorAngleCommand(AngleManipulatorBase manipulator, Angle position, Angle tolerance,
-      double kP, double kI, double kD) {
+  public ManipulatorAngleCommand(AngleManipulatorBase manipulator, Angle position,
+      PIDConfig pidConfig) {
     this.manipulator = manipulator;
     this.targetPosition = position;
-    this.tolerance = tolerance;
-    pid = new PIDController(kP, kI, kD);
-    pid.setTolerance(tolerance.in(Radians));
+    this.pidConfig = pidConfig;
+    pid = new PIDController(0, 0, 0);
+    synchronizePIDSettings();
     addRequirements(manipulator);
   }
 
@@ -36,6 +37,7 @@ public class ManipulatorAngleCommand extends Command {
 
   @Override
   public void execute() {
+    synchronizePIDSettings();
     manipulator.setPower(pid.calculate(manipulator.getAngle().in(Radians), targetPosition.in(Radians)),
         false);
     atPosition = isAtPosition();
@@ -62,10 +64,6 @@ public class ManipulatorAngleCommand extends Command {
     return targetPosition;
   }
 
-  public Angle getTolerance() {
-    return tolerance;
-  }
-
   public boolean isAtPosition() {
     if (currentlyAtPosition()) {
       onTargetCounter--;
@@ -76,10 +74,14 @@ public class ManipulatorAngleCommand extends Command {
   }
 
   private boolean currentlyAtPosition() {
-    return Math.abs(manipulator.getAngle().minus(targetPosition).in(Radians)) < tolerance.in(Radians) * 1.5;
+    return manipulator.getAngle().minus(targetPosition).abs(Radians) < tolerance.in(Radians);
   }
 
   public void setEndOnTarget(boolean endOnTarget) {
     this.endOnTarget = endOnTarget;
+  }
+
+  protected void synchronizePIDSettings() {
+    pidConfig.applyTo(pid);
   }
 }

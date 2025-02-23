@@ -1,6 +1,8 @@
 package frc.robot.SyncedLibraries.SystemBases;
 
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
@@ -9,10 +11,13 @@ import com.revrobotics.spark.config.EncoderConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.SyncedLibraries.SystemBases.Utils.ManipulatorDistanceCommand;
+import frc.robot.SyncedLibraries.SystemBases.Utils.ManipulatorFFDistanceCommand;
+import frc.robot.SyncedLibraries.SystemBases.Utils.PIDConfig;
 
 /**
  * <strong> To impliment: </strong>
@@ -37,9 +42,15 @@ import frc.robot.SyncedLibraries.SystemBases.Utils.ManipulatorDistanceCommand;
 public abstract class PositionManipulatorBase extends ManipulatorBase {
   protected Distance maxPosition;
   protected Distance minPosition;
+  protected final PIDConfig pidConfig;
 
   /** If null, run the {@link #setPositionPID(double, double, double, double)} */
-  protected ManipulatorDistanceCommand moveCommand;
+  protected final ManipulatorDistanceCommand moveCommand;
+
+  public PositionManipulatorBase(PIDConfig pidConfig, ManipulatorFFDistanceCommand.FeedForwardType feedForwardType) {
+    this.pidConfig = pidConfig;
+    moveCommand = new ManipulatorFFDistanceCommand(this, getPosition(), pidConfig, feedForwardType);
+  }
 
   public Distance getPosition() {
     double average = 0;
@@ -47,6 +58,14 @@ public abstract class PositionManipulatorBase extends ManipulatorBase {
       average += encoder.getPosition();
     }
     return Meters.of(average / encoders.size());
+  }
+
+  public LinearVelocity getVelocity() {
+    double average = 0;
+    for (RelativeEncoder encoder : encoders) {
+      average += encoder.getVelocity();
+    }
+    return MetersPerSecond.of(average / encoders.size());
   }
 
   /**
@@ -59,14 +78,8 @@ public abstract class PositionManipulatorBase extends ManipulatorBase {
     maxPosition = max;
   }
 
-  public void setPositionPID(double kP, double kI, double kD, Distance tolerance) {
-    cancelMoveToPosition();
-    this.moveCommand = new ManipulatorDistanceCommand(this, getPosition(), tolerance, kP, kI, kD);
-  }
-
-  public void setPositionPID(ManipulatorDistanceCommand command) {
-    cancelMoveToPosition();
-    this.moveCommand = command;
+  public PIDConfig getPIDConfig() {
+    return pidConfig;
   }
 
   public ManipulatorDistanceCommand getMoveCommand() {

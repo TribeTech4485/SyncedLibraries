@@ -188,6 +188,12 @@ public abstract class ManipulatorBase extends Estopable {
     }
   }
 
+  public void resetMotors() {
+    for (SparkMax motor : motors) {
+      motor.configure(new SparkMaxConfig(), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    }
+  }
+
   /** Not available on all setups */
   public void setBrakeMode(boolean brakeOnStop) {
     for (SparkMax motor : motors) {

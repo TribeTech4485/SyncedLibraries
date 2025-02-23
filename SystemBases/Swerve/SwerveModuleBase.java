@@ -22,6 +22,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.SyncedLibraries.SystemBases.Estopable;
+import frc.robot.SyncedLibraries.SystemBases.Utils.PIDConfig;
 import frc.robot.SyncedLibraries.SystemBases.Utils.VelocityFFController;
 
 public abstract class SwerveModuleBase extends Estopable {
@@ -31,11 +32,12 @@ public abstract class SwerveModuleBase extends Estopable {
   protected final RelativeEncoder m_driveEncoder;
   protected final SparkAbsoluteEncoder m_turningEncoder;
 
-  protected final TrapezoidProfile.Constraints m_driveConstraints;
+  // protected final TrapezoidProfile.Constraints m_driveConstraints;
   // protected final ProfiledPIDController m_drivePIDController;
   protected final PIDController m_turnPIDController;
   // protected final SimpleMotorFeedforward m_driveFeedforward;
-  protected final VelocityFFController m_drivePIDFController;
+  protected final VelocityFFController driveVelFFController;
+  protected final PIDConfig turnPIDF;
 
   // protected final double driveGearRatio = 1 / (10 * Math.PI * 15 / 50); // 1 is
   // the gear ratio when I find out
@@ -63,7 +65,7 @@ public abstract class SwerveModuleBase extends Estopable {
    */
   public SwerveModuleBase(SparkMax driveMotor, SparkMax turningMotor, double turningOffset, String name,
       SparkBaseConfig driveConfig, SparkBaseConfig turningConfig,
-      double[] drivePIDF, double[] turnPID, TrapezoidProfile.Constraints driveConstraints) {
+      PIDConfig drivePIDF, PIDConfig turnPID) {
     this.setName(name);
 
     // DRIVE MOTOR SETUP
@@ -77,9 +79,7 @@ public abstract class SwerveModuleBase extends Estopable {
         PersistMode.kPersistParameters); // burnFlash()
 
     m_driveEncoder = m_driveMotor.getEncoder();
-    m_driveConstraints = driveConstraints;
-    m_drivePIDFController = new VelocityFFController(drivePIDF[0], drivePIDF[1], drivePIDF[2], drivePIDF[3],
-        drivePIDF[4], drivePIDF[5], RotationsPerSecondPerSecond.of(driveConstraints.maxAcceleration));
+    driveVelFFController = new VelocityFFController(drivePIDF, RotationsPerSecond);
 
     // TURNING MOTOR SETUP
     m_turningMotor = turningMotor;
@@ -92,7 +92,8 @@ public abstract class SwerveModuleBase extends Estopable {
 
     m_turningEncoder = m_turningMotor.getAbsoluteEncoder();
 
-    m_turnPIDController = new PIDController(turnPID[0], turnPID[1], turnPID[2]);
+    this.turnPIDF = turnPID;
+    m_turnPIDController = new PIDController(0, 0, 0);
     m_turnPIDController.enableContinuousInput(0, 2 * Math.PI);
 
     driveAmps = m_driveMotor.configAccessor.getSmartCurrentLimit();
@@ -135,9 +136,9 @@ public abstract class SwerveModuleBase extends Estopable {
 
     // set the wanted position, actual moving done in periodic
     if (slowMode && !voltageControlMode) {
-      m_drivePIDFController.setGoal(RotationsPerSecond.of(state.speedMetersPerSecond * slowModeMultiplier));
+      driveVelFFController.setGoal(RotationsPerSecond.of(state.speedMetersPerSecond * slowModeMultiplier));
     } else {
-      m_drivePIDFController.setGoal(RotationsPerSecond.of(state.speedMetersPerSecond));
+      driveVelFFController.setGoal(RotationsPerSecond.of(state.speedMetersPerSecond));
     }
     if (state.speedMetersPerSecond == 0 && m_driveEncoder.getVelocity() >= 0.1 && !voltageControlMode) {
       // slowing down but not stopped yet (and not in voltage control mode)
@@ -151,6 +152,8 @@ public abstract class SwerveModuleBase extends Estopable {
 
   @Override
   public void periodic() {
+    turnPIDF.applyTo(m_turnPIDController);
+
     double drivingVoltage = 0;
     double turningVoltage = m_turnPIDController.calculate(m_turningEncoder.getPosition());
 
@@ -158,17 +161,17 @@ public abstract class SwerveModuleBase extends Estopable {
       if (voltageControlMode) {
         if (sudoMode) {
           // Sudo mode, drive motors will be at 12 volts
-          if (Math.abs(m_drivePIDFController.getGoal().in(RotationsPerSecond)) > 0.05) {
-            drivingVoltage = Math.signum(m_drivePIDFController.getGoal().in(RotationsPerSecond)) * 12;
+          if (Math.abs(driveVelFFController.getGoal().in(RotationsPerSecond)) > 0.05) {
+            drivingVoltage = Math.signum(driveVelFFController.getGoal().in(RotationsPerSecond)) * 12;
           } else {
             drivingVoltage = 0;
           }
         } else {
           // Using voltage control, but not sudo mode
-          drivingVoltage = m_drivePIDFController.getGoal().in(RotationsPerSecond);
+          drivingVoltage = driveVelFFController.getGoal().in(RotationsPerSecond);
         }
       } else {
-        drivingVoltage = m_drivePIDFController.calculate(RotationsPerSecond.of(m_driveEncoder.getVelocity()))
+        drivingVoltage = driveVelFFController.calculate(RotationsPerSecond.of(m_driveEncoder.getVelocity()))
             .magnitude();
       }
     }
@@ -182,7 +185,7 @@ public abstract class SwerveModuleBase extends Estopable {
     SmartDashboard.putNumber(getName() + " swerve turning degrees", getEncoderPos().getDegrees());
     SmartDashboard.putNumber(getName() + " swerve turning power", m_turningMotor.get());
 
-    SmartDashboard.putData(getName() + " swerve driving PID", m_drivePIDFController);
+    SmartDashboard.putData(getName() + " swerve driving PID", driveVelFFController);
     SmartDashboard.putNumber(getName() + " swerve driving speed", m_driveEncoder.getVelocity());
     SmartDashboard.putNumber(getName() + " swerve driving power", m_driveMotor.get());
   }
@@ -214,7 +217,7 @@ public abstract class SwerveModuleBase extends Estopable {
   }
 
   public VelocityFFController getDrivePIDController() {
-    return m_drivePIDFController;
+    return driveVelFFController;
   }
 
   public PIDController getTurnPIDController() {
@@ -273,7 +276,7 @@ public abstract class SwerveModuleBase extends Estopable {
   @Override
   public void ESTOP() {
     // handled in SwerveDriveBase
-    m_drivePIDFController.pidController.reset(0);
+    driveVelFFController.pidController.reset(0);
   }
 
   @Override

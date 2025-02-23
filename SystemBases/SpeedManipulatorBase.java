@@ -1,11 +1,15 @@
 package frc.robot.SyncedLibraries.SystemBases;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.SyncedLibraries.SystemBases.Utils.ManipulatorSpeedCommand;
+import frc.robot.SyncedLibraries.SystemBases.Utils.PIDConfig;
 
 /**
  * <strong> To impliment: </strong>
@@ -28,9 +32,15 @@ import frc.robot.SyncedLibraries.SystemBases.Utils.ManipulatorSpeedCommand;
  * Add a loop to run all tests to Robot.testInit()
  */
 public abstract class SpeedManipulatorBase extends ManipulatorBase {
+  protected final PIDConfig pidConfig;
 
   /** If null, run the {@link #setSpeedPID(double, double, double, double)} */
-  protected ManipulatorSpeedCommand speedCommand;
+  protected final ManipulatorSpeedCommand speedCommand;
+
+  public SpeedManipulatorBase(PIDConfig pidConfig) {
+    this.pidConfig = pidConfig;
+    speedCommand = new ManipulatorSpeedCommand(this, RotationsPerSecond.of(0), pidConfig);
+  }
 
   /** Get the target speed of the motor */
   public AngularVelocity getTargetSpeed() {
@@ -52,20 +62,8 @@ public abstract class SpeedManipulatorBase extends ManipulatorBase {
     return speedCommand.atSpeed;
   }
 
-  public void setSpeedPID(double kP, double kI, double kD, AngularVelocity tolerance) {
-    cancelSpeedCommand();
-    this.speedCommand = new ManipulatorSpeedCommand(this, null, tolerance, kP, kI, kD);
-  }
-
-  public void setSpeedPID(ManipulatorSpeedCommand command) {
-    cancelSpeedCommand();
-    this.speedCommand = command;
-  }
-
-  public void setSpeedPID(double kP, double kI, double kD, double kS, double kV, double kA,
-      AngularAcceleration maxAccel) {
-    cancelSpeedCommand();
-    this.speedCommand = new ManipulatorSpeedCommand(this, null, kP, kI, kD, kS, kV, kA, maxAccel);
+  public PIDConfig getPIDConfig() {
+    return pidConfig;
   }
 
   public final void cancelSpeedCommand() {
