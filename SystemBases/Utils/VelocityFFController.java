@@ -1,13 +1,10 @@
 package frc.robot.SyncedLibraries.SystemBases.Utils;
 
 import static edu.wpi.first.units.Units.RadiansPerSecond;
-import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Volts;
-
 import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.units.measure.AngularAcceleration;
+import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.util.sendable.Sendable;
@@ -16,52 +13,54 @@ import edu.wpi.first.util.sendable.SendableRegistry;
 
 public class VelocityFFController implements Sendable, AutoCloseable {
   public ProfiledPIDController pidController;
-  SimpleMotorFeedforward ffController;
-  double kS;
-  double kV;
+  PIDConfig pidConfig;
+  /**
+   * Should be RadiansPerSecond, but may be rotations per second ie. for driving
+   */
+  protected AngularVelocityUnit angularVelocityUnit = RadiansPerSecond;
 
-  public VelocityFFController(double kP, double kI, double kD, double kS, double kV, double kA,
-      AngularAcceleration maxAccel) {
-    pidController = new ProfiledPIDController(kP, kI, kD,
-        new TrapezoidProfile.Constraints(maxAccel.in(RadiansPerSecondPerSecond),
-            maxAccel.times(10000).in(RadiansPerSecondPerSecond)));
-    ffController = new SimpleMotorFeedforward(0, kA);
-    this.kS = kS;
-    this.kV = kV;
+  public VelocityFFController(PIDConfig pidConfig) {
+    pidController = new ProfiledPIDController(0, 0, 0,
+        new TrapezoidProfile.Constraints(0, 0));
+    this.pidConfig = pidConfig;
+    synchronizePIDSettings();
+  }
+
+  public VelocityFFController(PIDConfig pidConfig, AngularVelocityUnit angularVelocityUnit) {
+    pidController = new ProfiledPIDController(0, 0, 0,
+        new TrapezoidProfile.Constraints(0, 0));
+    this.pidConfig = pidConfig;
+    this.angularVelocityUnit = angularVelocityUnit;
+    synchronizePIDSettings();
   }
 
   public void setGoal(AngularVelocity goal) {
-    pidController.setGoal(goal.in(RadiansPerSecond));
+    pidController.setGoal(goal.in(angularVelocityUnit));
   }
 
   public Voltage calculate(AngularVelocity currentVelocity) {
-    return Volts.of(pidController.calculate(currentVelocity.in(RadiansPerSecond)) +
-        ffController.calculate(pidController.getSetpoint().velocity)
-        + kV * pidController.getSetpoint().position
-        + kS * Math.signum(0 - pidController.getSetpoint().position));
+    return Volts.of(pidController.calculate(currentVelocity.in(angularVelocityUnit)) +
+        pidConfig.A * (pidController.getSetpoint().velocity)
+        + pidConfig.V * pidController.getSetpoint().position
+        + pidConfig.S * Math.signum(0 - pidController.getSetpoint().position));
   }
 
   public AngularVelocity getGoal() {
-    return AngularVelocity.ofBaseUnits(pidController.getGoal().position, RadiansPerSecond);
+    return AngularVelocity.ofBaseUnits(pidController.getGoal().position, angularVelocityUnit);
   }
 
   @Override
   public void initSendable(SendableBuilder builder) {
     builder.setSmartDashboardType("PIDController");
-    builder.addDoubleProperty("p", pidController::getP, pidController::setP);
-    builder.addDoubleProperty("i", pidController::getI, pidController::setI);
-    builder.addDoubleProperty("d", pidController::getD, pidController::setD);
-    builder.addDoubleProperty("s", () -> kS, (value) -> kS = value);
-    builder.addDoubleProperty("v", () -> kV, (value) -> kV = value);
-    builder.addDoubleProperty("a", this::getKa,
-        (value) -> ffController = new SimpleMotorFeedforward(0, value));
+    builder.addDoubleProperty("p", () -> pidConfig.P, (value) -> pidConfig.P = value);
+    builder.addDoubleProperty("i", () -> pidConfig.I, (value) -> pidConfig.I = value);
+    builder.addDoubleProperty("d", () -> pidConfig.D, (value) -> pidConfig.D = value);
+    builder.addDoubleProperty("s", () -> pidConfig.S, (value) -> pidConfig.S = value);
+    builder.addDoubleProperty("v", () -> pidConfig.V, (value) -> pidConfig.V = value);
+    builder.addDoubleProperty("a", () -> pidConfig.A, (value) -> pidConfig.A = value);
     builder.addDoubleProperty("setpoint", () -> pidController.getSetpoint().position, pidController::setGoal);
     builder.addDoubleProperty("velocity", () -> pidController.getSetpoint().position, null);
     builder.addDoubleProperty("error", pidController::getPositionError, null);
-  }
-
-  private double getKa() {
-    return ffController.getKv();
   }
 
   @Override
@@ -70,10 +69,14 @@ public class VelocityFFController implements Sendable, AutoCloseable {
   }
 
   public void setTolerance(AngularVelocity tolerance) {
-    pidController.setTolerance(tolerance.in(RadiansPerSecond));
+    pidController.setTolerance(tolerance.in(angularVelocityUnit));
   }
 
   public void reset(AngularVelocity initialState) {
-    pidController.reset(initialState.in(RadiansPerSecond));
+    pidController.reset(initialState.in(angularVelocityUnit));
+  }
+
+  protected void synchronizePIDSettings() {
+    pidConfig.applyTo(pidController, angularVelocityUnit);
   }
 }

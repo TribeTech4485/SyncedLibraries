@@ -11,20 +11,21 @@ import static edu.wpi.first.units.Units.Meters;
 public class ManipulatorDistanceCommand extends Command {
   protected PositionManipulatorBase manipulator;
   protected Distance position;
-  protected Distance tolerance;
+  protected Distance tolerance = Meters.of(0.1);
   protected PIDController pid;
   protected int onTargetCounterStart = 10;
   protected int onTargetCounter = onTargetCounterStart;
   protected boolean endOnTarget = false;
   public boolean atPosition = false;
+  protected PIDConfig pidConfig;
 
-  public ManipulatorDistanceCommand(PositionManipulatorBase manipulator, Distance position, Distance tolerance,
-      double kP, double kI, double kD) {
+  public ManipulatorDistanceCommand(PositionManipulatorBase manipulator, Distance position,
+      PIDConfig pidConfig) {
     this.manipulator = manipulator;
     this.position = position;
-    this.tolerance = tolerance;
-    pid = new PIDController(kP, kI, kD);
-    pid.setTolerance(tolerance.in(Meters));
+    this.pidConfig = pidConfig;
+    pid = new PIDController(0, 0, 0);
+    synchronizePIDSettings();
     addRequirements(manipulator);
   }
 
@@ -76,10 +77,14 @@ public class ManipulatorDistanceCommand extends Command {
   }
 
   private boolean currentlyAtPosition() {
-    return Math.abs(manipulator.getPosition().minus(position).in(Meters)) < tolerance.in(Meters) * 1.5;
+    return Math.abs(manipulator.getPosition().minus(position).in(Meters)) < tolerance.in(Meters);
   }
 
   public void setEndOnTarget(boolean endOnTarget) {
     this.endOnTarget = endOnTarget;
+  }
+
+  protected void synchronizePIDSettings() {
+    pidConfig.applyTo(pid);
   }
 }

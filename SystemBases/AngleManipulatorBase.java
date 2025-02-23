@@ -12,6 +12,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.SyncedLibraries.SystemBases.Utils.ManipulatorAngleCommand;
+import frc.robot.SyncedLibraries.SystemBases.Utils.ManipulatorFFAngleCommand;
+import frc.robot.SyncedLibraries.SystemBases.Utils.PIDConfig;
 
 /**
  * <strong> To impliment: </strong>
@@ -36,9 +38,15 @@ import frc.robot.SyncedLibraries.SystemBases.Utils.ManipulatorAngleCommand;
 public abstract class AngleManipulatorBase extends ManipulatorBase {
   protected Angle maxPosition;
   protected Angle minPosition;
+  protected final PIDConfig pidConfig;
 
   /** If null, run the {@link #setPositionPID(double, double, double, double)} */
-  protected ManipulatorAngleCommand moveCommand;
+  protected final ManipulatorAngleCommand moveCommand;
+
+  public AngleManipulatorBase(PIDConfig pidConfig, ManipulatorFFAngleCommand.FeedForwardType feedForwardType) {
+    this.pidConfig = pidConfig;
+    moveCommand = new ManipulatorFFAngleCommand(this, getAngle(), pidConfig, feedForwardType);
+  }
 
   public void _setAngle(Angle angle) {
     for (RelativeEncoder encoder : encoders) {
@@ -64,16 +72,6 @@ public abstract class AngleManipulatorBase extends ManipulatorBase {
     maxPosition = max;
   }
 
-  public void setPositionPID(double kP, double kI, double kD, Angle tolerance) {
-    cancelMoveToPosition();
-    this.moveCommand = new ManipulatorAngleCommand(this, getAngle(), tolerance, kP, kI, kD);
-  }
-
-  public void setPositionPID(ManipulatorAngleCommand command) {
-    cancelMoveToPosition();
-    this.moveCommand = command;
-  }
-
   public ManipulatorAngleCommand getMoveCommand() {
     return moveCommand;
   }
@@ -81,6 +79,10 @@ public abstract class AngleManipulatorBase extends ManipulatorBase {
   /** Get the target position of the manipulator */
   public Angle getTargetPosition() {
     return moveCommand.getTargetPosition();
+  }
+
+  public PIDConfig getPIDConfig() {
+    return pidConfig;
   }
 
   /**

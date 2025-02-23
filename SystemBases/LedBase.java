@@ -4,8 +4,9 @@ import static edu.wpi.first.units.Units.Millimeters;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class LedBase {
+public class LedBase extends SubsystemBase {
   protected final AddressableLED led;
   protected final AddressableLEDBuffer buffer;
   final Distance spacing;
@@ -34,6 +35,7 @@ public class LedBase {
     this(port, length, Millimeters.of(139 / 9));
   }
 
+  @Override
   public void periodic() {
     led.setData(buffer);
   }

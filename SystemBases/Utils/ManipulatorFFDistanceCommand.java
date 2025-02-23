@@ -10,8 +10,7 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.LinearAcceleration;
-import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.SyncedLibraries.SystemBases.PositionManipulatorBase;
 
 /**
@@ -47,31 +46,19 @@ public class ManipulatorFFDistanceCommand extends ManipulatorDistanceCommand {
    * @param maxVelocity     The maximum velocity of the manipulator
    * @param maxAcceleration The maximum acceleration of the manipulator
    */
-  public ManipulatorFFDistanceCommand(PositionManipulatorBase manipulator, Distance position,
-      Distance tolerance, double kP, double kI, double kD, FeedForwardType feedForwardType,
-      double kS, double kV, double kG, double kA, LinearVelocity maxVelocity, LinearAcceleration maxAcceleration) {
-    super(manipulator, position, tolerance, kP, kI, kD);
+  public ManipulatorFFDistanceCommand(PositionManipulatorBase manipulator, Distance position, PIDConfig pidConfig,
+      FeedForwardType feedForwardType) {
+    super(manipulator, position, pidConfig);
 
     TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(
-        maxVelocity.in(MetersPerSecond), maxAcceleration.in(MetersPerSecondPerSecond));
-    pidProfiled = new ProfiledPIDController(kP, kI, kD, constraints);
+        pidConfig.maxLinearVelocity.in(MetersPerSecond),
+        pidConfig.maxLinearAcceleration.in(MetersPerSecondPerSecond));
+    pidProfiled = new ProfiledPIDController(pidConfig.P, pidConfig.I, pidConfig.D, constraints);
     pidProfiled.setTolerance(tolerance.in(Meters));
 
-    switch (feedForwardType) {
-      case SimpleMotor:
-        simpleController = new SimpleMotorFeedforward(kS, kV, kA);
-        break;
-      case Elevator:
-        elevatorController = new ElevatorFeedforward(kS, kG, kV, kA);
-        break;
-      case Arm:
-        armController = new ArmFeedforward(kS, kG, kV, kA);
-        break;
-      default:
-        System.out.println("Invalid FeedForward type for manipulator \"" + manipulator.getName()
-            + "\", defaulting to Simple. The options are \"Simple\", \"Elevator\", and \"Arm\"");
-        simpleController = new SimpleMotorFeedforward(kS, kV);
-        break;
+    if (feedForwardType == null) {
+      feedForwardType = FeedForwardType.SimpleMotor;
+      DriverStation.reportWarning("FeedForwardType not set, defaulting to SimpleMotor", true);
     }
     this.feedForwardType = feedForwardType;
   }
@@ -79,11 +66,49 @@ public class ManipulatorFFDistanceCommand extends ManipulatorDistanceCommand {
   private double getFF() {
     switch (feedForwardType) {
       case SimpleMotor:
-        return simpleController.calculate(pidProfiled.getSetpoint().velocity);
+        if (pidConfig.A == 0.0) {
+          return pidConfig.S * Math.signum(pidProfiled.getSetpoint().velocity) + pidConfig.V * pidProfiled
+              .getSetpoint().velocity;
+        } else {
+          double A = -pidConfig.V / pidConfig.A;
+          double B = 1.0 / pidConfig.A;
+          double A_d = Math.exp(A * 0.02);
+          double B_d = 1.0 / A * (A_d - 1.0) * B;
+          return pidConfig.S * Math.signum(manipulator.getVelocity().in(MetersPerSecond))
+              + 1.0 / B_d * (pidProfiled.getSetpoint().velocity - A_d
+                  * manipulator.getVelocity().in(MetersPerSecond));
+        }
+
       case Elevator:
-        return elevatorController.calculate(pidProfiled.getSetpoint().velocity);
+        if (pidConfig.A == 0.0) {
+          return pidConfig.S * Math.signum(pidProfiled.getSetpoint().velocity) + pidConfig.G
+              + pidConfig.V * pidProfiled.getSetpoint().velocity;
+        } else {
+          double A = -pidConfig.V / pidConfig.A;
+          double B = 1.0 / pidConfig.A;
+          double A_d = Math.exp(A * 0.02);
+          double B_d = 1.0 / A * (A_d - 1.0) * B;
+          return pidConfig.G
+              + pidConfig.S * Math.signum(manipulator.getVelocity().in(MetersPerSecond))
+              + 1.0 / B_d
+                  * (pidProfiled.getSetpoint().velocity - A_d * manipulator.getVelocity().in(MetersPerSecond));
+        }
+
       case Arm:
-        return armController.calculate(pidProfiled.getSetpoint().position, pidProfiled.getSetpoint().velocity);
+        if (pidConfig.A == 0.0) {
+          return pidConfig.S * Math.signum(pidProfiled.getSetpoint().velocity) +
+              pidConfig.G * Math.cos(manipulator.getPosition().in(Meters)) +
+              pidConfig.V * pidProfiled.getSetpoint().velocity;
+        } else {
+          double A = -pidConfig.V / pidConfig.A;
+          double B = 1.0 / pidConfig.A;
+          double A_d = Math.exp(A * 0.02);
+          double B_d = 1.0 / A * (A_d - 1.0) * B;
+          return pidConfig.G * Math.cos(manipulator.getPosition().in(Meters))
+              + pidConfig.S * Math.signum(manipulator.getVelocity().in(MetersPerSecond))
+              + 1.0 / B_d
+                  * (pidProfiled.getSetpoint().velocity - A_d * manipulator.getVelocity().in(MetersPerSecond));
+        }
       default:
         throw new IllegalArgumentException("FeedForward controller not set");
     }
