@@ -54,7 +54,7 @@ public abstract class TeleDriveCommandBase extends Command {
           break;
 
         case ROTATION_SPEED:
-          swerveTrain.inputDrivingX_Y(controllers[0].getLeftY(), controllers[0].getLeftX(), controllers[0].getRightX());
+          swerveTrain.inputDrivingX_Y(controllers[0].getLeftY(), controllers[0].getLeftX(), -controllers[0].getRightX());
           break;
       }
     }

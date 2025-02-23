@@ -99,7 +99,7 @@ public class ControllerBase {
       initAsXbox(port);
       // initAsGhost();
     }
-    ESTOPCondition.whileTrue(new InstantCommand(Estopable::KILLIT));
+    ESTOPCondition.onTrue(new InstantCommand(Estopable::KILLIT));
   }
 
   private void initAsJoystick(int port) {
