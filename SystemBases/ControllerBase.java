@@ -176,7 +176,7 @@ public class ControllerBase {
     this.PovLeft = commObjectPS4.povLeft();
     this.PovRight = commObjectPS4.povRight();
     this.LeftStickPress = commObjectPS4.L3();
-    this.RightStickPress = commObjectPS4.L3();
+    this.RightStickPress = commObjectPS4.R3();
     this.RightJoyMoved = new Trigger(() -> (getRightX() != 0 || getRightY() != 0));
     this.LeftJoyMoved = new Trigger(() -> (getLeftX() != 0 || getLeftY() != 0));
 
