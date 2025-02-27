@@ -1,5 +1,6 @@
 package frc.robot.SyncedLibraries.SystemBases;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Radians;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase.PersistMode;
@@ -59,7 +60,7 @@ public abstract class AngleManipulatorBase extends ManipulatorBase {
     for (RelativeEncoder encoder : encoders) {
       average += encoder.getPosition();
     }
-    return Radians.of(average / encoders.size());
+    return Radians.of((average / encoders.size()) % (2 * Math.PI));
   }
 
   /**
@@ -123,18 +124,21 @@ public abstract class AngleManipulatorBase extends ManipulatorBase {
   }
 
   public final void cancelMoveToPosition() {
-    if (moveCommand != null) {
-      if (moveCommand.isScheduled()) {
-        CommandScheduler.getInstance().cancel(moveCommand);
-        System.out.println("ManipulatorBase: Cancelling move command");
-      }
-    }
+    // if (moveCommand != null) {
+    // if (moveCommand.isScheduled()) {
+    moveCommand.cancel();
+    System.out.println("ManipulatorBase: Cancelling move command");
+    // }
+    // }
   }
 
   @Override
   public void periodic() {
     super.periodic();
     SmartDashboard.putBoolean(getName() + " At Position", isAtPosition());
+    SmartDashboard.putNumber(getName() + " Current Angle (deg)", getAngle().in(Degrees));
+    SmartDashboard.putNumber(getName() + " Target Angle (deg)", getTargetPosition().in(Degrees));
+    SmartDashboard.putNumber(getName() + " Current Encoder value", getEncoder(0).getPosition());
   }
 
   @Override

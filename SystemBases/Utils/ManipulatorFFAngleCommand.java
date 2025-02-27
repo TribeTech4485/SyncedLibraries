@@ -47,6 +47,7 @@ public class ManipulatorFFAngleCommand extends ManipulatorAngleCommand {
         pidConfig.maxAngularVelocity.in(RadiansPerSecond),
         pidConfig.maxAngularAcceleration.in(RadiansPerSecondPerSecond));
     pidProfiled = new ProfiledPIDController(pidConfig.P, pidConfig.I, pidConfig.D, constraints);
+    pidProfiled.enableContinuousInput(-0 * Math.PI, 2 * Math.PI);
 
     if (feedForwardType == null) {
       feedForwardType = FeedForwardType.SimpleMotor;
@@ -116,9 +117,15 @@ public class ManipulatorFFAngleCommand extends ManipulatorAngleCommand {
 
   @Override
   public void execute() {
-    manipulator.setVoltage(Volts.of(pidProfiled.calculate(manipulator.getAngle().in(Radians)) + getFF()),
+    pidProfiled.setGoal(targetPosition.in(Radians) % (2 * Math.PI));
+    manipulator.setVoltage(
+        Volts.of(pidProfiled.calculate(manipulator.getAngle().in(Radians) % (2 * Math.PI)) + getFF()),
         false);
     atPosition = isAtPosition();
+  }
+
+  public Angle getSetpoint() {
+    return Radians.of(pidProfiled.getSetpoint().position);
   }
 
   public enum FeedForwardType {
