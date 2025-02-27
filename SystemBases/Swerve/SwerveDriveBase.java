@@ -26,7 +26,10 @@ import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.Swerve;
 import frc.robot.SyncedLibraries.SystemBases.Estopable;
+import frc.robot.SyncedLibraries.SystemBases.Utils.SlewLimiter2d;
+
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
@@ -35,7 +38,7 @@ import org.littletonrobotics.urcl.URCL;
 
 /** Represents a swerve drive style drivetrain. */
 public abstract class SwerveDriveBase extends Estopable {
-  public final TrapezoidProfile.Constraints drivingConstraints;
+  public final SlewLimiter2d drivingAccelFilter;
   public final LinearVelocity maxSpeed;
   public final LinearAcceleration maxAcceleration;
   public final AngularVelocity maxRotationSpeed;
@@ -142,8 +145,8 @@ public abstract class SwerveDriveBase extends Estopable {
 
     this.maxSpeed = maxSpeed;
     this.maxAcceleration = maxAccel;
-    drivingConstraints = new TrapezoidProfile.Constraints(maxSpeed.in(MetersPerSecond),
-        maxAccel.in(MetersPerSecondPerSecond));
+    drivingProfile = new TrapezoidProfile(new TrapezoidProfile.Constraints(maxSpeed.in(MetersPerSecond),
+        maxAccel.in(MetersPerSecondPerSecond)));
     this.maxRotationSpeed = maxRotationSpeed;
   }
 
@@ -191,6 +194,7 @@ public abstract class SwerveDriveBase extends Estopable {
   public void inputDrivingX_Y(LinearVelocity xSpeed, LinearVelocity ySpeed,
       AngularVelocity rotationSpeed, int centerOfRotationPOV) {
     // Calculate the swerve module states from the requested speeds
+    // TODO: Trapezoidal profile movement constraints
     inputDrivingSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
         xSpeed.unaryMinus(), ySpeed.unaryMinus(), rotationSpeed,
         fieldRelative ? m_gyro.getRotation2d() : Rotation2d.fromDegrees(0)),
@@ -327,7 +331,7 @@ public abstract class SwerveDriveBase extends Estopable {
   @Override
   public void periodic() {
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates,
-        drivingConstraints.maxVelocity);
+        Swerve.Movement.maxBotSpeed.in(MetersPerSecond));
     setDesiredStates();
 
     NetworkTablesSwervePublisherDesired.set(swerveModuleStates);
