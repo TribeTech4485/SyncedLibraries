@@ -145,8 +145,9 @@ public abstract class SwerveDriveBase extends Estopable {
 
     this.maxSpeed = maxSpeed;
     this.maxAcceleration = maxAccel;
-    drivingProfile = new TrapezoidProfile(new TrapezoidProfile.Constraints(maxSpeed.in(MetersPerSecond),
-        maxAccel.in(MetersPerSecondPerSecond)));
+    // drivingProfile = new TrapezoidProfile(new TrapezoidProfile.Constraints(maxSpeed.in(MetersPerSecond),
+        // maxAccel.in(MetersPerSecondPerSecond)));
+    drivingAccelFilter = new SlewLimiter2d(maxAccel.in(MetersPerSecondPerSecond));
     this.maxRotationSpeed = maxRotationSpeed;
   }
 

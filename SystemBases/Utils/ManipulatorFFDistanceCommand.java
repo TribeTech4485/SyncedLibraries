@@ -123,6 +123,7 @@ public class ManipulatorFFDistanceCommand extends ManipulatorDistanceCommand {
 
   @Override
   public void execute() {
+    pidProfiled.setGoal(position.in(Meters));
     manipulator.setVoltage(Volts.of(pidProfiled.calculate(manipulator.getPosition().in(Meters)) + getFF()),
         false);
     atPosition = isAtPosition();
@@ -130,5 +131,9 @@ public class ManipulatorFFDistanceCommand extends ManipulatorDistanceCommand {
 
   public enum FeedForwardType {
     SimpleMotor, Elevator, Arm
+  }
+
+  public ProfiledPIDController getController() {
+    return pidProfiled;
   }
 }

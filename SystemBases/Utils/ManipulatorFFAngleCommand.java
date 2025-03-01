@@ -47,7 +47,7 @@ public class ManipulatorFFAngleCommand extends ManipulatorAngleCommand {
         pidConfig.maxAngularVelocity.in(RadiansPerSecond),
         pidConfig.maxAngularAcceleration.in(RadiansPerSecondPerSecond));
     pidProfiled = new ProfiledPIDController(pidConfig.P, pidConfig.I, pidConfig.D, constraints);
-    pidProfiled.enableContinuousInput(-0 * Math.PI, 2 * Math.PI);
+    pidProfiled.enableContinuousInput(0 * Math.PI, 2 * Math.PI);
 
     if (feedForwardType == null) {
       feedForwardType = FeedForwardType.SimpleMotor;
