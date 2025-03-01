@@ -42,6 +42,9 @@ public abstract class ManipulatorBase extends Estopable {
   protected LinkedList<RelativeEncoder> encoders = new LinkedList<RelativeEncoder>();
   protected BooleanSupplier customSensor = () -> false;
 
+  private static final boolean overVoltageProtection = true;
+  private boolean isOverVoltageProtected = false;
+
   // ===================== Raw Speed Methods ===================== //
   /** Get the raw speed of the motor in the range -1 to 1 */
   public double getAvePower() {
@@ -71,6 +74,9 @@ public abstract class ManipulatorBase extends Estopable {
       stopCommand();
     }
     for (SparkMax motor : motors) {
+      if (isOverVoltageProtected) {
+        return;
+      }
       motor.set(percent);
     }
   }
@@ -117,6 +123,9 @@ public abstract class ManipulatorBase extends Estopable {
     // double line = motors.get(0).getBusVoltage();
     // voltage = Math.min(line, Math.max(-line, voltage));
     for (SparkMax motor : motors) {
+      if (isOverVoltageProtected) {
+        return;
+      }
       motor.setVoltage(voltage);
     }
   }
@@ -276,6 +285,20 @@ public abstract class ManipulatorBase extends Estopable {
   public void periodic() {
     SmartDashboard.putNumber(getName() + " Speed (rpm)", getCurrentSpeed().in(RPM));
     SmartDashboard.putNumber(getName() + " Power", getAvePower());
+
+    if (overVoltageProtection) {
+      if (getMotor(0).getBusVoltage() > 16) {
+        if (!isOverVoltageProtected) {
+          DriverStation.reportWarning("Manipulators over voltage protection enabled", false);
+          for (SparkMax motor : motors) {
+            motor.disable();
+          }
+          isOverVoltageProtected = true;
+        }
+      } else {
+        isOverVoltageProtected = false;
+      }
+    }
   }
 
   /**
@@ -302,6 +325,14 @@ public abstract class ManipulatorBase extends Estopable {
    */
   public void onDisable() {
     // Save motor config
+    boolean maybe = true;
+    if (maybe) {
+      return;
+    }
+    persistMotorConfig();
+  }
+
+  protected void persistMotorConfig() {
     for (SparkMax motor : motors) {
       motor.configure(new SparkMaxConfig(), ResetMode.kNoResetSafeParameters,
           PersistMode.kPersistParameters);
