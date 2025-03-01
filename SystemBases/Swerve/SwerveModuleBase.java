@@ -30,25 +30,22 @@ public abstract class SwerveModuleBase extends Estopable {
   protected final RelativeEncoder m_driveEncoder;
   protected final SparkAbsoluteEncoder m_turningEncoder;
 
-  // protected final TrapezoidProfile.Constraints m_driveConstraints;
-  // protected final ProfiledPIDController m_drivePIDController;
   protected final PIDController m_turnPIDController;
-  // protected final SimpleMotorFeedforward m_driveFeedforward;
   protected final VelocityFFController driveVelFFController;
   protected final PIDConfig turnPIDF;
-
-  // protected final double driveGearRatio = 1 / (10 * Math.PI * 15 / 50); // 1 is
-  // the gear ratio when I find out
 
   protected boolean sudoMode = false;
   protected boolean slowMode = false;
   protected boolean voltageControlMode = false;
+  protected boolean brakeMode;
 
   protected double slowModeMultiplier = 0.5;
 
   protected int driveAmps;
   protected int turnAmps;
   protected int breakerMaxAmps = 30;
+
+  private int counter = 0;
 
   /**
    * @param driveMotor       The motor that drives the module.
@@ -69,12 +66,13 @@ public abstract class SwerveModuleBase extends Estopable {
     // DRIVE MOTOR SETUP
     m_driveMotor = driveMotor;
 
-    m_driveMotor.configure(driveConfig
+    m_driveMotor.configureAsync(driveConfig
     // .positionConversionFactor(driveGearRatio)
     // .velocityConversionFactor(driveGearRatio))
         ,
         ResetMode.kResetSafeParameters, // resetToFactoryDefaults()
         PersistMode.kPersistParameters); // burnFlash()
+    brakeMode = m_driveMotor.configAccessor.getIdleMode() == IdleMode.kBrake;
 
     m_driveEncoder = m_driveMotor.getEncoder();
     driveVelFFController = new VelocityFFController(drivePIDF, RotationsPerSecond);
@@ -82,7 +80,7 @@ public abstract class SwerveModuleBase extends Estopable {
     // TURNING MOTOR SETUP
     m_turningMotor = turningMotor;
 
-    m_turningMotor.configure(turningConfig.apply(
+    m_turningMotor.configureAsync(turningConfig.apply(
         new AbsoluteEncoderConfig().zeroOffset(
             turningOffset)),
         ResetMode.kResetSafeParameters,
@@ -96,6 +94,8 @@ public abstract class SwerveModuleBase extends Estopable {
 
     driveAmps = m_driveMotor.configAccessor.getSmartCurrentLimit();
     turnAmps = m_turningMotor.configAccessor.getSmartCurrentLimit();
+
+    counter = (driveMotor.getDeviceId() * 29) % 50; // start at different times
   }
 
   /**
@@ -176,7 +176,11 @@ public abstract class SwerveModuleBase extends Estopable {
 
     m_turningMotor.setVoltage(-turningVoltage);
     m_driveMotor.setVoltage(drivingVoltage);
-    // m_driveMotor.setVoltage(0);
+
+    if (counter++ >= 50) {
+      counter = 0;
+      brakeMode = m_driveMotor.configAccessor.getIdleMode() == IdleMode.kBrake;
+    }
 
     SmartDashboard.putData(getName() + " swerve turning PID", m_turnPIDController);
     SmartDashboard.putNumber(getName() + " swerve turning encoder", m_turningEncoder.getPosition());
@@ -189,7 +193,7 @@ public abstract class SwerveModuleBase extends Estopable {
   }
 
   public void setDriveBrakeMode(boolean brake) {
-    m_driveMotor.configure(new SparkMaxConfig().idleMode(brake ? IdleMode.kBrake : IdleMode.kCoast),
+    m_driveMotor.configureAsync(new SparkMaxConfig().idleMode(brake ? IdleMode.kBrake : IdleMode.kCoast),
         ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
@@ -228,10 +232,10 @@ public abstract class SwerveModuleBase extends Estopable {
 
   public void setSudoMode(boolean sudoMode) {
     this.sudoMode = sudoMode;
-    m_driveMotor.configure(new SparkMaxConfig()
+    m_driveMotor.configureAsync(new SparkMaxConfig()
         .smartCurrentLimit(sudoMode ? breakerMaxAmps : driveAmps),
         ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-    m_turningMotor.configure(new SparkMaxConfig()
+    m_turningMotor.configureAsync(new SparkMaxConfig()
         .smartCurrentLimit(sudoMode ? breakerMaxAmps : turnAmps),
         ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     setVoltageControlMode(sudoMode);
@@ -260,7 +264,7 @@ public abstract class SwerveModuleBase extends Estopable {
   }
 
   public void setDriveAmps(int limit) {
-    m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(limit),
+    m_driveMotor.configureAsync(new SparkMaxConfig().smartCurrentLimit(limit),
         ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     driveAmps = limit;
   }
@@ -289,6 +293,7 @@ public abstract class SwerveModuleBase extends Estopable {
   }
 
   public boolean getDriveBrakeMode() {
-    return m_driveMotor.configAccessor.getIdleMode() == IdleMode.kBrake;
+    return brakeMode;
+    // return m_driveMotor.configAccessor.getIdleMode() == IdleMode.kBrake;
   }
 }

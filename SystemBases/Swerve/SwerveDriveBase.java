@@ -196,7 +196,7 @@ public abstract class SwerveDriveBase extends Estopable {
   public void inputDrivingX_Y(LinearVelocity xSpeed, LinearVelocity ySpeed,
       AngularVelocity rotationSpeed, int centerOfRotationPOV) {
     // Calculate the swerve module states from the requested speeds
-    // TODO: Trapezoidal profile movement constraints
+    // TODO: SlewLimeter movement constraints
     inputDrivingSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
         xSpeed.unaryMinus(), ySpeed.unaryMinus(), rotationSpeed,
         fieldRelative ? m_gyro.getRotation2d() : Rotation2d.fromDegrees(0)),
