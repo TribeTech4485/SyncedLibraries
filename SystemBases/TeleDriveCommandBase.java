@@ -53,7 +53,8 @@ public abstract class TeleDriveCommandBase extends Command {
           break;
 
         case ROTATION_SPEED:
-          swerveTrain.inputDrivingX_Y(controllers[0].getRightY(), controllers[0].getRightX(), -controllers[0].getLeftX());
+          swerveTrain.inputDrivingX_Y(controllers[0].getRightY(), controllers[0].getRightX(),
+              -controllers[0].getLeftX());
           break;
       }
     }
@@ -73,8 +74,10 @@ public abstract class TeleDriveCommandBase extends Command {
     }
     haveTriggersBeenBound = true;
 
-    controllers[0].LeftStickPress.onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(true)));
-    controllers[0].RightStickPress.onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(false)));
+    controllers[0].LeftStickPress.and(controllers[0].RightStickPress.negate())
+        .onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(true)));
+    controllers[0].RightStickPress.and(controllers[0].LeftStickPress.negate())
+        .onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(false)));
 
     controllers[0].LeftStickPress.and(controllers[0].RightStickPress)
         .onTrue(new InstantCommand(swerveTrain::enableXLock))
@@ -100,10 +103,10 @@ public abstract class TeleDriveCommandBase extends Command {
     }));
 
     controllers[0].RightBumper
-    // .onTrue(new InstantCommand(() -> driveMode = DriveModes.DESIRED_ANGLE))
+        // .onTrue(new InstantCommand(() -> driveMode = DriveModes.DESIRED_ANGLE))
         .onTrue(new InstantCommand(() -> swerveTrain.setFieldRelative(true)));
     controllers[0].LeftBumper
-    // .onTrue(new InstantCommand(() -> driveMode = DriveModes.ROTATION_SPEED))
+        // .onTrue(new InstantCommand(() -> driveMode = DriveModes.ROTATION_SPEED))
         .onTrue(new InstantCommand(() -> swerveTrain.setFieldRelative(false)));
   }
 

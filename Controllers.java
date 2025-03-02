@@ -30,7 +30,6 @@ public class Controllers {
 
   /** Call this only upon inits */
   public void fullUpdate() {
-    // I would imagine this to be a very expensive operation
     Zero = new ControllerBase(0);
     One = new ControllerBase(1);
     Two = new ControllerBase(2);
@@ -58,5 +57,4 @@ public class Controllers {
         return null;
     }
   }
-
 }

@@ -7,6 +7,7 @@ package frc.robot.SyncedLibraries.SystemBases.Swerve;
 import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -38,7 +39,8 @@ import org.littletonrobotics.urcl.URCL;
 
 /** Represents a swerve drive style drivetrain. */
 public abstract class SwerveDriveBase extends Estopable {
-  public final SlewLimiter2d drivingAccelFilter;
+  protected final SlewLimiter2d drivingAccelFilter;
+  protected final SlewRateLimiter turnRateLimiter;
   public final LinearVelocity maxSpeed;
   public final LinearAcceleration maxAcceleration;
   public final AngularVelocity maxRotationSpeed;
@@ -149,6 +151,7 @@ public abstract class SwerveDriveBase extends Estopable {
     // TrapezoidProfile.Constraints(maxSpeed.in(MetersPerSecond),
     // maxAccel.in(MetersPerSecondPerSecond)));
     drivingAccelFilter = new SlewLimiter2d(maxAccel.in(MetersPerSecondPerSecond));
+    turnRateLimiter = new SlewRateLimiter(maxRotationSpeed.in(RadiansPerSecond));
     this.maxRotationSpeed = maxRotationSpeed;
   }
 
@@ -196,9 +199,14 @@ public abstract class SwerveDriveBase extends Estopable {
   public void inputDrivingX_Y(LinearVelocity xSpeed, LinearVelocity ySpeed,
       AngularVelocity rotationSpeed, int centerOfRotationPOV) {
     // Calculate the swerve module states from the requested speeds
-    // TODO: SlewLimeter movement constraints
+    double[] speeds = drivingAccelFilter.calculate(
+        xSpeed.in(MetersPerSecond), ySpeed.in(MetersPerSecond));
+    double rotationRate = turnRateLimiter.calculate(rotationSpeed.in(RadiansPerSecond));
+
     inputDrivingSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
-        xSpeed.unaryMinus(), ySpeed.unaryMinus(), rotationSpeed,
+        MetersPerSecond.of(speeds[0]).unaryMinus(),
+        MetersPerSecond.of(speeds[1]).unaryMinus(),
+        RadiansPerSecond.of(rotationRate),
         fieldRelative ? m_gyro.getRotation2d() : Rotation2d.fromDegrees(0)),
         centerOfRotationPOV);
   }
@@ -333,7 +341,7 @@ public abstract class SwerveDriveBase extends Estopable {
   @Override
   public void periodic() {
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates,
-        Swerve.Movement.maxBotSpeed.in(MetersPerSecond));
+        Swerve.Movement.maxWheelSpeed.in(MetersPerSecond));
     setDesiredStates();
 
     NetworkTablesSwervePublisherDesired.set(swerveModuleStates);
@@ -355,20 +363,18 @@ public abstract class SwerveDriveBase extends Estopable {
     m_frontRight.setDesiredState(swerveModuleStates[1]);
     m_backLeft.setDesiredState(swerveModuleStates[2]);
     m_backRight.setDesiredState(swerveModuleStates[3]);
-    if (false) {
-      for (SwerveModuleBase module : modules) {
-        if (module.getVoltageControlMode() != voltageControlMode) {
-          module.setVoltageControlMode(voltageControlMode);
-        }
-        if (module.getDriveBrakeMode() != brakeMode) {
-          module.setDriveBrakeMode(brakeMode);
-        }
-        if (module.getSlowMode() != slowMode) {
-          module.setSlowMode(slowMode);
-        }
-        if (module.getSudoMode() != sudoMode) {
-          module.setSudoMode(sudoMode);
-        }
+    for (SwerveModuleBase module : modules) {
+      if (module.getVoltageControlMode() != voltageControlMode) {
+        module.setVoltageControlMode(voltageControlMode);
+      }
+      if (module.getDriveBrakeMode() != brakeMode) {
+        module.setDriveBrakeMode(brakeMode);
+      }
+      if (module.getSlowMode() != slowMode) {
+        module.setSlowMode(slowMode);
+      }
+      if (module.getSudoMode() != sudoMode) {
+        module.setSudoMode(sudoMode);
       }
     }
   }

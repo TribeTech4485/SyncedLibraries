@@ -66,7 +66,7 @@ public abstract class SwerveModuleBase extends Estopable {
     // DRIVE MOTOR SETUP
     m_driveMotor = driveMotor;
 
-    m_driveMotor.configureAsync(driveConfig
+    m_driveMotor.configure(driveConfig
     // .positionConversionFactor(driveGearRatio)
     // .velocityConversionFactor(driveGearRatio))
         ,
@@ -80,7 +80,7 @@ public abstract class SwerveModuleBase extends Estopable {
     // TURNING MOTOR SETUP
     m_turningMotor = turningMotor;
 
-    m_turningMotor.configureAsync(turningConfig.apply(
+    m_turningMotor.configure(turningConfig.apply(
         new AbsoluteEncoderConfig().zeroOffset(
             turningOffset)),
         ResetMode.kResetSafeParameters,

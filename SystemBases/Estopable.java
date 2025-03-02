@@ -87,6 +87,7 @@ public abstract class Estopable extends SubsystemBase {
    * FOR {@link #KILLIT()}, don't stop the code.
    */
   public static void dontAllowFullEstop() {
+    DriverStation.reportWarning("NOT ALLOWING FULL ESTOP", false);
     allowFullEstop = false;
   }
 

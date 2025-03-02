@@ -289,7 +289,7 @@ public abstract class ManipulatorBase extends Estopable {
     if (overVoltageProtection) {
       if (getMotor(0).getBusVoltage() > 18) {
         if (!isOverVoltageProtected) {
-          DriverStation.reportWarning("Manipulators over voltage protection enabled", false);
+          DriverStation.reportError("Manipulators over voltage protection enabled", false);
           for (SparkMax motor : motors) {
             motor.disable();
           }
