@@ -128,9 +128,9 @@ public class ControllerBase {
     this.RightJoyMoved = new Trigger(() -> (getLeftX() != 0 || getLeftY() != 0));
     this.LeftJoyMoved = new Trigger(() -> (getLeftX() != 0 || getLeftY() != 0));
 
-    int buttonCount = objectJoystick.getButtonCount();
-    buttons = new Trigger[buttonCount + 1];
-    for (int i = 0; i < buttonCount + 1; i++) {
+    // int buttonCount = objectJoystick.getButtonCount();
+    buttons = new Trigger[13]; // TODO: set to "buttonCount + 1"
+    for (int i = 0; i < buttons.length; i++) {
       if (i == 0) {
         buttons[i] = new Trigger(() -> false);
         continue;
@@ -140,12 +140,10 @@ public class ControllerBase {
     }
 
     // All the buttons on the base section
-    this.ESTOPCondition = commObjectJoystick.button(7)
-        .and(commObjectJoystick.button(8))
-        .and(commObjectJoystick.button(9))
-        .and(commObjectJoystick.button(10))
-        .and(commObjectJoystick.button(11))
-        .and(commObjectJoystick.button(12));
+    this.ESTOPCondition = commObjectJoystick.button(3)
+        .and(commObjectJoystick.button(4))
+        .and(commObjectJoystick.button(5))
+        .and(commObjectJoystick.button(6));
 
     this.AnyButton = A.or(B).or(X).or(Y).or(LeftBumper)
         .or(RightBumper).or(Start).or(Options).or(LeftTrigger)
@@ -386,22 +384,26 @@ public class ControllerBase {
 
   /** If joystick: X-axis */
   public double getLeftX() {
-    return BasicFunctions.deadband(getLeftXRaw(), Controllers.joystickDeadband);
+    return BasicFunctions.smartExp(
+        BasicFunctions.deadband(getLeftXRaw(), Controllers.joystickDeadband), Controllers.joystickExponent);
   }
 
   /** If joystick: Y-axis */
   public double getLeftY() {
-    return BasicFunctions.deadband(getLeftYRaw(), Controllers.joystickDeadband);
+    return BasicFunctions.smartExp(
+        BasicFunctions.deadband(getLeftYRaw(), Controllers.joystickDeadband), Controllers.joystickExponent);
   }
 
   /** If joystick: Twist-axis */
   public double getRightX() {
-    return BasicFunctions.deadband(getRightXRaw(), Controllers.joystickDeadband);
+    return BasicFunctions.smartExp(
+        BasicFunctions.deadband(getRightXRaw(), Controllers.joystickDeadband), Controllers.joystickExponent);
   }
 
   /** If joystick: Throttle-axis */
   public double getRightY() {
-    return BasicFunctions.deadband(getRightYRaw(), Controllers.joystickDeadband);
+    return BasicFunctions.smartExp(
+        BasicFunctions.deadband(getRightYRaw(), Controllers.joystickDeadband), Controllers.joystickExponent);
   }
 
   /** If joystick: 1 or 0 if trigger pressed */
@@ -456,6 +458,7 @@ public class ControllerBase {
     }
   }
 
+  /** AKA the D-PAD, returns int degrees where 0 is up */
   public int getPOV() {
     if (isPS4) {
       return objectPS4.getPOV();

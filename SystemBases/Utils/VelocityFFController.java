@@ -13,7 +13,7 @@ import edu.wpi.first.util.sendable.SendableRegistry;
 
 public class VelocityFFController implements Sendable, AutoCloseable {
   public ProfiledPIDController pidController;
-  PIDConfig pidConfig;
+  public final PIDConfig pidConfig;
   /**
    * Should be RadiansPerSecond, but may be rotations per second ie. for driving
    */
@@ -78,5 +78,9 @@ public class VelocityFFController implements Sendable, AutoCloseable {
 
   protected void synchronizePIDSettings() {
     pidConfig.applyTo(pidController, angularVelocityUnit);
+  }
+
+  public ProfiledPIDController getPIDController() {
+    return pidController;
   }
 }

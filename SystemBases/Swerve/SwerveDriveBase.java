@@ -15,7 +15,6 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -27,14 +26,14 @@ import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.Constants.Swerve;
 import frc.robot.SyncedLibraries.SystemBases.Estopable;
 import frc.robot.SyncedLibraries.SystemBases.Utils.SlewLimiter2d;
-
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+
 import org.littletonrobotics.urcl.URCL;
 
 /** Represents a swerve drive style drivetrain. */
@@ -341,7 +340,7 @@ public abstract class SwerveDriveBase extends Estopable {
   @Override
   public void periodic() {
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates,
-        Swerve.Movement.maxWheelSpeed.in(MetersPerSecond));
+        modules[0].getDrivePIDController().pidConfig.maxLinearVelocity.in(MetersPerSecond));
     setDesiredStates();
 
     NetworkTablesSwervePublisherDesired.set(swerveModuleStates);
