@@ -48,15 +48,15 @@ public abstract class SwerveModuleBase extends Estopable {
   private int counter = 0;
 
   /**
-   * @param driveMotor       The motor that drives the module.
-   * @param turningMotor     The motor that turns the module.
-   * @param turningOffset    The offset for the turning encoder. Starting position
-   * @param name             The name of the module. Ie. "Front Left"
-   * @param driveConfig      The configuration for the drive motor.
-   * @param turningConfig    The configuration for the turning motor.
-   * @param drivePIDF        The PIDF values for the drive motor: P, I, D, S, V, A
-   * @param turnPID          The PID values for the turning motor: P, I, D
-   * @param driveConstraints The constraints for the drive motor.
+   * @param driveMotor    The motor that drives the module.
+   * @param turningMotor  The motor that turns the module.
+   * @param turningOffset The offset for the turning encoder. Starting position
+   * @param name          The name of the module. Ie. "Front Left"
+   * @param driveConfig   The configuration for the drive motor.
+   * @param turningConfig The configuration for the turning motor.
+   * @param drivePIDF     The PIDF values for the drive motor, including
+   *                      constraints
+   * @param turnPID       The PID values for the turning motor, no feedforward
    */
   public SwerveModuleBase(SparkMax driveMotor, SparkMax turningMotor, double turningOffset, String name,
       SparkBaseConfig driveConfig, SparkBaseConfig turningConfig,
@@ -189,8 +189,7 @@ public abstract class SwerveModuleBase extends Estopable {
 
     SmartDashboard.putData(getName() + " swerve driving PID", driveVelFFController);
     SmartDashboard.putNumber(getName() + " swerve driving speed", m_driveEncoder.getVelocity());
-    SmartDashboard.putNumber(getName() + " swerve driving speed setpoint",
-        driveVelFFController.getPIDController().getSetpoint().position);
+    SmartDashboard.putNumber(getName() + " swerve driving speed setpoint", driveVelFFController.getSetpoint());
     SmartDashboard.putNumber(getName() + " swerve driving power", m_driveMotor.get());
   }
 
@@ -280,7 +279,7 @@ public abstract class SwerveModuleBase extends Estopable {
   @Override
   public void ESTOP() {
     // handled in SwerveDriveBase
-    driveVelFFController.pidController.reset(0);
+    // driveVelFFController.pidController.reset(0);
   }
 
   @Override

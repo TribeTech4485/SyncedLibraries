@@ -13,7 +13,11 @@ public class BasicFunctions {
   }
 
   public static double smartExp(double x, double exponent) {
-    return Math.pow(x, exponent) * Math.signum(x);
+    double result = Math.pow(x, exponent);
+    if (Math.signum(result) == Math.signum(x)) {
+      return result;
+    }
+    return -result;
   }
 
   public static interface ControllerRunnable {
@@ -34,12 +38,12 @@ public class BasicFunctions {
     // DriverStation.reportWarning("ESTOP DriveTrain", false);
     // DriveTrain.ESTOP();
     // System.out.println("Done");
-    
+
     // DriverStation.reportError("KILLING IT", true);
     // for (Estoppable manipulator : Estoppable._getAllEstoppables()) {
-      //   DriverStation.reportWarning("ESTOP " + manipulator.getName(), false);
-    //   manipulator.ESTOP();
-    //   System.out.println("Done");
+    // DriverStation.reportWarning("ESTOP " + manipulator.getName(), false);
+    // manipulator.ESTOP();
+    // System.out.println("Done");
     // }
 
     // DriverStation.reportError("KILLED IT, EXITING NOW", false);
@@ -50,19 +54,20 @@ public class BasicFunctions {
    * <b>ONLY FOR USE IN EMERGENCY</b>
    * <p>
    * YES, ACTUALLY
+   * 
    * @deprecated Use "Estoppable.KILLIT()" instead
    */
   @Deprecated
   public static void KILLIT() {
     Estopable.KILLIT();
-  //   DriverStation.reportError("KILLING IT", true);
-  //   for (Estoppable manipulator : Estoppable._getAllEstoppables()) {
-  //     DriverStation.reportWarning("ESTOP " + manipulator.getName(), false);
-  //     manipulator.ESTOP();
-  //     System.out.println("Done");
-  //   }
+    // DriverStation.reportError("KILLING IT", true);
+    // for (Estoppable manipulator : Estoppable._getAllEstoppables()) {
+    // DriverStation.reportWarning("ESTOP " + manipulator.getName(), false);
+    // manipulator.ESTOP();
+    // System.out.println("Done");
+    // }
 
-  //   DriverStation.reportError("KILLED IT, EXITING NOW", false);
-  //   System.exit(0);
+    // DriverStation.reportError("KILLED IT, EXITING NOW", false);
+    // System.exit(0);
   }
 }

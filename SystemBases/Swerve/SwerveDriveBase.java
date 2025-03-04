@@ -6,7 +6,7 @@ package frc.robot.SyncedLibraries.SystemBases.Swerve;
 
 import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
-import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -15,8 +15,10 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearAcceleration;
@@ -27,12 +29,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.SyncedLibraries.SystemBases.Estopable;
+import frc.robot.SyncedLibraries.SystemBases.Utils.PIDConfig;
 import frc.robot.SyncedLibraries.SystemBases.Utils.SlewLimiter2d;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
-
+import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 import org.littletonrobotics.urcl.URCL;
 
 /** Represents a swerve drive style drivetrain. */
@@ -42,6 +45,7 @@ public abstract class SwerveDriveBase extends Estopable {
   public final LinearVelocity maxSpeed;
   public final LinearAcceleration maxAcceleration;
   public final AngularVelocity maxRotationSpeed;
+  public final AngularAcceleration maxRotationAccel;
 
   // The physical dimensions of the robot
   protected final double _robotWidth;
@@ -78,7 +82,7 @@ public abstract class SwerveDriveBase extends Estopable {
   protected boolean sudoMode = false;
   protected boolean voltageControlMode = false;
 
-  protected final PIDController turnController;
+  protected final ProfiledPIDController turnController;
 
   private SysIdRoutine sysIdRoutine;
 
@@ -97,8 +101,8 @@ public abstract class SwerveDriveBase extends Estopable {
    * @param driveAmps       The max amps for the drive motors
    * @param turnAmps        The max amps for the turn motors
    */
-  public SwerveDriveBase(Distance width, Distance length, SwerveModuleBase[] modules, double[] botTurnPID,
-      LinearVelocity maxSpeed, LinearAcceleration maxAccel, AngularVelocity maxRotationSpeed) {
+  public SwerveDriveBase(Distance width, Distance length, SwerveModuleBase[] modules, PIDConfig botTurnPID,
+      LinearVelocity maxSpeed, LinearAcceleration maxAccel) {
     NetworkTablesSwervePublisherDesired = NetworkTableInstance.getDefault()
         .getStructArrayTopic("/DesiredSwerveStates", SwerveModuleState.struct).publish();
     NetworkTablesSwervePublisherCurrent = NetworkTableInstance.getDefault()
@@ -140,7 +144,12 @@ public abstract class SwerveDriveBase extends Estopable {
             m_backRight.getPosition()
         });
 
-    turnController = new PIDController(botTurnPID[0], botTurnPID[1], botTurnPID[2]);
+    maxRotationSpeed = botTurnPID.maxAngularVelocity;
+    maxRotationAccel = botTurnPID.maxAngularAcceleration;
+
+    turnController = new ProfiledPIDController(botTurnPID.P, botTurnPID.I, botTurnPID.D,
+        new TrapezoidProfile.Constraints(maxRotationSpeed.in(RadiansPerSecond),
+            maxRotationAccel.in(RadiansPerSecondPerSecond)));
     turnController.enableContinuousInput(0, Math.PI * 2);
 
     this.maxSpeed = maxSpeed;
@@ -149,8 +158,7 @@ public abstract class SwerveDriveBase extends Estopable {
     // TrapezoidProfile.Constraints(maxSpeed.in(MetersPerSecond),
     // maxAccel.in(MetersPerSecondPerSecond)));
     drivingAccelFilter = new SlewLimiter2d(maxAccel.in(MetersPerSecondPerSecond));
-    turnRateLimiter = new SlewRateLimiter(maxRotationSpeed.in(RadiansPerSecond));
-    this.maxRotationSpeed = maxRotationSpeed;
+    turnRateLimiter = new SlewRateLimiter(maxRotationAccel.in(RadiansPerSecondPerSecond));
   }
 
   public void enableXLock() {
@@ -227,7 +235,7 @@ public abstract class SwerveDriveBase extends Estopable {
    */
   public void inputDrivingX_Y_A(LinearVelocity xSpeed, LinearVelocity ySpeed, Rotation2d desiredTheta,
       int centerOfRotationPOV) {
-    turnController.setSetpoint(desiredTheta.getRadians());
+    turnController.setGoal(desiredTheta.getRadians());
     inputDrivingX_Y(xSpeed, ySpeed,
         RadiansPerSecond.of(turnController.calculate(Math.toRadians(m_gyro.getYaw() % 360))));
   }
@@ -486,6 +494,10 @@ public abstract class SwerveDriveBase extends Estopable {
     enableXLock();
   }
 
+  public ProfiledPIDController getTurnController() {
+    return turnController;
+  }
+
   public void prepareSysID() {
     URCL.start(DataLogManager.getLog());
 
@@ -508,4 +520,5 @@ public abstract class SwerveDriveBase extends Estopable {
       module.setSlowModeMultiplier(multiplier);
     }
   }
+
 }

@@ -83,4 +83,8 @@ public class VelocityFFController implements Sendable, AutoCloseable {
   public ProfiledPIDController getPIDController() {
     return pidController;
   }
+
+  public double getSetpoint() {
+    return pidController.getSetpoint().position;
+  }
 }

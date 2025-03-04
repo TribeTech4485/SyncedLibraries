@@ -36,7 +36,7 @@ public class ControllerBase {
   public Trigger LeftBumper;
   public Trigger RightBumper;
   public Trigger Start;
-  public Trigger Options;
+  public Trigger Options; // The left one on Xbox
   public Trigger LeftTrigger;
   public Trigger RightTrigger;
   public Trigger PovUp;
