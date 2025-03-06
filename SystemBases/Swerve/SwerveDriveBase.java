@@ -520,5 +520,4 @@ public abstract class SwerveDriveBase extends Estopable {
       module.setSlowModeMultiplier(multiplier);
     }
   }
-
 }

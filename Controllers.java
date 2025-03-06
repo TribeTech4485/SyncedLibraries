@@ -7,18 +7,16 @@ public class Controllers {
   public static double joystickDeadband;
   public static double triggerDeadband;
   public static double triggerSetpoint;
-  public static double joystickExponent;
 
-  public Controllers(double joystickDeadband, double triggerDeadband, double triggerSetpoint, double joystickExponent) {
+  public Controllers(double joystickDeadband, double triggerDeadband, double triggerSetpoint) {
     Controllers.joystickDeadband = joystickDeadband;
     Controllers.triggerDeadband = triggerDeadband;
     Controllers.triggerSetpoint = triggerSetpoint;
-    Controllers.joystickExponent = joystickExponent;
     fullUpdate();
   }
 
   public Controllers() {
-    this(0.05, 0.05, 0.5, 1);
+    this(0.05, 0.05, 0.5);
   }
 
   // Port-bound controllers

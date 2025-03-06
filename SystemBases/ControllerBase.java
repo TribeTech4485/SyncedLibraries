@@ -140,10 +140,10 @@ public class ControllerBase {
     }
 
     // All the buttons on the base section
-    this.ESTOPCondition = commObjectJoystick.button(3)
-        .and(commObjectJoystick.button(4))
-        .and(commObjectJoystick.button(5))
-        .and(commObjectJoystick.button(6));
+    this.ESTOPCondition = buttons[3]
+        .and(buttons[4])
+        .and(buttons[5])
+        .and(buttons[6]);
 
     this.AnyButton = A.or(B).or(X).or(Y).or(LeftBumper)
         .or(RightBumper).or(Start).or(Options).or(LeftTrigger)
@@ -384,26 +384,26 @@ public class ControllerBase {
 
   /** If joystick: X-axis */
   public double getLeftX() {
-    return BasicFunctions.smartExp(
-        BasicFunctions.deadband(getLeftXRaw(), Controllers.joystickDeadband), Controllers.joystickExponent);
+    return BasicFunctions.deadband(getLeftXRaw(), Controllers.joystickDeadband);
   }
 
   /** If joystick: Y-axis */
   public double getLeftY() {
-    return BasicFunctions.smartExp(
-        BasicFunctions.deadband(getLeftYRaw(), Controllers.joystickDeadband), Controllers.joystickExponent);
+    return BasicFunctions.deadband(getLeftYRaw(), Controllers.joystickDeadband);
   }
 
   /** If joystick: Twist-axis */
   public double getRightX() {
-    return BasicFunctions.smartExp(
-        BasicFunctions.deadband(getRightXRaw(), Controllers.joystickDeadband), Controllers.joystickExponent);
+    if (isJoystick) {
+      return BasicFunctions.smartExp(BasicFunctions.deadband(getRightXRaw(), Controllers.joystickDeadband), 2);
+    } else {
+      return BasicFunctions.deadband(getRightXRaw(), Controllers.joystickDeadband);
+    }
   }
 
   /** If joystick: Throttle-axis */
   public double getRightY() {
-    return BasicFunctions.smartExp(
-        BasicFunctions.deadband(getRightYRaw(), Controllers.joystickDeadband), Controllers.joystickExponent);
+    return BasicFunctions.deadband(getRightYRaw(), Controllers.joystickDeadband);
   }
 
   /** If joystick: 1 or 0 if trigger pressed */

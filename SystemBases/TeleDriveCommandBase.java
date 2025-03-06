@@ -15,6 +15,7 @@ public abstract class TeleDriveCommandBase extends Command {
   protected SwerveDriveBase swerveTrain;
   protected boolean x_locked = false;
   private boolean haveTriggersBeenBound = false;
+  protected boolean allowTurn = false;
 
   public TeleDriveCommandBase(SwerveDriveBase driveTrain, ControllerBase... controllers) {
     addRequirements(driveTrain);
@@ -64,7 +65,8 @@ public abstract class TeleDriveCommandBase extends Command {
                 -controllers[0].getLeftX());
           } else if (controllers[0].isJoystick) {
             swerveTrain.inputDrivingX_Y(controllers[0].getLeftY(), controllers[0].getLeftX(),
-                -controllers[0].getRightX(), controllers[0].getPOV());
+                allowTurn ? -controllers[0].getRightX() : 0,
+                controllers[0].getPOV());
           }
           break;
       }
@@ -124,13 +126,15 @@ public abstract class TeleDriveCommandBase extends Command {
 
     } else if (controllers[0].isJoystick) {
       // Using flight sticks
-      controllers[0].buttons[1]
+      controllers[0].buttons[2]
           .onTrue(new InstantCommand(() -> swerveTrain.setSlowMode(true)))
           .onFalse(new InstantCommand(() -> swerveTrain.setSlowMode(false)));
 
-      controllers[0].buttons[2]
-          .onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(true)))
-          .onFalse(new InstantCommand(() -> swerveTrain.setSudoMode(false)));
+      controllers[0].buttons[1]
+          .onTrue(new InstantCommand(() -> allowTurn = true))
+          .onFalse(new InstantCommand(() -> allowTurn = false));
+      // .onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(true)))
+      // .onFalse(new InstantCommand(() -> swerveTrain.setSudoMode(false)));
 
       controllers[0].buttons[5]
           .onChange(new InstantCommand(() -> swerveTrain.setFieldRelative(true)));
@@ -139,11 +143,14 @@ public abstract class TeleDriveCommandBase extends Command {
       controllers[0].buttons[3].and(controllers[0].buttons[5])
           .onTrue(new InstantCommand(swerveTrain::resetGyro));
 
-      controllers[0].buttons[4]
+      controllers[0].buttons[6]
           .onTrue(new InstantCommand(swerveTrain::enableXLock))
           .onTrue(new InstantCommand(() -> x_locked = true))
           .onFalse(new InstantCommand(swerveTrain::disableXLock))
           .onFalse(new InstantCommand(() -> x_locked = false));
+      controllers[0].buttons[9]
+          .onTrue(new InstantCommand(swerveTrain::enableXLock))
+          .onTrue(new InstantCommand(() -> x_locked = true));
 
       controllers[0].buttons[7]
           .onTrue(new InstantCommand(() -> swerveTrain.setBrakeMode(true)));
