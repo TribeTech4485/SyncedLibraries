@@ -235,9 +235,10 @@ public abstract class SwerveDriveBase extends Estopable {
    */
   public void inputDrivingX_Y_A(LinearVelocity xSpeed, LinearVelocity ySpeed, Rotation2d desiredTheta,
       int centerOfRotationPOV) {
+        SmartDashboard.putNumber("AAAA Desired Angle", desiredTheta.getDegrees());
     turnController.setGoal(desiredTheta.getRadians());
     inputDrivingX_Y(xSpeed, ySpeed,
-        RadiansPerSecond.of(turnController.calculate(Math.toRadians(m_gyro.getYaw() % 360))));
+        RadiansPerSecond.of(-turnController.calculate(Math.toRadians(m_gyro.getYaw() % 360))));
   }
 
   /**
@@ -360,6 +361,7 @@ public abstract class SwerveDriveBase extends Estopable {
         });
 
     SmartDashboard.putData("Gyro", m_gyro);
+    SmartDashboard.putData("Swerve Drive turn controller", turnController);
     updateOdometry();
   }
 

@@ -47,13 +47,13 @@ public abstract class TeleDriveCommandBase extends Command {
       switch (driveMode) {
         case DESIRED_ANGLE:
           if (controllers[0].isXbox || controllers[0].isPS4) {
-            if (Math.abs(controllers[0].getRightX()) <= deadBand && Math.abs(controllers[0].getRightY()) <= deadBand) {
+            if (Math.abs(controllers[0].getLeftX()) <= deadBand && Math.abs(controllers[0].getLeftY()) <= deadBand) {
               // If the joystick is not being used, don't rotate
-              swerveTrain.inputDrivingX_Y(-controllers[0].getRightY(), controllers[0].getRightX(),
+              swerveTrain.inputDrivingX_Y(controllers[0].getRightY(), controllers[0].getRightX(),
                   0, usePOV ? controllers[0].getPOV() : -1);
             } else {
-              swerveTrain.inputDrivingX_Y_A(-controllers[0].getRightY(), controllers[0].getRightX(),
-                  new Rotation2d(controllers[0].getLeftX(), controllers[0].getLeftY()),
+              swerveTrain.inputDrivingX_Y_A(controllers[0].getRightY(), controllers[0].getRightX(),
+                  new Rotation2d(-controllers[0].getLeftY(), controllers[0].getLeftX()),
                   usePOV ? controllers[0].getPOV() : -1);
 
             }

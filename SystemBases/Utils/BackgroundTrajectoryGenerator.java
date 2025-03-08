@@ -21,6 +21,7 @@ import frc.robot.SyncedLibraries.SystemBases.Swerve.SwerveDriveBase;
  */
 public class BackgroundTrajectoryGenerator {
   private final Future<Trajectory> future;
+  private Trajectory trajectory;
 
   /**
    * A class that generates a trajectory in the background using a provided
@@ -45,12 +46,19 @@ public class BackgroundTrajectoryGenerator {
     TrajectoryConfig config = new TrajectoryConfig(driveBase.maxSpeed.times(margin),
         driveBase.maxAcceleration.times(margin));
 
-    Supplier<Trajectory> function = () -> TrajectoryGenerator.generateTrajectory(
-        startPos, interiorWaypoints, endPos, config);
+    Supplier<Trajectory> function = () -> {
+      return TrajectoryGenerator.generateTrajectory(
+          startPos, interiorWaypoints, endPos, config);
+    };
+
+    // trajectory = TrajectoryGenerator.generateTrajectory(
+    //   startPos, interiorWaypoints, endPos, config);
+
 
     ExecutorService executor = Executors.newSingleThreadExecutor();
     this.future = executor.submit(() -> {
-      return function.get();
+      return TrajectoryGenerator.generateTrajectory(
+        startPos, interiorWaypoints, endPos, config);
     });
     executor.shutdown();
   }
