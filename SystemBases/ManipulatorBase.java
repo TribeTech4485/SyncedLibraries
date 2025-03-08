@@ -332,6 +332,10 @@ public abstract class ManipulatorBase extends Estopable {
     persistMotorConfig();
   }
 
+  public BooleanSupplier getCustomSensor() {
+    return customSensor;
+  }
+
   protected void persistMotorConfig() {
     for (SparkMax motor : motors) {
       motor.configure(new SparkMaxConfig(), ResetMode.kNoResetSafeParameters,

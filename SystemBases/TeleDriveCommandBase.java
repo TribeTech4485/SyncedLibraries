@@ -12,10 +12,10 @@ public abstract class TeleDriveCommandBase extends Command {
   private boolean haveTriggersBeenBound = false;
   protected final ControllerBase[] controllers = new ControllerBase[5];
   protected double deadBand = 0.1;
-  protected DriveModes driveMode = DriveModes.ROTATION_SPEED;
+  protected DriveModes driveMode = DriveModes.DESIRED_ANGLE;
   protected SwerveDriveBase swerveTrain;
   protected boolean x_locked = false;
-  protected boolean allowTurn = false;
+  protected boolean allowTurn = true;
   protected boolean usePOV = false;
 
   public TeleDriveCommandBase(SwerveDriveBase driveTrain, ControllerBase... controllers) {
@@ -140,18 +140,20 @@ public abstract class TeleDriveCommandBase extends Command {
         controllers[0].LeftStickPress.and(controllers[0].RightStickPress)
             // .onChange(new InstantCommand(() -> swerveTrain.setSudoMode(false)))
             .onTrue(new InstantCommand(swerveTrain::enableXLock))
-            .onTrue(new InstantCommand(() -> x_locked = true))
+            .onTrue(new InstantCommand(() -> x_locked = true));
+        controllers[0].LeftStickPress.and(controllers[0].RightStickPress)
+            .and(controllers[0].LeftTrigger.negate()).and(controllers[0].RightTrigger.negate())
             .onFalse(new InstantCommand(swerveTrain::disableXLock))
             .onFalse(new InstantCommand(() -> x_locked = false));
 
         controllers[0].RightTrigger
-            .onChange(new InstantCommand(() -> swerveTrain.setFieldRelative(true)));
-        controllers[0].LeftTrigger
-            .onChange(new InstantCommand(() -> swerveTrain.setFieldRelative(false)));
-        controllers[0].RightBumper
-            .onChange(new InstantCommand(() -> driveMode = DriveModes.ROTATION_SPEED));
-        controllers[0].LeftBumper
+            .onChange(new InstantCommand(() -> swerveTrain.setFieldRelative(true)))
+            // controllers[0].RightBumper
             .onChange(new InstantCommand(() -> driveMode = DriveModes.DESIRED_ANGLE));
+        controllers[0].LeftTrigger
+            .onChange(new InstantCommand(() -> swerveTrain.setFieldRelative(false)))
+            // controllers[0].LeftBumper
+            .onChange(new InstantCommand(() -> driveMode = DriveModes.ROTATION_SPEED));
 
         controllers[0].LeftTrigger
             .and(controllers[0].RightTrigger)

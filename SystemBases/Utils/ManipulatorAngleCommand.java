@@ -54,7 +54,7 @@ public class ManipulatorAngleCommand extends Command {
 
   @Override
   public boolean isFinished() {
-    return endOnTarget && atPosition;
+    return endOnTarget && atPosition && false;
   }
 
   public void setTargetPosition(Angle position) {

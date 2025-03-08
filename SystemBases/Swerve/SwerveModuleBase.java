@@ -39,7 +39,7 @@ public abstract class SwerveModuleBase extends Estopable {
   protected boolean voltageControlMode = false;
   protected boolean brakeMode;
 
-  protected double slowModeMultiplier = 0.5;
+  protected double slowModeMultiplier = 0.4;
 
   protected int driveAmps;
   protected int turnAmps;

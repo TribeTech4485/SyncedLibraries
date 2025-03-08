@@ -130,6 +130,7 @@ public abstract class SwerveDriveBase extends Estopable {
 
     m_gyro = new AHRS(NavXComType.kMXP_SPI);
     m_gyro.reset();
+    m_gyro.zeroYaw();
 
     m_kinematics = new SwerveDriveKinematics(
         m_frontLeftLocation, m_frontRightLocation, m_backLeftLocation, m_backRightLocation);
@@ -212,12 +213,16 @@ public abstract class SwerveDriveBase extends Estopable {
     inputDrivingSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
         MetersPerSecond.of(speeds[0]).unaryMinus(),
         MetersPerSecond.of(speeds[1]).unaryMinus(),
-        RadiansPerSecond.of(rotationRate),
+        RadiansPerSecond.of(rotationRate).times(slowMode ? 1
+            : 1),
         fieldRelative ? m_gyro.getRotation2d() : Rotation2d.fromDegrees(0)),
         centerOfRotationPOV);
   }
 
   public void inputDrivingSpeeds(ChassisSpeeds speeds, int centerOfRotationPOV) {
+    SmartDashboard.putNumber("DriveTrain xSpeed (m/s)", speeds.vxMetersPerSecond);
+    SmartDashboard.putNumber("DriveTrain ySpeed (m/s)", speeds.vyMetersPerSecond);
+    SmartDashboard.putNumber("DriveTrain rotSpeed (rad/s)", speeds.omegaRadiansPerSecond);
     swerveModuleStates = m_kinematics.toSwerveModuleStates(
         ChassisSpeeds.discretize(speeds, 0.02),
         POVToTranslate2d(centerOfRotationPOV));
@@ -235,7 +240,7 @@ public abstract class SwerveDriveBase extends Estopable {
    */
   public void inputDrivingX_Y_A(LinearVelocity xSpeed, LinearVelocity ySpeed, Rotation2d desiredTheta,
       int centerOfRotationPOV) {
-        SmartDashboard.putNumber("AAAA Desired Angle", desiredTheta.getDegrees());
+    SmartDashboard.putNumber("AAAA Desired Angle", desiredTheta.getDegrees());
     turnController.setGoal(desiredTheta.getRadians());
     inputDrivingX_Y(xSpeed, ySpeed,
         RadiansPerSecond.of(-turnController.calculate(Math.toRadians(m_gyro.getYaw() % 360))));
@@ -264,7 +269,8 @@ public abstract class SwerveDriveBase extends Estopable {
    *                            front, clockwise degrees
    */
   public void inputDrivingX_Y(double xSpeed, double ySpeed, double rotationSpeed, int centerOfRotationPOV) {
-    inputDrivingX_Y(maxSpeed.times(xSpeed), maxSpeed.times(ySpeed), maxRotationSpeed.times(rotationSpeed),
+    inputDrivingX_Y(maxSpeed.times(xSpeed), maxSpeed.times(ySpeed),
+        maxRotationSpeed.times(rotationSpeed),
         centerOfRotationPOV);
   }
 
