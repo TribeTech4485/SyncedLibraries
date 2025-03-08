@@ -395,7 +395,7 @@ public class ControllerBase {
   /** If joystick: Twist-axis */
   public double getRightX() {
     if (isJoystick) {
-      return BasicFunctions.smartExp(BasicFunctions.deadband(getRightXRaw(), Controllers.joystickDeadband), 2);
+      return BasicFunctions.smartExp(BasicFunctions.deadband(getRightXRaw(), Controllers.joystickDeadband), 1.5);
     } else {
       return BasicFunctions.deadband(getRightXRaw(), Controllers.joystickDeadband);
     }

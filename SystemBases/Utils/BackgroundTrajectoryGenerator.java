@@ -21,7 +21,6 @@ import frc.robot.SyncedLibraries.SystemBases.Swerve.SwerveDriveBase;
  */
 public class BackgroundTrajectoryGenerator {
   private final Future<Trajectory> future;
-  private Trajectory result = null;
 
   /**
    * A class that generates a trajectory in the background using a provided
@@ -38,12 +37,17 @@ public class BackgroundTrajectoryGenerator {
    * @param interiorWaypoints The interior waypoints of the trajectory
    * @param driveBase         The swerve drive base to use for max speed and max
    *                          acceleration
+   * @param margin            The margin to multiply the max speed and max
+   *                          acceleration by
    */
   public BackgroundTrajectoryGenerator(Pose2d startPos, Pose2d endPos, List<Translation2d> interiorWaypoints,
-      SwerveDriveBase driveBase) {
-    TrajectoryConfig config = new TrajectoryConfig(driveBase.maxSpeed, driveBase.maxAcceleration);
+      SwerveDriveBase driveBase, double margin) {
+    TrajectoryConfig config = new TrajectoryConfig(driveBase.maxSpeed.times(margin),
+        driveBase.maxAcceleration.times(margin));
+
     Supplier<Trajectory> function = () -> TrajectoryGenerator.generateTrajectory(
         startPos, interiorWaypoints, endPos, config);
+
     ExecutorService executor = Executors.newSingleThreadExecutor();
     this.future = executor.submit(() -> {
       return function.get();

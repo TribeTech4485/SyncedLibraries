@@ -9,6 +9,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.RelativeEncoder;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.function.BooleanSupplier;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -37,8 +38,8 @@ import edu.wpi.first.wpilibj2.command.PrintCommand;
  */
 public abstract class ManipulatorBase extends Estopable {
   protected int breakerMaxAmps = 20;
-  protected LinkedList<SparkMax> motors = new LinkedList<SparkMax>();
-  protected LinkedList<RelativeEncoder> encoders = new LinkedList<RelativeEncoder>();
+  protected ArrayList<SparkMax> motors = new ArrayList<SparkMax>();
+  protected ArrayList<RelativeEncoder> encoders = new ArrayList<RelativeEncoder>();
   protected BooleanSupplier customSensor = () -> false;
 
   private static final boolean overVoltageProtection = true;

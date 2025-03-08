@@ -9,13 +9,14 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.SyncedLibraries.SystemBases.Swerve.SwerveDriveBase;
 
 public abstract class TeleDriveCommandBase extends Command {
+  private boolean haveTriggersBeenBound = false;
   protected final ControllerBase[] controllers = new ControllerBase[5];
   protected double deadBand = 0.1;
   protected DriveModes driveMode = DriveModes.ROTATION_SPEED;
   protected SwerveDriveBase swerveTrain;
   protected boolean x_locked = false;
-  private boolean haveTriggersBeenBound = false;
   protected boolean allowTurn = false;
+  protected boolean usePOV = false;
 
   public TeleDriveCommandBase(SwerveDriveBase driveTrain, ControllerBase... controllers) {
     addRequirements(driveTrain);
@@ -46,12 +47,15 @@ public abstract class TeleDriveCommandBase extends Command {
       switch (driveMode) {
         case DESIRED_ANGLE:
           if (controllers[0].isXbox || controllers[0].isPS4) {
-            if (controllers[0].getRightX() == 0 && controllers[0].getRightY() == 0) {
+            if (Math.abs(controllers[0].getRightX()) <= deadBand && Math.abs(controllers[0].getRightY()) <= deadBand) {
               // If the joystick is not being used, don't rotate
-              swerveTrain.inputDrivingX_Y(-controllers[0].getRightX(), controllers[0].getRightY(), 0);
+              swerveTrain.inputDrivingX_Y(-controllers[0].getRightY(), controllers[0].getRightX(),
+                  0, usePOV ? controllers[0].getPOV() : -1);
             } else {
-              swerveTrain.inputDrivingX_Y_A(-controllers[0].getRightX(), controllers[0].getRightY(),
-                  new Rotation2d(controllers[0].getLeftX(), controllers[0].getLeftY()), -1);
+              swerveTrain.inputDrivingX_Y_A(-controllers[0].getRightY(), controllers[0].getRightX(),
+                  new Rotation2d(controllers[0].getLeftX(), controllers[0].getLeftY()),
+                  usePOV ? controllers[0].getPOV() : -1);
+
             }
           } else if (controllers[0].isJoystick) {
             swerveTrain.inputDrivingX_Y_A(controllers[0].getLeftX(), controllers[0].getLeftY(),
@@ -62,11 +66,12 @@ public abstract class TeleDriveCommandBase extends Command {
         case ROTATION_SPEED:
           if (controllers[0].isXbox || controllers[0].isPS4) {
             swerveTrain.inputDrivingX_Y(controllers[0].getRightY(), controllers[0].getRightX(),
-                -controllers[0].getLeftX());
+                -controllers[0].getLeftX(),
+                usePOV ? controllers[0].getPOV() : -1);
           } else if (controllers[0].isJoystick) {
             swerveTrain.inputDrivingX_Y(controllers[0].getLeftY(), controllers[0].getLeftX(),
                 allowTurn ? -controllers[0].getRightX() : 0,
-                controllers[0].getPOV());
+                usePOV ? controllers[0].getPOV() : -1);
           }
           break;
       }
@@ -76,7 +81,7 @@ public abstract class TeleDriveCommandBase extends Command {
   }
 
   /**
-   * Keybinds that will be synchronized between all robot drivers
+   * Keybinds that will be synchronized between all robot drivers/years
    * <p>
    * Call this in RobotContainer.configureBindings() for readability
    */
@@ -88,41 +93,72 @@ public abstract class TeleDriveCommandBase extends Command {
     haveTriggersBeenBound = true;
 
     if (controllers[0].isXbox || controllers[0].isPS4) {
-      // Using normal controllers
-      controllers[0].LeftStickPress.and(controllers[0].RightStickPress.negate())
-          .onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(true)));
-      controllers[0].RightStickPress.and(controllers[0].LeftStickPress.negate())
-          .onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(false)));
+      if (false) {
+        // Using normal controllers
+        controllers[0].LeftStickPress.and(controllers[0].RightStickPress.negate())
+            .onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(true)));
+        controllers[0].RightStickPress.and(controllers[0].LeftStickPress.negate())
+            .onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(false)));
 
-      controllers[0].LeftStickPress.and(controllers[0].RightStickPress)
-          .onTrue(new InstantCommand(swerveTrain::enableXLock))
-          .onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(false)))
-          .onTrue(new InstantCommand(() -> x_locked = true))
-          .onFalse(new InstantCommand(swerveTrain::disableXLock))
-          .onFalse(new InstantCommand(() -> x_locked = false));
+        controllers[0].LeftStickPress.and(controllers[0].RightStickPress)
+            .onChange(new InstantCommand(() -> swerveTrain.setSudoMode(false)))
+            .onTrue(new InstantCommand(swerveTrain::enableXLock))
+            .onTrue(new InstantCommand(() -> x_locked = true))
+            .onFalse(new InstantCommand(swerveTrain::disableXLock))
+            .onFalse(new InstantCommand(() -> x_locked = false));
 
-      controllers[0].RightTrigger.onTrue(new InstantCommand(() -> swerveTrain.setBrakeMode(true)));
-      controllers[0].RightTrigger.onFalse(new InstantCommand(() -> swerveTrain.setBrakeMode(false)));
+        controllers[0].RightTrigger
+            .onTrue(new InstantCommand(() -> swerveTrain.setBrakeMode(true)))
+            .onFalse(new InstantCommand(() -> swerveTrain.setBrakeMode(false)));
 
-      controllers[0].LeftTrigger.onTrue(new InstantCommand(() -> swerveTrain.setSlowMode(true)));
-      controllers[0].LeftTrigger.onFalse(new InstantCommand(() -> swerveTrain.setSlowMode(false)));
+        controllers[0].LeftTrigger
+            .onTrue(new InstantCommand(() -> swerveTrain.setSlowMode(true)))
+            .onFalse(new InstantCommand(() -> swerveTrain.setSlowMode(false)));
 
-      // the right one
-      controllers[0].Start.onTrue(new InstantCommand(swerveTrain::resetGyro));
-      // the left one
-      controllers[0].Options.onTrue(new InstantCommand(() -> {
-        // Cancel all other commands using the drive train
-        if (swerveTrain.getCurrentCommand() != this) {
-          swerveTrain.getCurrentCommand().cancel();
-        }
-      }));
+        // the right one
+        controllers[0].Start.onTrue(new InstantCommand(swerveTrain::resetGyro));
 
-      controllers[0].RightBumper
-          // .onTrue(new InstantCommand(() -> driveMode = DriveModes.DESIRED_ANGLE))
-          .onTrue(new InstantCommand(() -> swerveTrain.setFieldRelative(true)));
-      controllers[0].LeftBumper
-          // .onTrue(new InstantCommand(() -> driveMode = DriveModes.ROTATION_SPEED))
-          .onTrue(new InstantCommand(() -> swerveTrain.setFieldRelative(false)));
+        // the left one
+        controllers[0].Options.onTrue(new InstantCommand(() -> {
+          // Cancel all other commands using the drive train
+          if (swerveTrain.getCurrentCommand() != this) {
+            swerveTrain.getCurrentCommand().cancel();
+          }
+        }));
+
+        controllers[0].RightBumper
+            // .onTrue(new InstantCommand(() -> driveMode = DriveModes.DESIRED_ANGLE))
+            .onTrue(new InstantCommand(() -> swerveTrain.setFieldRelative(true)));
+        controllers[0].LeftBumper
+            // .onTrue(new InstantCommand(() -> driveMode = DriveModes.ROTATION_SPEED))
+            .onTrue(new InstantCommand(() -> swerveTrain.setFieldRelative(false)));
+      } else {
+        controllers[0].LeftStickPress
+            .onChange(new InstantCommand(() -> swerveTrain.setSlowMode(false)));
+        controllers[0].RightStickPress
+            .onChange(new InstantCommand(() -> swerveTrain.setSlowMode(true)));
+        controllers[0].LeftStickPress.and(controllers[0].RightStickPress)
+            // .onChange(new InstantCommand(() -> swerveTrain.setSudoMode(false)))
+            .onTrue(new InstantCommand(swerveTrain::enableXLock))
+            .onTrue(new InstantCommand(() -> x_locked = true))
+            .onFalse(new InstantCommand(swerveTrain::disableXLock))
+            .onFalse(new InstantCommand(() -> x_locked = false));
+
+        controllers[0].RightTrigger
+            .onChange(new InstantCommand(() -> swerveTrain.setFieldRelative(true)));
+        controllers[0].LeftTrigger
+            .onChange(new InstantCommand(() -> swerveTrain.setFieldRelative(false)));
+        controllers[0].RightBumper
+            .onChange(new InstantCommand(() -> driveMode = DriveModes.ROTATION_SPEED));
+        controllers[0].LeftBumper
+            .onChange(new InstantCommand(() -> driveMode = DriveModes.DESIRED_ANGLE));
+
+        controllers[0].LeftTrigger
+            .and(controllers[0].RightTrigger)
+            .and(controllers[0].RightBumper)
+            .and(controllers[0].LeftBumper)
+            .onTrue(new InstantCommand(swerveTrain::resetGyro));
+      }
 
     } else if (controllers[0].isJoystick) {
       // Using flight sticks
@@ -156,9 +192,6 @@ public abstract class TeleDriveCommandBase extends Command {
           .onTrue(new InstantCommand(() -> swerveTrain.setBrakeMode(true)));
       controllers[0].buttons[8]
           .onTrue(new InstantCommand(() -> swerveTrain.setBrakeMode(false)));
-
-      // controllers[0].buttons[12]
-      // .onTrue(new InstantCommand(swerveTrain::resetGyro));
     }
   }
 

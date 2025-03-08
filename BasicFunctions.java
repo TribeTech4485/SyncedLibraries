@@ -35,19 +35,6 @@ public class BasicFunctions {
   @Deprecated
   public static void KILLIT(Estopable DriveTrain) {
     Estopable.KILLIT();
-    // DriverStation.reportWarning("ESTOP DriveTrain", false);
-    // DriveTrain.ESTOP();
-    // System.out.println("Done");
-
-    // DriverStation.reportError("KILLING IT", true);
-    // for (Estoppable manipulator : Estoppable._getAllEstoppables()) {
-    // DriverStation.reportWarning("ESTOP " + manipulator.getName(), false);
-    // manipulator.ESTOP();
-    // System.out.println("Done");
-    // }
-
-    // DriverStation.reportError("KILLED IT, EXITING NOW", false);
-    // System.exit(0);
   }
 
   /**
@@ -60,14 +47,5 @@ public class BasicFunctions {
   @Deprecated
   public static void KILLIT() {
     Estopable.KILLIT();
-    // DriverStation.reportError("KILLING IT", true);
-    // for (Estoppable manipulator : Estoppable._getAllEstoppables()) {
-    // DriverStation.reportWarning("ESTOP " + manipulator.getName(), false);
-    // manipulator.ESTOP();
-    // System.out.println("Done");
-    // }
-
-    // DriverStation.reportError("KILLED IT, EXITING NOW", false);
-    // System.exit(0);
   }
 }
