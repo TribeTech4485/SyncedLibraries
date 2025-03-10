@@ -6,10 +6,10 @@ import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class LedBase extends SubsystemBase {
+public abstract class LedBase extends SubsystemBase {
   protected final AddressableLED led;
   protected final AddressableLEDBuffer buffer;
-  final Distance spacing;
+  protected final Distance spacing;
 
   /**
    * @param port       The PWM port number to which the LED strip is connected.
@@ -29,14 +29,18 @@ public class LedBase extends SubsystemBase {
    * Constructs a new LedBase object with a default spacing of 15.44mm.
    *
    * @param port   The PWM port number to which the LED strip is connected.
-   * @param length The length of the LED strip in LEDs.
+   * @param length The length of the LED strip in # of LEDs.
    */
   public LedBase(int port, int length) {
     this(port, length, Millimeters.of(139 / 9));
   }
 
+  /** led.setData(buffer) */
   @Override
   public void periodic() {
     led.setData(buffer);
+    applyPatterns();
   }
+
+  protected abstract void applyPatterns();
 }

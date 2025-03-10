@@ -137,23 +137,28 @@ public abstract class TeleDriveCommandBase extends Command {
             .onChange(new InstantCommand(() -> swerveTrain.setSlowMode(false)));
         controllers[0].RightStickPress
             .onChange(new InstantCommand(() -> swerveTrain.setSlowMode(true)));
+
         controllers[0].LeftStickPress.and(controllers[0].RightStickPress)
-            // .onChange(new InstantCommand(() -> swerveTrain.setSudoMode(false)))
-            .onTrue(new InstantCommand(swerveTrain::enableXLock))
-            .onTrue(new InstantCommand(() -> x_locked = true));
-        controllers[0].LeftStickPress.and(controllers[0].RightStickPress)
-            .and(controllers[0].LeftTrigger.negate()).and(controllers[0].RightTrigger.negate())
-            .onFalse(new InstantCommand(swerveTrain::disableXLock))
-            .onFalse(new InstantCommand(() -> x_locked = false));
+            .onTrue(new InstantCommand(() -> swerveTrain.setSlowMode(false)))
+            .onTrue(new InstantCommand(() -> swerveTrain.setSudoMode(true)))
+            .onFalse(new InstantCommand(() -> swerveTrain.setSudoMode(false)));
 
         controllers[0].RightTrigger
             .onChange(new InstantCommand(() -> swerveTrain.setFieldRelative(true)))
-            // controllers[0].RightBumper
             .onChange(new InstantCommand(() -> driveMode = DriveModes.DESIRED_ANGLE));
         controllers[0].LeftTrigger
             .onChange(new InstantCommand(() -> swerveTrain.setFieldRelative(false)))
-            // controllers[0].LeftBumper
             .onChange(new InstantCommand(() -> driveMode = DriveModes.ROTATION_SPEED));
+
+        controllers[0].LeftTrigger.and(controllers[0].RightTrigger) // Both triggers to enable
+            .onTrue(new InstantCommand(swerveTrain::enableXLock))
+            .onTrue(new InstantCommand(() -> x_locked = true))
+            .onFalse(new InstantCommand(swerveTrain::disableXLock))
+            .onFalse(new InstantCommand(() -> x_locked = false));
+
+        controllers[0].Options // Both triggers to enable
+            .onTrue(new InstantCommand(swerveTrain::enableXLock))
+            .onTrue(new InstantCommand(() -> x_locked = true));
 
         controllers[0].LeftTrigger
             .and(controllers[0].RightTrigger)
