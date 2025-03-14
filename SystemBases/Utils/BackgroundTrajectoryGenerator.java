@@ -46,20 +46,10 @@ public class BackgroundTrajectoryGenerator {
     TrajectoryConfig config = new TrajectoryConfig(driveBase.maxSpeed.times(margin),
         driveBase.maxAcceleration.times(margin));
 
-    Supplier<Trajectory> function = () -> {
-      return TrajectoryGenerator.generateTrajectory(
-          startPos, interiorWaypoints, endPos, config);
-    };
-
-    // trajectory = TrajectoryGenerator.generateTrajectory(
-    //   startPos, interiorWaypoints, endPos, config);
-
 
     ExecutorService executor = Executors.newSingleThreadExecutor();
-    this.future = executor.submit(() -> {
-      return TrajectoryGenerator.generateTrajectory(
-        startPos, interiorWaypoints, endPos, config);
-    });
+    this.future = executor.submit(() -> TrajectoryGenerator.generateTrajectory(
+        startPos, interiorWaypoints, endPos, config));
     executor.shutdown();
   }
 
