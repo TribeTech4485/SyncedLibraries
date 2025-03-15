@@ -66,7 +66,7 @@ public abstract class TeleDriveCommandBase extends Command {
         case ROTATION_SPEED:
           if (controllers[0].isXbox || controllers[0].isPS4) {
             swerveTrain.inputDrivingX_Y(controllers[0].getRightY(), controllers[0].getRightX(),
-                -controllers[0].getLeftX(),
+                -controllers[0].getLeftX() * 0.8,
                 usePOV ? controllers[0].getPOV() : -1);
           } else if (controllers[0].isJoystick) {
             swerveTrain.inputDrivingX_Y(controllers[0].getLeftY(), controllers[0].getLeftX(),
