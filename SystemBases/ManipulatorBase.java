@@ -221,7 +221,13 @@ public abstract class ManipulatorBase extends Estopable {
     }
   }
 
+  /** Inputting -1 sets to the maxBreakerAmps */
   public void setCurrentLimit(int limit) {
+    if (limit == -1) {
+      setCurrentLimit(breakerMaxAmps);
+      return;
+    }
+
     if (limit > breakerMaxAmps) {
       DriverStation.reportWarning(
           "ManipulatorBase: Current limit out of bounds" + limit + " > " + breakerMaxAmps, true);
