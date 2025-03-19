@@ -11,6 +11,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.units.measure.LinearAcceleration;
+import edu.wpi.first.units.measure.LinearVelocity;
 import frc.robot.SyncedLibraries.SystemBases.Swerve.SwerveDriveBase;
 
 /**
@@ -43,9 +45,30 @@ public class BackgroundTrajectoryGenerator {
    */
   public BackgroundTrajectoryGenerator(Pose2d startPos, Pose2d endPos, List<Translation2d> interiorWaypoints,
       SwerveDriveBase driveBase, double margin) {
-    TrajectoryConfig config = new TrajectoryConfig(driveBase.maxSpeed.times(margin),
+    this(startPos, endPos, interiorWaypoints,
+        driveBase.maxSpeed.times(margin),
         driveBase.maxAcceleration.times(margin));
+  }
 
+  /**
+   * A class that generates a trajectory in the background using a provided
+   * function.
+   * The trajectory generation is performed in a separate thread to avoid blocking
+   * the main thread. See inside for why.
+   * <p>
+   * Input a lambda function that returns a trajectory.
+   * To check if the generation is completed, use {@link #isDone()}, then use
+   * {@link #getTrajectory()} to retrieve the result.
+   *
+   * @param startPos          The starting position of the trajectory
+   * @param endPos            The ending position of the trajectory
+   * @param interiorWaypoints The interior waypoints of the trajectory
+   * @param maxSpeed          The maximum speed of the robot
+   * @param maxAcceleration   The maximum acceleration of the robot
+   */
+  public BackgroundTrajectoryGenerator(Pose2d startPos, Pose2d endPos, List<Translation2d> interiorWaypoints,
+      LinearVelocity maxSpeed, LinearAcceleration maxAcceleration) {
+    TrajectoryConfig config = new TrajectoryConfig(maxSpeed, maxAcceleration);
 
     ExecutorService executor = Executors.newSingleThreadExecutor();
     this.future = executor.submit(() -> TrajectoryGenerator.generateTrajectory(
@@ -61,7 +84,7 @@ public class BackgroundTrajectoryGenerator {
    */
   public synchronized Trajectory getTrajectory() {
     try {
-      return future.get(); // Blocks if not completed
+      return future.get(); // Waits if not completed
     } catch (Exception e) {
       System.out.println("Error getting trajectory!! " + e.getMessage());
       e.printStackTrace();

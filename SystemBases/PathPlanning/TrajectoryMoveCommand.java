@@ -1,68 +1,69 @@
 package frc.robot.SyncedLibraries.SystemBases.PathPlanning;
 
-import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
+import frc.robot.SyncedLibraries.SystemBases.Swerve.SwerveDriveBase;
 import frc.robot.SyncedLibraries.SystemBases.Utils.BackgroundTrajectoryGenerator;
 
 public class TrajectoryMoveCommand extends Command {
-  protected Trajectory trajectory;
   protected final BackgroundTrajectoryGenerator generator;
-  protected final HolonomicDriveBase holoDrive;
-  protected final Pose2d initialPose;
-  protected final Timer timer = new Timer();
+  protected final SwerveDriveBase driveBase;
   protected final boolean relativeToInitialPose;
+  protected final HolonomicDriveController holoDrive;
+  protected SwerveControllerCommand swerveControllerCommand;
 
-  public TrajectoryMoveCommand(BackgroundTrajectoryGenerator generator, HolonomicDriveBase driveBase,
-      boolean relativeToInitialPose) {
+  public TrajectoryMoveCommand(BackgroundTrajectoryGenerator generator, HolonomicDriveController holoController,
+      SwerveDriveBase swerveDriveBase, boolean relativeToInitialPose) {
     this.generator = generator;
-    this.holoDrive = driveBase;
-    this.initialPose = driveBase.driveBase.getOdometry().getPoseMeters();
+    this.driveBase = swerveDriveBase;
+    this.holoDrive = holoController;
     this.relativeToInitialPose = relativeToInitialPose;
-  }
-
-  // Called when the command is initially scheduled.
-  @Override
-  public void initialize() {
-    timer.restart();
   }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    retrieveTrajectory();
-    if (trajectory != null) {
-      holoDrive.drive(trajectory.sample(timer.get()),
-          holoDrive.driveBase.getOdometry().getPoseMeters());
+    if (swerveControllerCommand == null) {
+      retrieveTrajectory();
+    }
+    if (swerveControllerCommand != null) {
+      if (!swerveControllerCommand.isScheduled()) {
+        swerveControllerCommand.schedule();
+      }
     } else {
-      holoDrive.driveBase.stop();
+      driveBase.stop();
     }
   }
 
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
-    holoDrive.driveBase.stop();
+    driveBase.stop();
   }
 
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return timer.hasElapsed(trajectory.getTotalTimeSeconds());
+    if (swerveControllerCommand == null) {
+      return false;
+    } else {
+      return swerveControllerCommand.isFinished();
+    }
   }
 
   private void retrieveTrajectory() {
-    if (trajectory == null && generator.isDone()) {
-      trajectory = generator.getTrajectory();
+    if (swerveControllerCommand == null && generator.isDone()) {
+      Trajectory trajectory = generator.getTrajectory();
       if (relativeToInitialPose) {
-        trajectory = trajectory.relativeTo(initialPose);
+        trajectory = trajectory.relativeTo(driveBase.getOdometry().getPoseMeters());
       }
 
-      // start the timer as soon as the trajectory is retrieved as
-      // this is when we start following it
-      timer.reset();
-      timer.start();
+      swerveControllerCommand = new SwerveControllerCommand(
+          trajectory, driveBase.getOdometry()::getPoseMeters, driveBase.getKinematics(), holoDrive,
+          (states) -> driveBase.inputDrivingSpeeds(driveBase.getKinematics().toChassisSpeeds(states), -1),
+          driveBase);
     }
   }
 }

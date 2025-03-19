@@ -7,7 +7,8 @@ import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.SyncedLibraries.SystemBases.AngleManipulatorBase;
 import static edu.wpi.first.units.Units.Radians;
 
-// TODO: PURGE THIS FILE
+// TODO: move ff to here
+
 public class ManipulatorAngleCommand extends Command {
   protected AngleManipulatorBase manipulator;
   protected Angle targetPosition;

@@ -135,6 +135,8 @@ public abstract class ManipulatorBase extends Estopable {
   /**
    * Set multiplier to convert from encoder values to <b>radians/s</b> on
    * manipulator
+   * <p>
+   * Warning: you'll likely need to divide by 50 due to 50 periodics/sec
    */
   public void setSpeedMultiplier(double multiplier) {
     for (SparkMax motor : motors) {

@@ -13,6 +13,8 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.SyncedLibraries.SystemBases.PositionManipulatorBase;
 
+// TODO: PURGE THIS FILE, move to ManipulatorDistanceCommand
+
 /**
  * Nearly identical to the ManipulatorMoveCommand, but with FeedForward
  * controllers

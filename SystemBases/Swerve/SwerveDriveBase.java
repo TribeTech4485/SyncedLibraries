@@ -220,9 +220,9 @@ public abstract class SwerveDriveBase extends Estopable {
   }
 
   public void inputDrivingSpeeds(ChassisSpeeds speeds, int centerOfRotationPOV) {
-    SmartDashboard.putNumber("DriveTrain xSpeed (m/s)", speeds.vxMetersPerSecond);
-    SmartDashboard.putNumber("DriveTrain ySpeed (m/s)", speeds.vyMetersPerSecond);
-    SmartDashboard.putNumber("DriveTrain rotSpeed (rad/s)", speeds.omegaRadiansPerSecond);
+    SmartDashboard.putNumber("DriveTrain target xSpeed (m/s)", speeds.vxMetersPerSecond);
+    SmartDashboard.putNumber("DriveTrain target ySpeed (m/s)", speeds.vyMetersPerSecond);
+    SmartDashboard.putNumber("DriveTrain target rotSpeed (rad/s)", speeds.omegaRadiansPerSecond);
     swerveModuleStates = m_kinematics.toSwerveModuleStates(
         ChassisSpeeds.discretize(speeds, 0.02),
         POVToTranslate2d(centerOfRotationPOV));
@@ -368,6 +368,11 @@ public abstract class SwerveDriveBase extends Estopable {
 
     SmartDashboard.putData("Gyro", m_gyro);
     SmartDashboard.putData("Swerve Drive turn controller", turnController);
+    
+    ChassisSpeeds chassisSpeeds = m_kinematics.toChassisSpeeds(swerveModuleStates);
+    SmartDashboard.putNumber("Current Chassis XSpeed", chassisSpeeds.vxMetersPerSecond);
+    SmartDashboard.putNumber("Current Chassis YSpeed", chassisSpeeds.vyMetersPerSecond);
+    SmartDashboard.putNumber("Current Chassis RotSpeed", chassisSpeeds.omegaRadiansPerSecond);
     updateOdometry();
   }
 
@@ -488,6 +493,7 @@ public abstract class SwerveDriveBase extends Estopable {
     return lockPositions;
   }
 
+  /** Decelerates to a stop */
   public void stop() {
     inputDrivingX_Y(MetersPerSecond.zero(), MetersPerSecond.zero(), RadiansPerSecond.zero(), -1);
   }

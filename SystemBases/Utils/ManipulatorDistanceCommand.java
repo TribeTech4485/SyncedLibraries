@@ -8,7 +8,7 @@ import frc.robot.SyncedLibraries.SystemBases.PositionManipulatorBase;
 
 import static edu.wpi.first.units.Units.Meters;
 
-// TODO: PURGE THIS FILE
+// TODO: move ff to here
 public class ManipulatorDistanceCommand extends Command {
   protected PositionManipulatorBase manipulator;
   protected Distance position;
