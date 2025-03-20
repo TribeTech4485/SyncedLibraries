@@ -368,7 +368,7 @@ public abstract class SwerveDriveBase extends Estopable {
 
     SmartDashboard.putData("Gyro", m_gyro);
     SmartDashboard.putData("Swerve Drive turn controller", turnController);
-    
+
     ChassisSpeeds chassisSpeeds = m_kinematics.toChassisSpeeds(swerveModuleStates);
     SmartDashboard.putNumber("Current Chassis XSpeed", chassisSpeeds.vxMetersPerSecond);
     SmartDashboard.putNumber("Current Chassis YSpeed", chassisSpeeds.vyMetersPerSecond);

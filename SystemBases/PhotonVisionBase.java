@@ -37,8 +37,8 @@ public abstract class PhotonVisionBase extends SubsystemBase {
     hasTarget = latestResult.hasTargets();
     if (hasTarget) {
       mainTarget = latestResult.getBestTarget();
-      x = mainTarget.getYaw();
-      y = mainTarget.getPitch();
+      x = mainTarget.getBestCameraToTarget().getX();
+      y = mainTarget.getBestCameraToTarget().getY();
 
       targetXYAngles[0] = x;
       targetXYAngles[1] = y;

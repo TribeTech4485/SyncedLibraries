@@ -3,6 +3,7 @@ package frc.robot.SyncedLibraries.SystemBases.PathPlanning;
 import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import frc.robot.SyncedLibraries.SystemBases.Swerve.SwerveDriveBase;
 import frc.robot.SyncedLibraries.SystemBases.Utils.BackgroundTrajectoryGenerator;
@@ -40,7 +41,8 @@ public class TrajectoryMoveCommand extends Command {
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
-    driveBase.stop();
+    // driveBase.stop();
+    new RunCommand(() -> driveBase.stop(), driveBase).withTimeout(1).schedule();
   }
 
   // Returns true when the command should end.
