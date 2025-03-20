@@ -8,8 +8,10 @@ import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
@@ -75,12 +77,14 @@ public abstract class SwerveDriveBase extends Estopable {
 
   protected final SwerveModuleState[] lockPositions = generateLockPositions();
   protected SwerveModuleState[] swerveModuleStates = lockPositions;
+  protected SwerveModuleState[] prevSwerveModuleStates = swerveModuleStates;
 
   protected boolean fieldRelative = true;
   protected boolean brakeMode = false;
   protected boolean slowMode = false;
   protected boolean sudoMode = false;
   protected boolean voltageControlMode = false;
+  protected boolean useKinematicsAngle = false;
 
   protected final ProfiledPIDController turnController;
 
@@ -215,7 +219,8 @@ public abstract class SwerveDriveBase extends Estopable {
         MetersPerSecond.of(speeds[1]).unaryMinus(),
         RadiansPerSecond.of(rotationRate).times(slowMode ? 1
             : 1),
-        fieldRelative ? m_gyro.getRotation2d() : Rotation2d.fromDegrees(0)),
+        fieldRelative ? (useKinematicsAngle ? m_odometry.getPoseMeters().getRotation() : m_gyro.getRotation2d())
+            : Rotation2d.fromDegrees(0)),
         centerOfRotationPOV);
   }
 
@@ -243,7 +248,9 @@ public abstract class SwerveDriveBase extends Estopable {
     SmartDashboard.putNumber("AAAA Desired Angle", desiredTheta.getDegrees());
     turnController.setGoal(desiredTheta.getRadians());
     inputDrivingX_Y(xSpeed, ySpeed,
-        RadiansPerSecond.of(-turnController.calculate(Math.toRadians(m_gyro.getAngle() % 360))));
+        RadiansPerSecond.of(-turnController.calculate(Math.toRadians(
+            useKinematicsAngle ? m_odometry.getPoseMeters().getRotation().getDegrees()
+                : m_gyro.getAngle() % 360))));
   }
 
   /**
@@ -341,14 +348,30 @@ public abstract class SwerveDriveBase extends Estopable {
 
   /** Updates the field relative position of the robot. */
   public void updateOdometry() {
-    m_odometry.update(
-        m_gyro.getRotation2d(),
-        new SwerveModulePosition[] {
-            m_frontLeft.getPosition(),
-            m_frontRight.getPosition(),
-            m_backLeft.getPosition(),
-            m_backRight.getPosition()
-        });
+    SwerveModuleState[] measuredStatesDiff = new SwerveModuleState[4];
+    for (int i = 0; i < 4; i++) {
+      measuredStatesDiff[i] = new SwerveModuleState(
+          (swerveModuleStates[i].speedMetersPerSecond - prevSwerveModuleStates[i].speedMetersPerSecond),
+          swerveModuleStates[i].angle);
+      prevSwerveModuleStates[i] = swerveModuleStates[i];
+    }
+    ChassisSpeeds chassisStateDiff = m_kinematics.toChassisSpeeds(measuredStatesDiff);
+
+    if (useKinematicsAngle) {
+      m_odometry.resetPose(new Pose2d().exp(
+          new Twist2d(chassisStateDiff.vxMetersPerSecond,
+              chassisStateDiff.vyMetersPerSecond,
+              chassisStateDiff.omegaRadiansPerSecond)));
+    } else {
+      m_odometry.update(
+          m_gyro.getRotation2d(),
+          new SwerveModulePosition[] {
+              m_frontLeft.getPosition(),
+              m_frontRight.getPosition(),
+              m_backLeft.getPosition(),
+              m_backRight.getPosition()
+          });
+    }
   }
 
   @Override
