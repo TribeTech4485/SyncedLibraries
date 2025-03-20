@@ -84,7 +84,7 @@ public abstract class SwerveDriveBase extends Estopable {
   protected boolean slowMode = false;
   protected boolean sudoMode = false;
   protected boolean voltageControlMode = false;
-  protected boolean useKinematicsAngle = false;
+  protected boolean useKinematicsAngle = true;
 
   protected final ProfiledPIDController turnController;
 
@@ -348,21 +348,13 @@ public abstract class SwerveDriveBase extends Estopable {
 
   /** Updates the field relative position of the robot. */
   public void updateOdometry() {
-    SwerveModuleState[] measuredStatesDiff = new SwerveModuleState[4];
-    SwerveModuleState[] liveStates = getLiveStates();
-    for (int i = 0; i < 4; i++) {
-      measuredStatesDiff[i] = new SwerveModuleState(
-          (liveStates[i].speedMetersPerSecond - prevSwerveModuleStates[i].speedMetersPerSecond),
-          liveStates[i].angle);
-      prevSwerveModuleStates[i] = liveStates[i];
-    }
-
     if (useKinematicsAngle) {
-      ChassisSpeeds chassisStateDiff = m_kinematics.toChassisSpeeds(measuredStatesDiff);
+      ChassisSpeeds liveSpeed = m_kinematics.toChassisSpeeds(getLiveStates());
       m_odometry.resetPose(m_odometry.getPoseMeters().exp(
-          new Twist2d(chassisStateDiff.vxMetersPerSecond,
-              chassisStateDiff.vyMetersPerSecond,
-              chassisStateDiff.omegaRadiansPerSecond)));
+          new Twist2d(liveSpeed.vxMetersPerSecond * 0.02,
+              liveSpeed.vyMetersPerSecond * 0.02,
+              liveSpeed.omegaRadiansPerSecond * 0.02)));
+      // TODO: Pull in vision data to update odometry
     } else {
       m_odometry.update(
           m_gyro.getRotation2d(),
@@ -484,7 +476,12 @@ public abstract class SwerveDriveBase extends Estopable {
 
   /** Zeros the heading, reccomended for Field Oriented driving */
   public void resetGyro() {
-    m_gyro.zeroYaw();
+    if (useKinematicsAngle) {
+      m_odometry.resetPose(new Pose2d(m_odometry.getPoseMeters().getTranslation(),
+          Rotation2d.fromDegrees(0)));
+    } else {
+      m_gyro.zeroYaw();
+    }
   }
 
   public void setDriveAmps(int amps) {
