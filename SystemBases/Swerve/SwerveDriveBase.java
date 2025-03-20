@@ -349,16 +349,17 @@ public abstract class SwerveDriveBase extends Estopable {
   /** Updates the field relative position of the robot. */
   public void updateOdometry() {
     SwerveModuleState[] measuredStatesDiff = new SwerveModuleState[4];
+    SwerveModuleState[] liveStates = getLiveStates();
     for (int i = 0; i < 4; i++) {
       measuredStatesDiff[i] = new SwerveModuleState(
-          (swerveModuleStates[i].speedMetersPerSecond - prevSwerveModuleStates[i].speedMetersPerSecond),
-          swerveModuleStates[i].angle);
-      prevSwerveModuleStates[i] = swerveModuleStates[i];
+          (liveStates[i].speedMetersPerSecond - prevSwerveModuleStates[i].speedMetersPerSecond),
+          liveStates[i].angle);
+      prevSwerveModuleStates[i] = liveStates[i];
     }
-    ChassisSpeeds chassisStateDiff = m_kinematics.toChassisSpeeds(measuredStatesDiff);
 
     if (useKinematicsAngle) {
-      m_odometry.resetPose(new Pose2d().exp(
+      ChassisSpeeds chassisStateDiff = m_kinematics.toChassisSpeeds(measuredStatesDiff);
+      m_odometry.resetPose(m_odometry.getPoseMeters().exp(
           new Twist2d(chassisStateDiff.vxMetersPerSecond,
               chassisStateDiff.vyMetersPerSecond,
               chassisStateDiff.omegaRadiansPerSecond)));
@@ -381,13 +382,7 @@ public abstract class SwerveDriveBase extends Estopable {
     setDesiredStates();
 
     NetworkTablesSwervePublisherDesired.set(swerveModuleStates);
-    NetworkTablesSwervePublisherCurrent.set(
-        new SwerveModuleState[] {
-            m_frontLeft.getState(),
-            m_frontRight.getState(),
-            m_backLeft.getState(),
-            m_backRight.getState()
-        });
+    NetworkTablesSwervePublisherCurrent.set(getLiveStates());
 
     SmartDashboard.putData("Gyro", m_gyro);
     SmartDashboard.putData("Swerve Drive turn controller", turnController);
@@ -397,6 +392,15 @@ public abstract class SwerveDriveBase extends Estopable {
     SmartDashboard.putNumber("Current Chassis YSpeed", chassisSpeeds.vyMetersPerSecond);
     SmartDashboard.putNumber("Current Chassis RotSpeed", chassisSpeeds.omegaRadiansPerSecond);
     updateOdometry();
+  }
+
+  private SwerveModuleState[] getLiveStates() {
+    return new SwerveModuleState[] {
+        m_frontLeft.getState(),
+        m_frontRight.getState(),
+        m_backLeft.getState(),
+        m_backRight.getState()
+    };
   }
 
   /** Send the positions to the modules */
