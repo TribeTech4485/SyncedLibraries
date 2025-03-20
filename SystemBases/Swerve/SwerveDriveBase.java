@@ -357,23 +357,27 @@ public abstract class SwerveDriveBase extends Estopable {
         modules[0].getDrivePIDController().pidConfig.maxLinearVelocity.in(MetersPerSecond));
     setDesiredStates();
 
+    SwerveModuleState[] liveStates = getLiveStates();
     NetworkTablesSwervePublisherDesired.set(swerveModuleStates);
-    NetworkTablesSwervePublisherCurrent.set(
-        new SwerveModuleState[] {
-            m_frontLeft.getState(),
-            m_frontRight.getState(),
-            m_backLeft.getState(),
-            m_backRight.getState()
-        });
+    NetworkTablesSwervePublisherCurrent.set(liveStates);
 
     SmartDashboard.putData("Gyro", m_gyro);
     SmartDashboard.putData("Swerve Drive turn controller", turnController);
 
-    ChassisSpeeds chassisSpeeds = m_kinematics.toChassisSpeeds(swerveModuleStates);
+    ChassisSpeeds chassisSpeeds = m_kinematics.toChassisSpeeds(liveStates);
     SmartDashboard.putNumber("Current Chassis XSpeed", chassisSpeeds.vxMetersPerSecond);
     SmartDashboard.putNumber("Current Chassis YSpeed", chassisSpeeds.vyMetersPerSecond);
     SmartDashboard.putNumber("Current Chassis RotSpeed", chassisSpeeds.omegaRadiansPerSecond);
     updateOdometry();
+  }
+
+  private SwerveModuleState[] getLiveStates() {
+    return new SwerveModuleState[] {
+        m_frontLeft.getState(),
+        m_frontRight.getState(),
+        m_backLeft.getState(),
+        m_backRight.getState()
+    };
   }
 
   /** Send the positions to the modules */
