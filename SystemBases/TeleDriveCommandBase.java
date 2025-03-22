@@ -11,11 +11,12 @@ import frc.robot.SyncedLibraries.SystemBases.Swerve.SwerveDriveBase;
 public abstract class TeleDriveCommandBase extends Command {
   private boolean haveTriggersBeenBound = false;
   protected final ControllerBase[] controllers = new ControllerBase[5];
-  protected double deadBand = 0.1;
+  protected double deadBand = 0.05;
   protected DriveModes driveMode = DriveModes.DESIRED_ANGLE;
   protected SwerveDriveBase swerveTrain;
   protected boolean x_locked = false;
   protected boolean allowTurn = true;
+  /** Use driver POV for changing center of rotation */
   protected boolean usePOV = false;
 
   public TeleDriveCommandBase(SwerveDriveBase driveTrain, ControllerBase... controllers) {
