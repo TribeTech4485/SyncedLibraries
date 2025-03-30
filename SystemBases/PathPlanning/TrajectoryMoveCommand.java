@@ -1,6 +1,11 @@
 package frc.robot.SyncedLibraries.SystemBases.PathPlanning;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
+
 import edu.wpi.first.math.controller.HolonomicDriveController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -12,6 +17,7 @@ public class TrajectoryMoveCommand extends Command {
   protected final BackgroundTrajectoryGenerator generator;
   protected final SwerveDriveBase driveBase;
   protected final boolean relativeToInitialPose;
+  protected double stopTimeMultiplier = 1;
   protected final HolonomicDriveController holoDrive;
   protected SwerveControllerCommand swerveControllerCommand;
 
@@ -21,6 +27,11 @@ public class TrajectoryMoveCommand extends Command {
     this.driveBase = swerveDriveBase;
     this.holoDrive = holoController;
     this.relativeToInitialPose = relativeToInitialPose;
+  }
+
+  @Override
+  public void initialize() {
+    swerveControllerCommand = null;
   }
 
   // Called every time the scheduler runs while the command is scheduled.
@@ -41,8 +52,10 @@ public class TrajectoryMoveCommand extends Command {
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
-    // driveBase.stop();
-    new RunCommand(() -> driveBase.stop(), driveBase).withTimeout(1).schedule();
+    new RunCommand(() -> driveBase.stop(), driveBase).withTimeout(
+        driveBase.maxSpeed.in(MetersPerSecond) / driveBase.maxAcceleration.in(MetersPerSecondPerSecond)
+            * stopTimeMultiplier)
+        .schedule();
   }
 
   // Returns true when the command should end.
@@ -59,13 +72,22 @@ public class TrajectoryMoveCommand extends Command {
     if (swerveControllerCommand == null && generator.isDone()) {
       Trajectory trajectory = generator.getTrajectory();
       if (relativeToInitialPose) {
-        trajectory = trajectory.relativeTo(driveBase.getOdometry().getPoseMeters());
+        trajectory = trajectory
+            .relativeTo(driveBase.getOdometry().getPoseMeters());
       }
 
       swerveControllerCommand = new SwerveControllerCommand(
-          trajectory, driveBase.getOdometry()::getPoseMeters, driveBase.getKinematics(), holoDrive,
+          trajectory,
+          () -> new Pose2d(driveBase.getOdometry().getPoseMeters().getTranslation(),
+              driveBase.getGyroAngle()),
+          driveBase.getKinematics(), holoDrive,
           (states) -> driveBase.inputDrivingSpeeds(driveBase.getKinematics().toChassisSpeeds(states), -1),
           driveBase);
     }
+  }
+
+  public TrajectoryMoveCommand setStopTimeMultiplier(double stopTimeMultiplier) {
+    this.stopTimeMultiplier = stopTimeMultiplier;
+    return this;
   }
 }

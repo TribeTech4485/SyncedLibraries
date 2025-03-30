@@ -45,6 +45,13 @@ public abstract class PositionManipulatorBase extends ManipulatorBase {
   /** If null, run the {@link #setPositionPID(double, double, double, double)} */
   protected final ManipulatorDistanceCommand moveCommand;
 
+  /**
+   * Create a manipulator with a PID controller
+   * 
+   * @param pidConfig       The PID values
+   * @param feedForwardType The type of feedforward controller to use, if unknown
+   *                        use SimpleMotor
+   */
   public PositionManipulatorBase(PIDConfig pidConfig, ManipulatorFFDistanceCommand.FeedForwardType feedForwardType) {
     this.pidConfig = pidConfig;
     moveCommand = new ManipulatorFFDistanceCommand(this, getPosition(), pidConfig, feedForwardType);

@@ -132,4 +132,8 @@ public class ManipulatorFFAngleCommand extends ManipulatorAngleCommand {
   public enum FeedForwardType {
     SimpleMotor, Elevator, Arm
   }
+
+  public void resetPID() {
+    pidProfiled.reset(new TrapezoidProfile.State(manipulator.getAngle().in(Radians), 0));
+  }
 }

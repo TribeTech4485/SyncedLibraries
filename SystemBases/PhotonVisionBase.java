@@ -4,6 +4,8 @@ import java.util.List;
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
+
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -13,6 +15,7 @@ public abstract class PhotonVisionBase extends SubsystemBase {
   public PhotonPipelineResult latestResult;
   public List<PhotonTrackedTarget> targets;
   public PhotonTrackedTarget mainTarget;
+  public final Timer timeSinceLastSeen = new Timer();
   /**
    * 0 is x, 1 is y <br>
    * positive is right/up
@@ -43,6 +46,7 @@ public abstract class PhotonVisionBase extends SubsystemBase {
       targetXYAngles[0] = x;
       targetXYAngles[1] = y;
       targetDistance = mainTarget.getBestCameraToTarget().getTranslation().getX();
+      timeSinceLastSeen.restart();
     }
 
     SmartDashboard.putNumber("TargetX", x);

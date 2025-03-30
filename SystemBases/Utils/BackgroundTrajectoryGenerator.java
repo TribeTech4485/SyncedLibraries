@@ -74,6 +74,7 @@ public class BackgroundTrajectoryGenerator {
     this.future = executor.submit(() -> TrajectoryGenerator.generateTrajectory(
         startPos, interiorWaypoints, endPos, config));
     executor.shutdown();
+    System.out.println("Generating trajectory from " + startPos + " to " + endPos);
   }
 
   /**

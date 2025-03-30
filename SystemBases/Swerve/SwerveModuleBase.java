@@ -191,6 +191,8 @@ public abstract class SwerveModuleBase extends Estopable {
     SmartDashboard.putNumber(getName() + " swerve driving speed", m_driveEncoder.getVelocity());
     SmartDashboard.putNumber(getName() + " swerve driving speed setpoint", driveVelFFController.getSetpoint());
     SmartDashboard.putNumber(getName() + " swerve driving power", m_driveMotor.get());
+
+    SmartDashboard.putNumber(getName() + " swerve driving distance", m_driveEncoder.getPosition());
   }
 
   public void setDriveBrakeMode(boolean brake) {
@@ -296,5 +298,9 @@ public abstract class SwerveModuleBase extends Estopable {
   public boolean getDriveBrakeMode() {
     return brakeMode;
     // return m_driveMotor.configAccessor.getIdleMode() == IdleMode.kBrake;
+  }
+
+  public void resetDriveEncoder() {
+    m_driveEncoder.setPosition(0);
   }
 }

@@ -7,6 +7,7 @@ package frc.robot.SyncedLibraries.SystemBases;
 import java.util.LinkedList;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /** A {@link SubsystemBase}, but you have to have an ESTOP function */
@@ -67,6 +68,10 @@ public abstract class Estopable extends SubsystemBase {
    */
   public static void KILLIT() {
     DriverStation.reportError("KILLING IT", true);
+
+    DriverStation.reportWarning("Canceling all commands", false);
+    CommandScheduler.getInstance().cancelAll();
+
     for (Estopable stopable : allEstoppables) {
       DriverStation.reportWarning("ESTOPing " + stopable.getName(), false);
       stopable.ESTOP();
@@ -77,8 +82,20 @@ public abstract class Estopable extends SubsystemBase {
       DriverStation.reportError("KILLED IT, EXITING NOW", false);
       System.exit(0);
     } else {
-      DriverStation.reportError("CONNECTED TO FMS, NOT KILLING THE CODE", false);
+      DriverStation.reportError("NOT KILLING THE CODE, likely due to FMS", false);
     }
+  }
+
+  /**
+   * <b>ONLY FOR USE IN CASE OF AN <i>EMERGENCY
+   * <p>
+   * NO TOUCHIE</i></b>
+   */
+  public static void KILLIT(boolean allowSysExit) {
+    boolean previousStopCondition = allowFullEstop;
+    allowFullEstop = allowSysExit;
+    KILLIT();
+    allowFullEstop = previousStopCondition;
   }
 
   /**

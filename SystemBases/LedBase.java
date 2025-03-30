@@ -4,6 +4,8 @@ import static edu.wpi.first.units.Units.Millimeters;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public abstract class LedBase extends SubsystemBase {
@@ -43,4 +45,21 @@ public abstract class LedBase extends SubsystemBase {
   }
 
   protected abstract void applyPatterns();
+
+  /**
+   * If not set, returns random color.
+   * 
+   * @return The color of the alliance, fails to blue if no data is available.
+   */
+  protected Color getAllianceColor() {
+    try {
+      if (DriverStation.getAlliance().get() == DriverStation.Alliance.Blue) {
+        return Color.kBlue;
+      } else {
+        return Color.kRed;
+      }
+    } catch (Exception e) {
+      return Color.kYellow;
+    }
+  }
 }

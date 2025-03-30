@@ -14,11 +14,13 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearAcceleration;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 
 /** A class to store PID values to easily transfer between classes */
-public class PIDConfig {
+public class PIDConfig implements Sendable {
   public double P = 0;
   public double I = 0;
   public double D = 0;
@@ -204,5 +206,25 @@ public class PIDConfig {
     } else {
       DriverStation.reportError("Invalid velocity unit", true);
     }
+  }
+
+  @Override
+  public void initSendable(SendableBuilder builder) {
+    builder.addDoubleProperty("P", () -> P, (value) -> P = value);
+    builder.addDoubleProperty("I", () -> I, (value) -> I = value);
+    builder.addDoubleProperty("D", () -> D, (value) -> D = value);
+    builder.addDoubleProperty("S", () -> S, (value) -> S = value);
+    builder.addDoubleProperty("V", () -> V, (value) -> V = value);
+    builder.addDoubleProperty("A", () -> A, (value) -> A = value);
+    builder.addDoubleProperty("G", () -> G, (value) -> G = value);
+    builder.addDoubleProperty("maxLinearVelocity m/s", () -> maxLinearVelocity.in(MetersPerSecond),
+        (value) -> maxLinearVelocity = MetersPerSecond.of(value));
+    builder.addDoubleProperty("maxLinearAcceleration m/s^2", () -> maxLinearAcceleration.in(MetersPerSecondPerSecond),
+        (value) -> maxLinearAcceleration = MetersPerSecondPerSecond.of(value));
+    builder.addDoubleProperty("maxAngularVelocity rad/s", () -> maxAngularVelocity.in(RadiansPerSecond),
+        (value) -> maxAngularVelocity = RadiansPerSecond.of(value));
+    builder.addDoubleProperty("maxAngularAcceleration rad/s^2",
+        () -> maxAngularAcceleration.in(RadiansPerSecondPerSecond),
+        (value) -> maxAngularAcceleration = RadiansPerSecondPerSecond.of(value));
   }
 }

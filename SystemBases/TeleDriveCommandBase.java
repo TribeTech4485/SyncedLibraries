@@ -14,7 +14,7 @@ public abstract class TeleDriveCommandBase extends Command {
   protected double deadBand = 0.05;
   protected DriveModes driveMode = DriveModes.DESIRED_ANGLE;
   protected SwerveDriveBase swerveTrain;
-  protected boolean x_locked = false;
+  protected boolean inputDisabled = false;
   protected boolean allowTurn = true;
   /** Use driver POV for changing center of rotation */
   protected boolean usePOV = false;
@@ -44,7 +44,7 @@ public abstract class TeleDriveCommandBase extends Command {
     if (!DriverStation.isTeleopEnabled()) {
       return;
     }
-    if (!x_locked) {
+    if (!inputDisabled) {
       switch (driveMode) {
         case DESIRED_ANGLE:
           if (controllers[0].isXbox || controllers[0].isPS4) {
@@ -113,13 +113,13 @@ public abstract class TeleDriveCommandBase extends Command {
 
       controllers[0].LeftTrigger.and(controllers[0].RightTrigger) // Both triggers to enable
           .onTrue(new InstantCommand(swerveTrain::enableXLock))
-          .onTrue(new InstantCommand(() -> x_locked = true))
+          .onTrue(new InstantCommand(() -> inputDisabled = true))
           .onFalse(new InstantCommand(swerveTrain::disableXLock))
-          .onFalse(new InstantCommand(() -> x_locked = false));
+          .onFalse(new InstantCommand(() -> inputDisabled = false));
 
       controllers[0].Options // Both triggers to enable
           .onTrue(new InstantCommand(swerveTrain::enableXLock))
-          .onTrue(new InstantCommand(() -> x_locked = true));
+          .onTrue(new InstantCommand(() -> inputDisabled = true));
 
       controllers[0].LeftTrigger
           .and(controllers[0].RightTrigger)
@@ -148,12 +148,12 @@ public abstract class TeleDriveCommandBase extends Command {
 
       controllers[0].buttons[6]
           .onTrue(new InstantCommand(swerveTrain::enableXLock))
-          .onTrue(new InstantCommand(() -> x_locked = true))
+          .onTrue(new InstantCommand(() -> inputDisabled = true))
           .onFalse(new InstantCommand(swerveTrain::disableXLock))
-          .onFalse(new InstantCommand(() -> x_locked = false));
+          .onFalse(new InstantCommand(() -> inputDisabled = false));
       controllers[0].buttons[9]
           .onTrue(new InstantCommand(swerveTrain::enableXLock))
-          .onTrue(new InstantCommand(() -> x_locked = true));
+          .onTrue(new InstantCommand(() -> inputDisabled = true));
 
       controllers[0].buttons[7]
           .onTrue(new InstantCommand(() -> swerveTrain.setBrakeMode(true)));
@@ -164,5 +164,15 @@ public abstract class TeleDriveCommandBase extends Command {
 
   protected enum DriveModes {
     DESIRED_ANGLE, ROTATION_SPEED
+  }
+
+  /** Stops DRIVING input */
+  public void disable() {
+    inputDisabled = true;
+  }
+
+  /** Enables DRIVING input */
+  public void enable() {
+    inputDisabled = false;
   }
 }

@@ -16,6 +16,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.units.measure.AngularAcceleration;
@@ -24,6 +25,8 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -128,6 +131,8 @@ public abstract class SwerveDriveBase extends Estopable {
     m_backRight = modules[3];
     this.modules = modules;
 
+    swerveModuleStates = getLiveStates();
+
     m_gyro = new AHRS(NavXComType.kMXP_SPI);
     m_gyro.reset();
     m_gyro.zeroYaw();
@@ -160,6 +165,27 @@ public abstract class SwerveDriveBase extends Estopable {
     // maxAccel.in(MetersPerSecondPerSecond)));
     drivingAccelFilter = new SlewLimiter2d(maxAccel.in(MetersPerSecondPerSecond));
     turnRateLimiter = new SlewRateLimiter(maxRotationAccel.in(RadiansPerSecondPerSecond));
+
+    SmartDashboard.putData("Swerve Drive", new Sendable() {
+      @Override
+      public void initSendable(SendableBuilder builder) {
+        builder.setSmartDashboardType("SwerveDrive");
+
+        builder.addDoubleProperty("Front Left Angle", () -> m_frontLeft.getState().angle.getRadians(), null);
+        builder.addDoubleProperty("Front Left Velocity", () -> m_frontLeft.getState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Front Right Angle", () -> m_frontRight.getState().angle.getRadians(), null);
+        builder.addDoubleProperty("Front Right Velocity", () -> m_frontRight.getState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Back Left Angle", () -> m_backLeft.getState().angle.getRadians(), null);
+        builder.addDoubleProperty("Back Left Velocity", () -> m_backLeft.getState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Back Right Angle", () -> m_backRight.getState().angle.getRadians(), null);
+        builder.addDoubleProperty("Back Right Velocity", () -> m_backRight.getState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Robot Angle", () -> m_gyro.getRotation2d().getRadians(), null);
+      }
+    });
   }
 
   public void enableXLock() {
@@ -170,6 +196,14 @@ public abstract class SwerveDriveBase extends Estopable {
 
   public void disableXLock() {
     setDriveBrakeMode(brakeMode);
+  }
+
+  public Rotation2d getGyroAngle() {
+    return m_gyro.getRotation2d();
+  }
+
+  public AHRS getGyro() {
+    return m_gyro;
   }
 
   protected void setDriveBrakeMode(boolean brakeMode) {
@@ -240,7 +274,6 @@ public abstract class SwerveDriveBase extends Estopable {
    */
   public void inputDrivingX_Y_A(LinearVelocity xSpeed, LinearVelocity ySpeed, Rotation2d desiredTheta,
       int centerOfRotationPOV) {
-    SmartDashboard.putNumber("AAAA Desired Angle", desiredTheta.getDegrees());
     turnController.setGoal(desiredTheta.getRadians());
     inputDrivingX_Y(xSpeed, ySpeed,
         RadiansPerSecond.of(-turnController.calculate(Math.toRadians(m_gyro.getAngle() % 360))));
@@ -367,8 +400,13 @@ public abstract class SwerveDriveBase extends Estopable {
     ChassisSpeeds chassisSpeeds = m_kinematics.toChassisSpeeds(liveStates);
     SmartDashboard.putNumber("Current Chassis XSpeed", chassisSpeeds.vxMetersPerSecond);
     SmartDashboard.putNumber("Current Chassis YSpeed", chassisSpeeds.vyMetersPerSecond);
+    SmartDashboard.putNumber("AAAA Desired Angle",
+        ((((Units.radiansToDegrees(turnController.getSetpoint().position)) % 360) + 180) % 360) - 180);
     SmartDashboard.putNumber("Current Chassis RotSpeed", chassisSpeeds.omegaRadiansPerSecond);
+    SmartDashboard.putBoolean("Gyro connected", m_gyro.isConnected());
+    SmartDashboard.putNumber("Gyro rate", m_gyro.getRate());
     updateOdometry();
+
   }
 
   private SwerveModuleState[] getLiveStates() {
@@ -378,6 +416,10 @@ public abstract class SwerveDriveBase extends Estopable {
         m_backLeft.getState(),
         m_backRight.getState()
     };
+  }
+
+  public ChassisSpeeds getLiveChassisSpeed() {
+    return m_kinematics.toChassisSpeeds(getLiveStates());
   }
 
   /** Send the positions to the modules */
@@ -481,6 +523,12 @@ public abstract class SwerveDriveBase extends Estopable {
 
   public SwerveDriveOdometry getOdometry() {
     return m_odometry;
+  }
+
+  public void resetDriveEncoders() {
+    for (SwerveModuleBase module : modules) {
+      module.resetDriveEncoder();
+    }
   }
 
   /**

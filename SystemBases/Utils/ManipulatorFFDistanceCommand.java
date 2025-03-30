@@ -119,7 +119,8 @@ public class ManipulatorFFDistanceCommand extends ManipulatorDistanceCommand {
   @Override
   public void initialize() {
     manipulator.stop();
-    pidProfiled.reset(new TrapezoidProfile.State(manipulator.getPosition().in(Meters), 0));
+    pidProfiled.reset(new TrapezoidProfile.State(manipulator.getPosition().in(Meters),
+        manipulator.getVelocity().in(MetersPerSecond)));
     pidProfiled.setGoal(position.in(Meters));
   }
 
