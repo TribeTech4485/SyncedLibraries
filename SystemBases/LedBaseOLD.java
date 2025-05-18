@@ -18,6 +18,7 @@ import java.util.List;
  * </code>
  * </pre>
  */
+@Deprecated
 public class LedBaseOLD extends SubsystemBase {
   public AddressableLED led;
   public LedSection[] sections;

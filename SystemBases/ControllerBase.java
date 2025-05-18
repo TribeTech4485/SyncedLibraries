@@ -22,6 +22,9 @@ public class ControllerBase {
   public final boolean isJoystick;
   public final int port;
 
+  protected double joystickDeadband;
+  protected double triggerDeadband;
+
   public CommandXboxController commObjectX;
   public XboxController objectX;
   public CommandPS4Controller commObjectPS4;
@@ -100,6 +103,9 @@ public class ControllerBase {
       // initAsGhost();
     }
     ESTOPCondition.onTrue(new InstantCommand(Estopable::KILLIT));
+
+    joystickDeadband = Controllers.joystickDeadband;
+    triggerDeadband = Controllers.triggerDeadband;
   }
 
   private void initAsJoystick(int port) {
@@ -384,36 +390,36 @@ public class ControllerBase {
 
   /** If joystick: X-axis */
   public double getLeftX() {
-    return BasicFunctions.deadband(getLeftXRaw(), Controllers.joystickDeadband);
+    return BasicFunctions.deadband(getLeftXRaw(), joystickDeadband);
   }
 
   /** If joystick: Y-axis */
   public double getLeftY() {
-    return BasicFunctions.deadband(getLeftYRaw(), Controllers.joystickDeadband);
+    return BasicFunctions.deadband(getLeftYRaw(), joystickDeadband);
   }
 
   /** If joystick: Twist-axis */
   public double getRightX() {
     if (isJoystick) {
-      return BasicFunctions.smartExp(BasicFunctions.deadband(getRightXRaw(), Controllers.joystickDeadband), 1.5);
+      return BasicFunctions.smartExp(BasicFunctions.deadband(getRightXRaw(), joystickDeadband), 1.5);
     } else {
-      return BasicFunctions.deadband(getRightXRaw(), Controllers.joystickDeadband);
+      return BasicFunctions.deadband(getRightXRaw(), joystickDeadband);
     }
   }
 
   /** If joystick: Throttle-axis */
   public double getRightY() {
-    return BasicFunctions.deadband(getRightYRaw(), Controllers.joystickDeadband);
+    return BasicFunctions.deadband(getRightYRaw(), joystickDeadband);
   }
 
   /** If joystick: 1 or 0 if trigger pressed */
   public double getLeftTrigger() {
-    return BasicFunctions.deadband(getLeftTriggerRaw(), Controllers.triggerDeadband);
+    return BasicFunctions.deadband(getLeftTriggerRaw(), triggerDeadband);
   }
 
   /** If joystick: 1 or 0 if trigger pressed */
   public double getRightTrigger() {
-    return BasicFunctions.deadband(getRightTriggerRaw(), Controllers.triggerDeadband);
+    return BasicFunctions.deadband(getRightTriggerRaw(), triggerDeadband);
   }
 
   /**

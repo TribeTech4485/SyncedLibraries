@@ -166,12 +166,12 @@ public abstract class TeleDriveCommandBase extends Command {
     DESIRED_ANGLE, ROTATION_SPEED
   }
 
-  /** Stops DRIVING input */
+  /** Stops <strong>DRIVING</strong> input */
   public void disable() {
     inputDisabled = true;
   }
 
-  /** Enables DRIVING input */
+  /** Enables <strong>DRIVING</strong> input */
   public void enable() {
     inputDisabled = false;
   }

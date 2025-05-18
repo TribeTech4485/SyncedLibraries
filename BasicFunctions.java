@@ -4,6 +4,11 @@ import frc.robot.SyncedLibraries.SystemBases.ControllerBase;
 import frc.robot.SyncedLibraries.SystemBases.Estopable;
 
 public class BasicFunctions {
+  /**
+   * Deadband that includes increased slope for full range of motion
+   * <p>
+   * Inputs must be from -1 to 1
+   */
   public static double deadband(double input, double deadband) {
     if (Math.abs(input) < deadband) {
       return 0;
@@ -12,6 +17,7 @@ public class BasicFunctions {
     }
   }
 
+  /** Exponent that keeps the sign of the input */
   public static double smartExp(double x, double exponent) {
     double result = Math.pow(x, exponent);
     if (Math.signum(result) == Math.signum(x)) {
@@ -20,6 +26,7 @@ public class BasicFunctions {
     return -result;
   }
 
+  @Deprecated
   public static interface ControllerRunnable {
     public void run(ControllerBase controller);
   }
@@ -29,8 +36,7 @@ public class BasicFunctions {
    * <p>
    * YES, ACTUALLY
    * 
-   * @param DriveTrain
-   * @deprecated Use "Estoppable.KILLIT()" instead
+   * @deprecated Use {@link @Estopable#KILLIT()} instead
    */
   @Deprecated
   public static void KILLIT(Estopable DriveTrain) {

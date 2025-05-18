@@ -3,18 +3,12 @@ package frc.robot.SyncedLibraries.SystemBases;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.EncoderConfig;
-import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.SyncedLibraries.SystemBases.Utils.ManipulatorDistanceCommand;
-import frc.robot.SyncedLibraries.SystemBases.Utils.ManipulatorFFDistanceCommand;
 import frc.robot.SyncedLibraries.SystemBases.Utils.PIDConfig;
 
 /**
@@ -27,10 +21,16 @@ import frc.robot.SyncedLibraries.SystemBases.Utils.PIDConfig;
  * <p>
  * 3.) Add the motors
  * <p>
- * 4.) Run the {@link #setPositionPID(ManipulatorDistanceCommand)} methods
- * in the constructor to set the PID values.
+ * 4.) Adjust position multipliers to be in meters using
+ * {@link ManipulatorBase#setEncoderMultiplier(double)}
  * <p>
- * 5.) Adjust position multipliers to be in meters
+ * 5.) Set {@link #setBreakerMaxAmps(int)} and {@link #setCurrentLimit(int)}
+ * current limits
+ * <p>
+ * 6.) Set the position limits using
+ * {@link #setPositionBounds(Distance, Distance)}
+ * <p>
+ * 7.) Run {@link #persistMotorConfig()} to save the motor config
  * <p>
  * You also can use standard {@link SubsystemBase} and {@link ManipulatorBase}
  * methods
@@ -52,9 +52,9 @@ public abstract class PositionManipulatorBase extends ManipulatorBase {
    * @param feedForwardType The type of feedforward controller to use, if unknown
    *                        use SimpleMotor
    */
-  public PositionManipulatorBase(PIDConfig pidConfig, ManipulatorFFDistanceCommand.FeedForwardType feedForwardType) {
+  public PositionManipulatorBase(PIDConfig pidConfig) {
     this.pidConfig = pidConfig;
-    moveCommand = new ManipulatorFFDistanceCommand(this, getPosition(), pidConfig, feedForwardType);
+    moveCommand = new ManipulatorDistanceCommand(this, getPosition(), pidConfig);
   }
 
   public Distance getPosition() {
@@ -146,7 +146,11 @@ public abstract class PositionManipulatorBase extends ManipulatorBase {
   public void periodic() {
     super.periodic();
     SmartDashboard.putBoolean(getName() + " At Position", isAtPosition());
-    SmartDashboard.putNumber(getName() + "position (m)", getPosition().in(Meters));
+    SmartDashboard.putNumber(getName() + " current position (m)", getPosition().in(Meters));
+    SmartDashboard.putNumber(getName() + " target position (m)", getTargetPosition().in(Meters));
+    SmartDashboard.putNumber(getName() + " current velocity (m/s)", getVelocity().in(MetersPerSecond));
+    SmartDashboard.putNumber(getName() + " setpoint velocity (m/s)", moveCommand.getSetpoint().velocity);
+    SmartDashboard.putNumber(getName() + " setpoint position (m)", moveCommand.getSetpoint().position);
   }
 
   @Override
@@ -162,14 +166,6 @@ public abstract class PositionManipulatorBase extends ManipulatorBase {
   public void _setPosition(Distance position) {
     for (RelativeEncoder encoder : encoders) {
       encoder.setPosition(position.in(Meters));
-    }
-  }
-
-  /** Set multiplier to convert from encoder values to meters on manipulator */
-  public void setPositionMultiplier(double multiplier) {
-    for (SparkMax motor : motors) {
-      motor.configure(new SparkMaxConfig().apply(new EncoderConfig().positionConversionFactor(multiplier)),
-          ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     }
   }
 }

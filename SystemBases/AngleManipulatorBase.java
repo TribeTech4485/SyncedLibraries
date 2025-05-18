@@ -3,16 +3,11 @@ package frc.robot.SyncedLibraries.SystemBases;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Radians;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.EncoderConfig;
-import com.revrobotics.spark.config.SparkMaxConfig;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.SyncedLibraries.SystemBases.Utils.ManipulatorAngleCommand;
-import frc.robot.SyncedLibraries.SystemBases.Utils.ManipulatorFFAngleCommand;
 import frc.robot.SyncedLibraries.SystemBases.Utils.PIDConfig;
 
 /**
@@ -25,11 +20,14 @@ import frc.robot.SyncedLibraries.SystemBases.Utils.PIDConfig;
  * <p>
  * 3.) Add the motors
  * <p>
- * 4.) Run the {@link #setPositionPID(ManipulatorAngleCommand)} methods
- * in the constructor to set the PID values.
+ * 4.) Adjust position multipliers using
+ * {@link ManipulatorBase#setEncoderMultiplier(double)} to be in
+ * radians
  * <p>
- * 5.) Adjust position multipliers to be in radians
+ * 5.) Set {@link #setBreakerMaxAmps(int)} and {@link #setCurrentLimit(int)}
+ * current limits
  * <p>
+ * 6.) Set the angle limits using {@link #setAngleBounds(Angle, Angle)}
  * You also can use standard {@link SubsystemBase} and {@link ManipulatorBase}
  * methods
  * <p>
@@ -43,11 +41,14 @@ public abstract class AngleManipulatorBase extends ManipulatorBase {
   /** If null, run the {@link #setPositionPID(double, double, double, double)} */
   protected final ManipulatorAngleCommand moveCommand;
 
-  public AngleManipulatorBase(PIDConfig pidConfig, ManipulatorFFAngleCommand.FeedForwardType feedForwardType) {
+  public AngleManipulatorBase(PIDConfig pidConfig) {
     this.pidConfig = pidConfig;
-    moveCommand = new ManipulatorFFAngleCommand(this, getAngle(), pidConfig, feedForwardType);
+    moveCommand = new ManipulatorAngleCommand(this, getAngle(), pidConfig);
   }
 
+  /**
+   * Sets the current angle that the manipulator is at. USE CAUTIOUSLY
+   */
   public void _setAngle(Angle angle) {
     for (RelativeEncoder encoder : encoders) {
       encoder.setPosition(angle.in(Radians));
@@ -137,19 +138,13 @@ public abstract class AngleManipulatorBase extends ManipulatorBase {
     SmartDashboard.putBoolean(getName() + " At Position", isAtPosition());
     SmartDashboard.putNumber(getName() + " Current Angle (deg)", getAngle().in(Degrees));
     SmartDashboard.putNumber(getName() + " Target Angle (deg)", getTargetPosition().in(Degrees));
+    SmartDashboard.putNumber(getName() + " Setpoint Angle (deg)",
+        Units.radiansToDegrees(getMoveCommand().getSetpoint().position));
     SmartDashboard.putNumber(getName() + " Current Encoder value", getEncoder(0).getPosition());
   }
 
   @Override
   public void stopCommand() {
     cancelMoveToPosition();
-  }
-
-  /** Set multiplier to convert from encoder values to radians on manipulator */
-  public void setPositionMultiplier(double multiplier) {
-    for (SparkMax motor : motors) {
-      motor.configure(new SparkMaxConfig().apply(new EncoderConfig().positionConversionFactor(multiplier)),
-          ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-    }
   }
 }

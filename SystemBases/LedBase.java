@@ -8,6 +8,10 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
+/**
+ * Overrinde the applyPatterns with calls to apply the patters to the
+ * views/buffer, this will be runn in the periodic
+ */
 public abstract class LedBase extends SubsystemBase {
   protected final AddressableLED led;
   protected final AddressableLEDBuffer buffer;

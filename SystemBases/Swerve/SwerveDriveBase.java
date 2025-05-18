@@ -41,7 +41,10 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 import org.littletonrobotics.urcl.URCL;
 
-/** Represents a swerve drive style drivetrain. */
+/**
+ * Represents a swerve drive style drivetrain. Due to quirks of acceleration
+ * control system, inputting driving speeds must be called continiously
+ */
 public abstract class SwerveDriveBase extends Estopable {
   protected final SlewLimiter2d drivingAccelFilter;
   protected final SlewRateLimiter turnRateLimiter;
@@ -70,7 +73,7 @@ public abstract class SwerveDriveBase extends Estopable {
   protected final SwerveModuleBase m_backRight;
   protected final SwerveModuleBase[] modules;
 
-  protected final AHRS m_gyro;
+  protected final AHRS m_gyro; // Move to seperate class if possible
   protected final SwerveDriveKinematics m_kinematics;
   protected final SwerveDriveOdometry m_odometry;
   protected StructArrayPublisher<SwerveModuleState> NetworkTablesSwervePublisherDesired;
@@ -188,6 +191,10 @@ public abstract class SwerveDriveBase extends Estopable {
     });
   }
 
+  /**
+   * It is up to the user to prevent the positions from being overwritten!
+   * Do not call any input driving speeds
+   */
   public void enableXLock() {
     setDriveBrakeMode(true);
     swerveModuleStates = lockPositions;
@@ -400,7 +407,7 @@ public abstract class SwerveDriveBase extends Estopable {
     ChassisSpeeds chassisSpeeds = m_kinematics.toChassisSpeeds(liveStates);
     SmartDashboard.putNumber("Current Chassis XSpeed", chassisSpeeds.vxMetersPerSecond);
     SmartDashboard.putNumber("Current Chassis YSpeed", chassisSpeeds.vyMetersPerSecond);
-    SmartDashboard.putNumber("AAAA Desired Angle",
+    SmartDashboard.putNumber("Bot Desired Angle", // Why so long???
         ((((Units.radiansToDegrees(turnController.getSetpoint().position)) % 360) + 180) % 360) - 180);
     SmartDashboard.putNumber("Current Chassis RotSpeed", chassisSpeeds.omegaRadiansPerSecond);
     SmartDashboard.putBoolean("Gyro connected", m_gyro.isConnected());
@@ -429,6 +436,8 @@ public abstract class SwerveDriveBase extends Estopable {
     m_backLeft.setDesiredState(swerveModuleStates[2]);
     m_backRight.setDesiredState(swerveModuleStates[3]);
     for (SwerveModuleBase module : modules) {
+      // Many of the set methods are time consuming, so only set them if
+      // they are needed
       if (module.getVoltageControlMode() != voltageControlMode) {
         module.setVoltageControlMode(voltageControlMode);
       }
@@ -470,6 +479,7 @@ public abstract class SwerveDriveBase extends Estopable {
     return brakeMode;
   }
 
+  /** Interprit driving speeds as voltages. USE WITH CAUTION */
   public void setVoltageControlMode(boolean voltageControlMode) {
     this.voltageControlMode = voltageControlMode;
   }
@@ -481,7 +491,7 @@ public abstract class SwerveDriveBase extends Estopable {
   /**
    * Sets the speed of the swerveModuleStates to the input
    * <p>
-   * Recommended for use with {@link #setVoltageControlMode(boolean)}
+   * Recommended for use as {@link #setManualVoltage(Voltage)}
    */
   public void manualSetSpeed(double speed) {
     for (SwerveModuleState state : swerveModuleStates) {
@@ -545,7 +555,7 @@ public abstract class SwerveDriveBase extends Estopable {
     return lockPositions;
   }
 
-  /** Decelerates to a stop */
+  /** <strong>Decelerates to a stop, must be called repeatedly</strong> */
   public void stop() {
     inputDrivingX_Y(MetersPerSecond.zero(), MetersPerSecond.zero(), RadiansPerSecond.zero(), -1);
   }
@@ -556,6 +566,7 @@ public abstract class SwerveDriveBase extends Estopable {
    * <p>
    * Hopefully won't skid too far
    */
+  @Override
   public void ESTOP() {
     enableXLock();
   }
@@ -581,6 +592,11 @@ public abstract class SwerveDriveBase extends Estopable {
     return sysIdRoutine.dynamic(direction);
   }
 
+  /**
+   * Sets the multiplier for the slow mode
+   * <p>
+   * 1 is normal speed, 0.5 is half speed, 0.25 is quarter speed
+   */
   public void setSlowModeMultiplier(double multiplier) {
     for (SwerveModuleBase module : modules) {
       module.setSlowModeMultiplier(multiplier);

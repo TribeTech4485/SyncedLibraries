@@ -37,13 +37,30 @@ import edu.wpi.first.wpilibj2.command.PrintCommand;
  * Add a loop to run all tests to Robot.testInit()
  */
 public abstract class ManipulatorBase extends Estopable {
+  /**
+   * The maximum current that the breaker can handle
+   * <p>
+   * Can be exceeded minimally in extreme and brief cases
+   */
   protected int breakerMaxAmps = 20;
+  // Long-term solution, make a motor object that sends values asynchronously to
+  // prevent hanging of main thread of many motor sys-calls
   protected ArrayList<SparkMax> motors = new ArrayList<SparkMax>();
   protected ArrayList<RelativeEncoder> encoders = new ArrayList<RelativeEncoder>();
+  /**
+   * Custom sensor for general use
+   * <p>
+   * Used for things like limit switches
+   */
   protected BooleanSupplier customSensor = () -> false;
 
-  private static final boolean overVoltageProtection = true;
-  private boolean isOverVoltageProtected = false;
+  /**
+   * The voltage that the motors will be disabled at
+   * <p>
+   * Set to 0 to disable
+   */
+  private static double overVoltageProtection = 18;
+  private boolean isDisabled = false;
 
   // ===================== Raw Speed Methods ===================== //
   /** Get the raw speed of the motor in the range -1 to 1 */
@@ -74,7 +91,7 @@ public abstract class ManipulatorBase extends Estopable {
       stopCommand();
     }
     for (SparkMax motor : motors) {
-      if (isOverVoltageProtected) {
+      if (isDisabled) {
         return;
       }
       motor.set(percent);
@@ -114,6 +131,7 @@ public abstract class ManipulatorBase extends Estopable {
    * Set the raw speed of the motor in the range -1 to 1
    * <p>
    * Used for manual control
+   * @param voltage Uses the unit library to prevent improper usage
    */
   public void setVoltage(Voltage voltage, boolean stopCommands) {
     if (stopCommands) {
@@ -123,18 +141,18 @@ public abstract class ManipulatorBase extends Estopable {
     // double line = motors.get(0).getBusVoltage();
     // voltage = Math.min(line, Math.max(-line, voltage));
     for (SparkMax motor : motors) {
-      if (isOverVoltageProtected) {
+      if (isDisabled) {
         return;
       }
       motor.setVoltage(voltage);
     }
   }
 
-  // ===================== Speed Methods ===================== //
+  // ===================== Encoder Methods ===================== //
 
   /**
-   * Set multiplier to convert from encoder values to <b>radians/s</b> on
-   * manipulator
+   * Set multiplier to convert from encoder values to radians/s or m/s
+   * on the manipulator
    * <p>
    * Warning: you'll likely need to divide by 50 due to 50 periodics/sec
    */
@@ -155,6 +173,20 @@ public abstract class ManipulatorBase extends Estopable {
     return RadiansPerSecond.of(average);
   }
 
+  /** Set multiplier to convert from encoder values to meters on manipulator */
+  public void setPositionMultiplier(double multiplier) {
+    for (SparkMax motor : motors) {
+      motor.configure(new SparkMaxConfig().apply(new EncoderConfig().positionConversionFactor(multiplier)),
+          ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    }
+  }
+
+  /** Sets both speed and postition multipliers */
+  public void setEncoderMultiplier(double multiplier) {
+    setPositionMultiplier(multiplier);
+    setSpeedMultiplier(multiplier / 50); // 50 periodics/sec
+  }
+
   // ===================== Utility Methods ===================== //
 
   /** Adds all the encoders from the motors into the encoders list */
@@ -173,6 +205,10 @@ public abstract class ManipulatorBase extends Estopable {
     updateEncoders();
   }
 
+  /**
+   * In order of when motors are added, likely in the constructer of the child
+   * class
+   */
   public SparkMax getMotor(int index) {
     return motors.get(index);
   }
@@ -200,13 +236,14 @@ public abstract class ManipulatorBase extends Estopable {
     }
   }
 
+  /** Reset all motors to factory settings */
   public void resetMotors() {
     for (SparkMax motor : motors) {
       motor.configure(new SparkMaxConfig(), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
   }
 
-  /** Not available on all setups */
+  /** Not reasonable on all setups */
   public void setBrakeMode(boolean brakeOnStop) {
     for (SparkMax motor : motors) {
       motor.configure(new SparkMaxConfig().idleMode(brakeOnStop ? IdleMode.kBrake : IdleMode.kCoast),
@@ -261,7 +298,7 @@ public abstract class ManipulatorBase extends Estopable {
     }
   }
 
-  /** Use to invert specific motors {@link #setInverted(boolean)} */
+  /** Use to invert specific motors, se also {@link #setInverted(boolean)} */
   public void invertSpecificMotors(boolean inverted, int... motorIndexes) {
     for (int index : motorIndexes) {
       motors.get(index).configure(new SparkMaxConfig().inverted(inverted),
@@ -277,7 +314,7 @@ public abstract class ManipulatorBase extends Estopable {
   }
 
   public boolean isSpinning() {
-    return getCurrentSpeed().in(RadiansPerSecond) <= 0.01;
+    return getCurrentSpeed().in(RadiansPerSecond) >= 0.01;
   }
 
   /**
@@ -294,17 +331,17 @@ public abstract class ManipulatorBase extends Estopable {
     SmartDashboard.putNumber(getName() + " Speed (rpm)", getCurrentSpeed().in(RPM));
     SmartDashboard.putNumber(getName() + " Power", getAvePower());
 
-    if (overVoltageProtection) {
-      if (getMotor(0).getBusVoltage() > 18) {
-        if (!isOverVoltageProtected) {
+    if (overVoltageProtection != 0) {
+      if (getMotor(0).getBusVoltage() > overVoltageProtection) {
+        if (!isDisabled) {
           DriverStation.reportError("Manipulators over voltage protection enabled", false);
           for (SparkMax motor : motors) {
             motor.disable();
           }
-          isOverVoltageProtected = true;
+          isDisabled = true;
         }
       } else {
-        isOverVoltageProtected = false;
+        isDisabled = false;
       }
     }
   }
@@ -312,7 +349,7 @@ public abstract class ManipulatorBase extends Estopable {
   /**
    * When put into test mode, this command will run
    * <p>
-   * Basically run all systems to show they work
+   * Used to run all systems to show they work
    */
   public abstract Command test();
 
@@ -327,15 +364,15 @@ public abstract class ManipulatorBase extends Estopable {
     return manipulators.toArray(new ManipulatorBase[0]);
   }
 
-  @Override
   /**
    * Runs when the robot is disabled, base method saves motor config
    */
+  @Override
   public void onDisable() {
     // Save motor config
     boolean maybe = true;
     if (maybe) {
-      return;
+      return; // ?
     }
     persistMotorConfig();
   }
@@ -355,6 +392,7 @@ public abstract class ManipulatorBase extends Estopable {
    * Stops the speed/position command
    */
   public void stopCommand() {
+    // Overridden in abstract subclasses
     System.out.println("ManipulatorBase" + getName() + " stopCommand() not implemented");
   }
 
@@ -363,12 +401,16 @@ public abstract class ManipulatorBase extends Estopable {
     stopCommand();
   }
 
+  /**
+   * Runs whenever a manipulatorbase is created, used to ensure that a reasonable
+   * current limit is in place
+   */
   public ManipulatorBase() {
     // Make sure the amp limit is reasonable
     for (SparkMax motor : motors) {
       if (motor.configAccessor.getSmartCurrentLimit() > breakerMaxAmps) {
         motor.configure(new SparkMaxConfig().smartCurrentLimit(breakerMaxAmps), ResetMode.kNoResetSafeParameters,
-            PersistMode.kNoPersistParameters);
+            PersistMode.kPersistParameters);
       }
     }
   }

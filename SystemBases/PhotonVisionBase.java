@@ -34,8 +34,7 @@ public abstract class PhotonVisionBase extends SubsystemBase {
   public void periodic() {
     double x = 0;
     double y = 0;
-    // TODO: update to use the new API
-    latestResult = camera.getLatestResult();
+    latestResult = camera.getLatestResult(); // TODO: update to use the new API
     targets = latestResult.getTargets();
     hasTarget = latestResult.hasTargets();
     if (hasTarget) {

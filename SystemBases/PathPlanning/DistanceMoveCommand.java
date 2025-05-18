@@ -14,15 +14,14 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.SyncedLibraries.SystemBases.Swerve.SwerveDriveBase;
 import frc.robot.SyncedLibraries.SystemBases.Utils.PIDConfig;
 
+/** Move to a translation without any turning */
 public class DistanceMoveCommand extends Command {
   SwerveDriveBase drivetrain;
   PIDConfig xConfig;
@@ -44,8 +43,6 @@ public class DistanceMoveCommand extends Command {
     this.xConfig = xConfig;
     this.yConfig = yConfig;
     this.turnConfig = turnConfig;
-    // addRequirements(drivetrain);
-    // SmartDashboard.putData("AAAAAA MoveDistanceCommand", this);
   }
 
   @Override
@@ -70,8 +67,6 @@ public class DistanceMoveCommand extends Command {
   @Override
   public void execute() {
     Transform2d traveledTransform = drivetrain.getOdometry().getPoseMeters().minus(startingPose);
-    // SmartDashboard.putNumber("AAA has traveled X", traveledTransform.getX());
-    // SmartDashboard.putNumber("AAA has traveled Y", traveledTransform.getY());
     double xOutput = xController.calculate(traveledTransform.getX());
     double yOutput = yController.calculate(traveledTransform.getY());
     double turnOutput = turnController
@@ -79,16 +74,6 @@ public class DistanceMoveCommand extends Command {
     if (!drivetrain.getGyro().isConnected()) {
       turnOutput = 0;
     }
-    // SmartDashboard.putNumber("AAA xOutput", xOutput);
-    // SmartDashboard.putNumber("AAA yOutput", yOutput);
-    // SmartDashboard.putNumber("AAA xError", xController.getPositionError());
-    // SmartDashboard.putNumber("AAA yError", yController.getPositionError());
-    // SmartDashboard.putNumber("AAA xGoal", xController.getGoal().position);
-    // SmartDashboard.putNumber("AAA yGoal", yController.getGoal().position);
-    // SmartDashboard.putNumber("AAA xSetpoint",
-    // xController.getSetpoint().position);
-    // SmartDashboard.putNumber("AAA ySetpoint",
-    // yController.getSetpoint().position);
     drivetrain.setFieldRelative(false);
     drivetrain.inputDrivingX_Y(MetersPerSecond.of(-xOutput - xController.getSetpoint().velocity),
         MetersPerSecond.of(-yOutput - yController.getSetpoint().velocity),
@@ -113,6 +98,7 @@ public class DistanceMoveCommand extends Command {
         return true;
       }
     } catch (Exception e) {
+      // If PID controllers are not initialized yet
     }
 
     return false;
@@ -122,6 +108,5 @@ public class DistanceMoveCommand extends Command {
   public void end(boolean interrupted) {
     System.out.println("Move ended with interrupted: " + interrupted);
     new RunCommand(() -> drivetrain.stop()).withTimeout(.25).schedule();
-
   }
 }

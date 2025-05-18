@@ -52,10 +52,9 @@ public abstract class SwerveModuleBase extends Estopable {
    * @param turningMotor  The motor that turns the module.
    * @param turningOffset The offset for the turning encoder. Starting position
    * @param name          The name of the module. Ie. "Front Left"
-   * @param driveConfig   The configuration for the drive motor.
-   * @param turningConfig The configuration for the turning motor.
-   * @param drivePIDF     The PIDF values for the drive motor, including
-   *                      constraints
+   * @param driveConfig   The motor configuration for the drive motor.
+   * @param turningConfig The motor configuration for the turning motor.
+   * @param drivePIDF     The PIDF values for the drive motor
    * @param turnPID       The PID values for the turning motor, no feedforward
    */
   public SwerveModuleBase(SparkMax driveMotor, SparkMax turningMotor, double turningOffset, String name,
@@ -129,6 +128,7 @@ public abstract class SwerveModuleBase extends Estopable {
     SwerveModuleState state = new SwerveModuleState(desiredState.speedMetersPerSecond, desiredState.angle);
     // SwerveModuleState state = desiredState;
 
+    // Account for time it takes for wheel to turn to the desired angle
     state.optimize(encoderRotation);
     state.cosineScale(encoderRotation);
 
@@ -200,7 +200,6 @@ public abstract class SwerveModuleBase extends Estopable {
         ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
-  /** Converts to radians */
   public Rotation2d getEncoderPos() {
     return new Rotation2d(m_turningEncoder.getPosition());
   }
@@ -266,12 +265,14 @@ public abstract class SwerveModuleBase extends Estopable {
     return voltageControlMode;
   }
 
+  /** Current limit */
   public void setDriveAmps(int limit) {
     m_driveMotor.configure(new SparkMaxConfig().smartCurrentLimit(limit),
         ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     driveAmps = limit;
   }
 
+  /** Current limit */
   public void setTurnAmps(int limit) {
     m_turningMotor.configure(new SparkMaxConfig().smartCurrentLimit(limit),
         ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
